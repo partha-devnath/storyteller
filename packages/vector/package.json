@@ -1,0 +1,27 @@
+{
+  "name": "@workspace/vector",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@workspace/ai": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "@workspace/logger": "workspace:*",
+    "@workspace/schemas": "workspace:*",
+    "drizzle-orm": "^0.43.0"
+  },
+  "devDependencies": {
+    "typescript": "~6"
+  }
+}
