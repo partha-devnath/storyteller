@@ -9,6 +9,9 @@ import { file as fileSchema } from "@workspace/schemas"
 import { createS3Storage, uploadFile } from "@workspace/files"
 import { orgsRoutes } from "./routes/orgs"
 import { projectsRoutes } from "./routes/projects"
+import { aiRoutes } from "./routes/ai"
+import { proposalsRoutes } from "./routes/proposals"
+import { cardsRoutes } from "./routes/cards"
 
 type Env = {
   Variables: {
@@ -78,8 +81,13 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 function rateLimiter(maxRequests: number, windowMs: number) {
   return createMiddleware(async (c, next) => {
-    const info = getConnInfo(c)
-    const key = info.remote.address ?? "unknown"
+    let address: string
+    try {
+      address = getConnInfo(c).remote.address ?? "unknown"
+    } catch {
+      address = "127.0.0.1"
+    }
+    const key = address
     const now = Date.now()
 
     const entry = rateLimitStore.get(key)
@@ -140,6 +148,11 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
 
 app.route("/api/orgs", orgsRoutes)
 app.route("/api/projects", projectsRoutes)
+
+app.use("/api/ai/*", rateLimiter(10, 60_000))
+app.route("/api/ai", aiRoutes)
+app.route("/api/proposals", proposalsRoutes)
+app.route("/api/cards", cardsRoutes)
 
 app.get("/api/health", async (c) => {
   try {

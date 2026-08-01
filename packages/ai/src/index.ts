@@ -13,6 +13,10 @@ export {
   consistencyReviewOutputSchema,
   clarifyingAnswersInputSchema,
 } from "./schemas"
+export { generateBoard } from "./operations/generate-board"
+export { answerClarifyingQuestions } from "./operations/clarify"
+export { processInstruction } from "./operations/process-instruction"
+export { runConsistencyReview } from "./operations/consistency-review"
 
 const providerName = process.env.AI_PROVIDER
 
