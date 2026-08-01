@@ -102,48 +102,48 @@ Deferred to later milestones.
 
 | Requirement | Phase | Status  |
 | ----------- | ----- | ------- |
-| AI-01       | TBD   | Pending |
-| AI-02       | TBD   | Pending |
-| AI-03       | TBD   | Pending |
-| AI-04       | TBD   | Pending |
-| AI-05       | TBD   | Pending |
-| AI-06       | TBD   | Pending |
-| AI-07       | TBD   | Pending |
-| AI-08       | TBD   | Pending |
-| ORG-01      | TBD   | Pending |
-| ORG-02      | TBD   | Pending |
-| ORG-03      | TBD   | Pending |
-| ORG-04      | TBD   | Pending |
-| DATA-01     | TBD   | Pending |
-| DATA-02     | TBD   | Pending |
-| DATA-03     | TBD   | Pending |
-| DATA-04     | TBD   | Pending |
-| DATA-05     | TBD   | Pending |
-| DATA-06     | TBD   | Pending |
-| APPR-01     | TBD   | Pending |
-| APPR-02     | TBD   | Pending |
-| APPR-03     | TBD   | Pending |
-| APPR-04     | TBD   | Pending |
-| VEC-01      | TBD   | Pending |
-| VEC-02      | TBD   | Pending |
-| VEC-03      | TBD   | Pending |
-| VEC-04      | TBD   | Pending |
-| UI-01       | TBD   | Pending |
-| UI-02       | TBD   | Pending |
-| UI-03       | TBD   | Pending |
-| UI-04       | TBD   | Pending |
-| UI-05       | TBD   | Pending |
-| UI-06       | TBD   | Pending |
-| UI-07       | TBD   | Pending |
-| E2E-01      | TBD   | Pending |
-| E2E-02      | TBD   | Pending |
-| E2E-03      | TBD   | Pending |
+| AI-01       | 1     | Pending |
+| AI-02       | 1     | Pending |
+| AI-03       | 1     | Pending |
+| AI-04       | 1     | Pending |
+| AI-05       | 1     | Pending |
+| AI-06       | 1     | Pending |
+| AI-07       | 1     | Pending |
+| AI-08       | 1     | Pending |
+| ORG-01      | 1     | Pending |
+| ORG-02      | 1     | Pending |
+| ORG-03      | 1     | Pending |
+| ORG-04      | 1     | Pending |
+| DATA-01     | 1     | Pending |
+| DATA-02     | 1     | Pending |
+| DATA-03     | 1     | Pending |
+| DATA-04     | 1     | Pending |
+| DATA-05     | 1     | Pending |
+| DATA-06     | 1     | Pending |
+| APPR-01     | 1     | Pending |
+| APPR-02     | 1     | Pending |
+| APPR-03     | 1     | Pending |
+| APPR-04     | 1     | Pending |
+| VEC-01      | 1     | Pending |
+| VEC-02      | 1     | Pending |
+| VEC-03      | 1     | Pending |
+| VEC-04      | 1     | Pending |
+| UI-01       | 1     | Pending |
+| UI-02       | 1     | Pending |
+| UI-03       | 1     | Pending |
+| UI-04       | 1     | Pending |
+| UI-05       | 1     | Pending |
+| UI-06       | 2     | Pending |
+| UI-07       | 1     | Pending |
+| E2E-01      | 1     | Pending |
+| E2E-02      | 2     | Pending |
+| E2E-03      | 3     | Pending |
 
 **Coverage:**
 
 - v2 requirements: 36 total
-- Mapped to phases: 0 (roadmap next)
-- Unmapped: 36
+- Mapped to phases: 36
+- Unmapped: 0 ✓
 
 ---
 

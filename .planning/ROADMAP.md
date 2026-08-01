@@ -1,73 +1,72 @@
 # ROADMAP.md
 
 **Project:** storyteller
-**Milestone:** v1.0 — Template Release
+**Milestone:** v2.0 — Living Requirements Board
 
-## Phase 1: Core Monorepo & Auth
+## Phase 1: Core Loop (MVP Differentiator)
 
-**Goal:** A working local full-stack auth template with database, migrations, file uploads, and email capture.
+**Goal:** Ship the core loop — AI generates a story board from a prompt, users approve proposals, cards version and close (spawning replacements), all inside a multi-tenant org with a professional SaaS UI and E2E coverage.
 
 **Mode:** mvp
 
 **Requirements:**
-AUTH-01, AUTH-02, AUTH-03, AUTH-04, API-01, API-02, API-03, WEB-01, WEB-02, WEB-03, DB-01, DB-02, FILE-01, FILE-02, EMAIL-01, EMAIL-02
+AI-01, AI-02, AI-03, AI-04, AI-05, AI-06, AI-07, AI-08, ORG-01, ORG-02, ORG-03, ORG-04, DATA-01, DATA-02, DATA-03, DATA-04, DATA-05, DATA-06, APPR-01, APPR-02, APPR-03, APPR-04, VEC-01, VEC-02, VEC-03, VEC-04, UI-01, UI-02, UI-03, UI-04, UI-05, UI-07, E2E-01
 
 **Success Criteria:**
 
-1. `bun install` completes without errors.
-2. `docker compose up` starts PostgreSQL, Mailpit, api, and web.
-3. User can sign up, verify email, sign in, and view the dashboard.
-4. Database migrations generate and apply successfully.
-5. File upload endpoint accepts files and records metadata.
+1. A new user signs up, gets a personal org, creates a project, and types a product prompt; the mock AI generates story cards behind an approval proposal.
+2. Approving a proposal makes cards live on a kanban board with version history; a card detail drawer shows diff, relations, and similar cards.
+3. Closing a card freezes it; a later instruction targeting it creates a replacement card linked by evolution instead of updating it.
+4. Cross-org isolation holds — a second user cannot see the first user's project.
+5. E2E journeys pass end-to-end with the mock AI provider; unit + API + component tests pass.
 
-**Status:** Complete
+**Status:** Not started
 
-## Phase 2: AWS Infrastructure
+## Phase 2: Graph & Collaboration Depth
 
-**Goal:** Provision production-ready AWS infrastructure with ECR, EKS, and ALB.
+**Goal:** Add the graph view (dependencies, hierarchy, evolution lineage), polished comments/mentions, real-time updates, and export — deepening collaboration and visibility.
 
 **Mode:** standard
 
 **Requirements:**
-INFRA-01, INFRA-02, INFRA-03, INFRA-04
+UI-06, DATA-04, E2E-02
 
 **Success Criteria:**
 
-1. `terraform init` and `terraform plan` succeed in `infra/terraform/environments/dev`.
-2. ECR repositories for api and web are defined.
-3. VPC, EKS cluster, and ALB modules are wired without circular dependencies.
-4. Dev and prod environment configurations are separate.
+1. Graph view renders cards/epics as nodes with color-coded dependency, hierarchy, and evolution edges; toggles filter edge types.
+2. Clicking a node opens the card drawer; "impact of X" highlights downstream dependents.
+3. Comments and @mentions flow works; updates arrive via SSE without full page reloads.
+4. Export produces CSV, JSON, and Markdown files of the board.
+5. E2E journeys for graph, comments/mentions, and export pass.
 
-**Status:** Complete
+**Status:** Not started
 
-## Phase 3: Developer Experience & Verification
+## Phase 3: SaaS Hardening
 
-**Goal:** Ensure the template builds, tests, and documents accurately.
+**Goal:** Add billing, usage limits, onboarding, analytics, and deployment polish — turning the product into a shippable SaaS.
 
 **Mode:** standard
 
 **Requirements:**
-DX-01, DX-02, DX-03, DX-04
+E2E-03
 
 **Success Criteria:**
 
-1. `bun run build` succeeds for all workspaces.
-2. `bun run test` passes with no failures.
-3. `bun run typecheck` passes with no errors.
-4. README accurately reflects stack (Winston, floci S3, PostgreSQL 16, Terraform).
+1. Subscription plans (free + paid) are selectable; plan limits are enforced.
+2. Billing page and plan-limit enforcement E2E journeys pass.
+3. Onboarding and analytics dashboards are available.
+4. Staging/production deployment pipeline is documented and verified.
 
-**Status:** In Progress
+**Status:** Not started
 
 ---
 
 ## Phase Transition Log
 
-| Date       | Phase | Action      | Notes                                        |
-| ---------- | ----- | ----------- | -------------------------------------------- |
-| 2026-07-25 | 1     | Complete    | Existing codebase already satisfies criteria |
-| 2026-07-25 | 2     | Complete    | Terraform modules added for ECR, EKS, ALB    |
-| 2026-07-25 | 3     | In Progress | Build verification and graphify refresh      |
+| Date       | Phase | Action  | Notes                              |
+| ---------- | ----- | ------- | ---------------------------------- |
+| 2026-08-02 | 1     | Created | Milestone v2.0 roadmap initialized |
 
 ---
 
-_Last updated: 2026-07-25_
+_Last updated: 2026-08-02_
