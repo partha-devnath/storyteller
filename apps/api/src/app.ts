@@ -7,6 +7,8 @@ import { createLogger } from "@workspace/logger"
 import { db } from "@workspace/db"
 import { file as fileSchema } from "@workspace/schemas"
 import { createS3Storage, uploadFile } from "@workspace/files"
+import { orgsRoutes } from "./routes/orgs"
+import { projectsRoutes } from "./routes/projects"
 
 type Env = {
   Variables: {
@@ -58,7 +60,7 @@ app.use("*", async (c, next) => {
 app.use(
   "*",
   factory.createMiddleware(async (c, next) => {
-    let remote: { address?: string; addressType?: string; port?: number } = {}
+    let remote: { address?: string; addressType?: string; port?: number }
     try {
       remote = getConnInfo(c).remote
     } catch {
@@ -135,6 +137,9 @@ app.get("/", (c) =>
 app.use("/api/auth/*", rateLimiter(30, 60_000))
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
+
+app.route("/api/orgs", orgsRoutes)
+app.route("/api/projects", projectsRoutes)
 
 app.get("/api/health", async (c) => {
   try {

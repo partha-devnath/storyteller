@@ -96,6 +96,7 @@ describe("resendSender", () => {
     expect(logSpy).toHaveBeenCalledWith(
       "[EMAIL] RESEND_API_KEY not set, falling back to console"
     )
+    expect(emailSender).toBeDefined()
     logSpy.mockRestore()
   })
 })

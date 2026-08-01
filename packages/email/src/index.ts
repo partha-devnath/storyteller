@@ -5,9 +5,16 @@ type SendEmailParams = {
   url: string
 }
 
+type SendInviteEmailParams = {
+  email: string
+  url: string
+  orgName: string
+}
+
 export type EmailSender = {
   sendVerificationEmail: (params: SendEmailParams) => Promise<void>
   sendResetPasswordEmail: (params: SendEmailParams) => Promise<void>
+  sendInviteEmail: (params: SendInviteEmailParams) => Promise<void>
 }
 
 const consoleSender: EmailSender = {
@@ -16,6 +23,9 @@ const consoleSender: EmailSender = {
   },
   sendResetPasswordEmail: async ({ email, url }) => {
     console.log(`[EMAIL] Reset password to ${email}: ${url}`)
+  },
+  sendInviteEmail: async ({ email, url, orgName }) => {
+    console.log(`[EMAIL] Invite to ${email} for ${orgName}: ${url}`)
   },
 }
 
@@ -40,6 +50,14 @@ function createMailpitSender(): EmailSender {
         to: email,
         subject: "Reset your password",
         html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
+      })
+    },
+    async sendInviteEmail({ email, url, orgName }) {
+      await transport.sendMail({
+        from,
+        to: email,
+        subject: `Invite to join ${orgName}`,
+        html: `<p>You have been invited to join <strong>${orgName}</strong>. Click <a href="${url}">here</a> to accept.</p>`,
       })
     },
   }
@@ -73,6 +91,16 @@ function createResendSender(): EmailSender {
         to: email,
         subject: "Reset your password",
         html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
+      })
+    },
+    async sendInviteEmail({ email, url, orgName }) {
+      const { Resend } = await import("resend")
+      const resend = new Resend(apiKey)
+      await resend.emails.send({
+        from,
+        to: email,
+        subject: `Invite to join ${orgName}`,
+        html: `<p>You have been invited to join <strong>${orgName}</strong>. Click <a href="${url}">here</a> to accept.</p>`,
       })
     },
   }

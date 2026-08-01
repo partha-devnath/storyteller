@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { db } from "@workspace/db"
 import * as schema from "@workspace/schemas"
+import { organization, organizationMember } from "@workspace/schemas"
 import { emailSender } from "@workspace/email"
 import { createLogger } from "@workspace/logger"
 
@@ -19,13 +20,41 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            const orgId = crypto.randomUUID().split("-").join("").slice(0, 16)
+            const orgName = `${user.name ?? "Personal"}'s Workspace`
+            const slug = `user-${user.id.slice(0, 8)}`
+            await db.insert(organization).values({
+              id: orgId,
+              name: orgName,
+              slug,
+              createdBy: user.id,
+            })
+            await db.insert(organizationMember).values({
+              id: crypto.randomUUID().split("-").join("").slice(0, 16),
+              orgId,
+              userId: user.id,
+              role: "owner",
+              inviteStatus: "accepted",
+            })
+            logger.info({ userId: user.id, orgId }, "Personal org created")
+          } catch (error) {
+            logger.error(error, "Failed to create personal org")
+          }
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
     autoSignIn: true,
     sendResetPassword: async ({
       user,
-      url,
       token,
     }: {
       user: { id: string; email: string }
@@ -46,7 +75,6 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({
       user,
-      url,
       token,
     }: {
       user: { id: string; email: string }

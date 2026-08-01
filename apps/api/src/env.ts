@@ -20,6 +20,11 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_BUCKET: z.string().default("template"),
   S3_BASE_URL: z.string().optional(),
+  AI_PROVIDER: z.enum(["openai", "anthropic", "mock"]).default("mock"),
+  OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
+  CHAT_MODEL: z.string().default("gpt-4o-mini"),
 })
 
 export function validateEnv() {
