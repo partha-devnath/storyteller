@@ -1,35 +1,44 @@
+---
+gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: Living Requirements Board
+status: planning
+last_updated: "2026-08-01T19:58:18.146Z"
+last_activity: 2026-08-01
+progress:
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
+---
+
 # STATE.md
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-07-25)
+See: `.planning/PROJECT.md` (updated 2026-08-02)
 
-**Core value:** A developer can clone this template, run `bun install && docker compose up && bun dev`, and immediately have a working local auth stack, database migrations, and a deployable application structure.
+**Core value:** Business folks can describe an idea in natural language and get a clean, consistent, non-contradictory requirements board that AI keeps in sync — closed cards freeze, nothing is lost, every change is approved and auditable.
 
-**Current focus:** Phase 3 — Developer Experience & Verification
+**Current focus:** Milestone v2.0 — Living Requirements Board
 
 ## Current Status
 
-- Phase 1 (Core Monorepo & Auth): Complete
-- Phase 2 (AWS Infrastructure): Complete
-- Phase 3 (Developer Experience & Verification): Complete
+- Milestone v1.0 (Template Release): Complete
+- Milestone v2.0 (Living Requirements Board): Planning
 
 ## Recent Work
 
-- Switched Docker Compose PostgreSQL image to `postgres:16-alpine`.
-- Updated README to reflect Winston logger, `@workspace/files`, floci S3, and Terraform.
-- Added Terraform modules for ECR, network, EKS, and gateway with dev/prod environments.
-- Initialized GSD planning artifacts (PROJECT.md, REQUIREMENTS.md, ROADMAP.md, STATE.md, config.json).
-- Re-ran graphify on the current codebase (879 nodes, 1036 edges, 53 communities).
-- Fixed missing `@workspace/logger` dependency in `@workspace/auth`.
-- Verified `bun install`, `bun run build`, `bun run typecheck`, and `bun run test` all pass.
-- Fixed `apps/api/Dockerfile` and `apps/web/Dockerfile` build command syntax (`bun run --cwd <app> <script>`).
-- Built and pushed `storyteller/api:latest` and `storyteller/web:latest` to the floci ECR registry at `000000000000.dkr.ecr.us-east-1.localhost:5100`.
+- Approved the full product design spec: `docs/superpowers/specs/2026-08-02-storyteller-design.md`
+- Design covers: AI engine + approval flow, living-card semantics (closed cards spawn replacements), card versioning + diff, pgvector semantic memory, kanban + graph views, orgs/members/roles, professional SaaS dashboard, E2E per phase, industry-standard SDLC.
+- Started milestone v2.0 planning (this milestone).
 
 ## Next Actions
 
-1. Address any new issues opened against the template.
-2. Add Kubernetes manifests and CI/CD image push in a future phase.
+1. Define milestone v2.0 requirements (REQ-IDs) in REQUIREMENTS.md.
+2. Create phased roadmap (ROADMAP.md) — 3 phases.
+3. Plan and execute Phase 1 (core loop: AI engine, data model, board, approvals, orgs, landing + dashboard, E2E).
 
 ## Blockers
 
@@ -37,5 +46,13 @@ None.
 
 ## Notes
 
-- The repository is a template, not a live product. Requirements are framed as template capabilities.
-- GitHub issues were created to track remaining tasks.
+- The template milestone (v1.0) is complete; the repo is now a live product.
+- E2E uses the mock AI provider for deterministic tests (no live API calls).
+- Billing deferred to Phase 3; design accommodates Stripe without rework.
+
+## Current Position
+
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-08-01 — Milestone v2.0 started
