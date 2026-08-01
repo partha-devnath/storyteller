@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Living Requirements Board
-status: planning
-last_updated: "2026-08-01T19:58:18.146Z"
-last_activity: 2026-08-01
+status: executing
+last_updated: "2026-08-01T20:07:59.926Z"
+last_activity: 2026-08-01 -- Phase 1 execution started
 progress:
   total_phases: 0
   completed_phases: 0
@@ -21,7 +21,7 @@ See: `.planning/PROJECT.md` (updated 2026-08-02)
 
 **Core value:** Business folks can describe an idea in natural language and get a clean, consistent, non-contradictory requirements board that AI keeps in sync — closed cards freeze, nothing is lost, every change is approved and auditable.
 
-**Current focus:** Milestone v2.0 — Living Requirements Board
+**Current focus:** Phase 1
 
 ## Current Status
 
@@ -36,9 +36,9 @@ See: `.planning/PROJECT.md` (updated 2026-08-02)
 
 ## Next Actions
 
-1. Define milestone v2.0 requirements (REQ-IDs) in REQUIREMENTS.md.
-2. Create phased roadmap (ROADMAP.md) — 3 phases.
-3. Plan and execute Phase 1 (core loop: AI engine, data model, board, approvals, orgs, landing + dashboard, E2E).
+1. Plan Phase 1 (core loop: AI engine, data model, board, approvals, orgs, landing + dashboard, E2E) — `/gsd-plan-phase 1`
+2. Execute Phase 1 with E2E journeys.
+3. Then Phase 2 (graph & collaboration) and Phase 3 (SaaS hardening).
 
 ## Blockers
 
@@ -52,7 +52,7 @@ None.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-08-01 — Milestone v2.0 started
+Phase: 1 — EXECUTING
+Plan: 1 of ?
+Status: Executing Phase 1
+Last activity: 2026-08-01 -- Phase 1 execution started
