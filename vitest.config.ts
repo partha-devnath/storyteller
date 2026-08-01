@@ -12,7 +12,7 @@ export default defineConfig({
     include: ["**/__tests__/**/*.test.{ts,tsx}"],
     exclude: ["**/node_modules/**", "**/dist/**", "apps/api/**"],
     environment: "jsdom",
-    setupFiles: ["./packages/ui/src/__tests__/setup.ts"],
+    setupFiles: [path.resolve(__dirname, "packages/ui/src/__tests__/setup.ts")],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
