@@ -1,0 +1,31 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "build": "tsc --noEmit && bun build src/index.ts --outdir dist --target bun",
+    "start": "bun run dist/index.js",
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:watch": "bun test --watch"
+  },
+  "dependencies": {
+    "@workspace/auth": "workspace:*",
+    "@workspace/db": "workspace:*",
+    "@workspace/files": "workspace:*",
+    "@workspace/logger": "workspace:*",
+    "@workspace/schemas": "workspace:*",
+    "drizzle-orm": "^0.43.0",
+    "hono": "^4.8.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1",
+    "@types/node": "^24",
+    "typescript": "~6"
+  }
+}

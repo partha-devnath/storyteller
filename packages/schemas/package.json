@@ -1,0 +1,28 @@
+{
+  "name": "@workspace/schemas",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./validations/*": "./src/validations/*.ts",
+    "./db/*": "./src/db/*.ts",
+    "./types/*": "./src/types/*.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.43.0",
+    "postgres": "^3.4.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "~6"
+  }
+}

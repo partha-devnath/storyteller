@@ -1,0 +1,25 @@
+{
+  "name": "@workspace/logger",
+  "version": "0.0.1",
+  "main": "./src/server.ts",
+  "devDependencies": {
+    "@types/node": "^24",
+    "typescript": "~6"
+  },
+  "exports": {
+    ".": "./src/server.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "private": true,
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "type": "module",
+  "dependencies": {
+    "winston": "3.19.0"
+  }
+}

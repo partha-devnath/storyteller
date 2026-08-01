@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@workspace/schemas/*": ["../../packages/schemas/src/*"],
+      "@workspace/schemas": ["../../packages/schemas/src"],
+      "@workspace/db": ["../../packages/db/src"],
+      "@workspace/auth": ["../../packages/auth/src"],
+      "@workspace/email": ["../../packages/email/src"],
+      "@workspace/files": ["../../packages/files/src"]
+    }
+  },
+  "include": ["src"]
+}

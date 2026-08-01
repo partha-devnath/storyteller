@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "types": ["node", "bun"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@workspace/*": ["../../packages/*/src"]
+    }
+  },
+  "include": ["src"]
+}

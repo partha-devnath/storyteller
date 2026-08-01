@@ -1,0 +1,23 @@
+{
+  "name": "@workspace/email",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "nodemailer": "^9.0.1",
+    "resend": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/nodemailer": "^8.0.1",
+    "typescript": "~6"
+  }
+}

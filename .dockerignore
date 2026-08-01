@@ -1,0 +1,12 @@
+node_modules
+.turbo
+dist
+.git
+*.md
+.env
+.env.example
+.gitignore
+eslint.config.js
+.prettierrc
+.prettierignore
+.gitkeep

@@ -1,0 +1,25 @@
+{
+  "name": "@workspace/auth",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "@workspace/email": "workspace:*",
+    "@workspace/logger": "workspace:*",
+    "@workspace/schemas": "workspace:*",
+    "better-auth": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "typescript": "~6"
+  }
+}

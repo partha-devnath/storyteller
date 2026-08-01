@@ -1,0 +1,25 @@
+{
+  "name": "@workspace/files",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3",
+    "@workspace/db": "workspace:*",
+    "@workspace/schemas": "workspace:*",
+    "@workspace/logger": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1",
+    "@types/node": "^24",
+    "typescript": "~6"
+  }
+}
