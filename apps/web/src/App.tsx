@@ -5,11 +5,18 @@ import { VerifyEmailPage } from "@/routes/verify-email"
 import { ForgotPasswordPage } from "@/routes/forgot-password"
 import { ResetPasswordPage } from "@/routes/reset-password"
 import { DashboardPage } from "@/routes/dashboard"
+import { LandingPage } from "@/routes/landing"
+import { ProjectsPage } from "@/routes/projects"
+import { ProjectChatPage } from "@/routes/project-chat"
+import { OrgMembersPage } from "@/routes/org-members"
 import { ProtectedRoute, PublicRoute } from "@/components/protected-route"
+import { AppShell } from "@/components/app-shell"
 
 export function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
+
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
@@ -19,10 +26,15 @@ export function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:slug/chat" element={<ProjectChatPage />} />
+          <Route path="/orgs/:orgId/members" element={<OrgMembersPage />} />
+        </Route>
       </Route>
 
-      <Route path="*" element={<LoginPage />} />
+      <Route path="*" element={<LandingPage />} />
     </Routes>
   )
 }
