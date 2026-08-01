@@ -1,0 +1,277 @@
+import { useState } from "react"
+import ReactMarkdown from "react-markdown"
+import {
+  useCardDetail,
+  useCardVersions,
+  useCardSimilar,
+  useAddComment,
+} from "@/hooks/use-cards"
+import { DiffPanel } from "./diff-panel"
+import { Button } from "@workspace/ui/components/button"
+
+type Tab = "details" | "history" | "relations" | "similar"
+
+export function CardDrawer({
+  cardId,
+  open,
+  onClose,
+  projectSlug,
+}: {
+  cardId: string
+  open: boolean
+  onClose: () => void
+  projectSlug: string
+}) {
+  const { data: detail } = useCardDetail(open ? cardId : undefined)
+  const { data: versions } = useCardVersions(open ? cardId : undefined)
+  const { data: similar } = useCardSimilar(open ? cardId : undefined)
+  const addComment = useAddComment(open ? cardId : undefined)
+  const [tab, setTab] = useState<Tab>("details")
+  const [comment, setComment] = useState("")
+  const [copied, setCopied] = useState(false)
+
+  if (!open || !detail) return null
+
+  const card = detail.card
+  const slug = card.slug
+
+  async function copyLink() {
+    const url = `/project/${projectSlug}/card/${slug}`
+    try {
+      await navigator.clipboard.writeText(window.location.origin + url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  async function submitComment() {
+    if (!comment.trim()) return
+    await addComment.mutateAsync({ body: comment })
+    setComment("")
+  }
+
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "details", label: "Details" },
+    { key: "history", label: "History" },
+    { key: "relations", label: "Relations" },
+    { key: "similar", label: "Similar" },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative flex h-full w-full max-w-xl flex-col border-l bg-background shadow-xl">
+        <div className="flex items-center justify-between border-b p-4">
+          <div>
+            <p className="text-lg font-semibold">{card.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {card.status} · {card.priority}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={copyLink}
+              data-testid="copy-link"
+            >
+              {copied ? "Copied!" : "Copy link"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose}>
+              ✕
+            </Button>
+          </div>
+        </div>
+
+        {card.isClosed && (
+          <div className="border-b border-dashed bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+            🔒 This card is closed and read-only.
+          </div>
+        )}
+
+        <div className="flex gap-1 border-b px-4 pt-3">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              data-testid={t.key === "history" ? "history-tab" : undefined}
+              className={`rounded-t-md px-3 py-1.5 text-sm ${
+                tab === t.key
+                  ? "border border-b-0 bg-background font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {tab === "details" && (
+            <div className="space-y-4">
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown>{card.description ?? ""}</ReactMarkdown>
+              </div>
+              {card.acceptanceCriteria.length > 0 && (
+                <div>
+                  <p className="mb-1 text-sm font-semibold">
+                    Acceptance criteria
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {card.acceptanceCriteria.map((c, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span>☐</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {card.customFields &&
+                Object.keys(card.customFields).length > 0 && (
+                  <div>
+                    <p className="mb-1 text-sm font-semibold">Custom fields</p>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(card.customFields).map(([k, v]) => (
+                        <span
+                          key={k}
+                          className="rounded-full bg-muted px-2 py-0.5 text-xs"
+                        >
+                          {k}: {v}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              {detail.attachments.length > 0 && (
+                <div>
+                  <p className="mb-1 text-sm font-semibold">Attachments</p>
+                  <ul className="space-y-1 text-sm">
+                    {detail.attachments.map((a) => (
+                      <li key={a.id}>
+                        <a href={a.url} className="text-primary underline">
+                          {a.originalName}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div>
+                <p className="mb-1 text-sm font-semibold">Comments</p>
+                <div className="space-y-2">
+                  {detail.comments.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      No comments.
+                    </p>
+                  )}
+                  {detail.comments.map((cm) => (
+                    <div key={cm.id} className="rounded-md border p-2 text-sm">
+                      <p className="text-xs text-muted-foreground">
+                        {cm.userName}
+                      </p>
+                      <p>{cm.body}</p>
+                    </div>
+                  ))}
+                </div>
+                {!card.isClosed && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
+                      placeholder="Add a comment..."
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+                    <Button size="sm" onClick={submitComment}>
+                      Post
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === "history" && (
+            <div className="space-y-2">
+              {!versions || versions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No history.</p>
+              ) : (
+                versions.map((v) => (
+                  <div key={v.id} className="rounded-md border p-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">v{v.versionNo}</span>
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                        {v.changeType}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {v.title}
+                    </p>
+                  </div>
+                ))
+              )}
+              {versions && versions.length > 1 && (
+                <div className="mt-3">
+                  <p className="mb-1 text-sm font-semibold">
+                    v{versions.length} vs v{versions.length - 1}
+                  </p>
+                  <DiffPanel
+                    before={versions[versions.length - 1].description ?? ""}
+                    after={versions[0].description ?? ""}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === "relations" && (
+            <div className="space-y-2 text-sm">
+              {detail.relations.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No relations.</p>
+              ) : (
+                detail.relations.map((r) => (
+                  <div key={r.id} className="rounded-md border p-2 text-sm">
+                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase">
+                      {r.type}
+                    </span>
+                    <span className="ml-2">
+                      {r.sourceCardId} → {r.targetCardId}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {tab === "similar" && (
+            <div data-testid="similar-list" className="space-y-2 text-sm">
+              {!similar || similar.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No similar cards found.
+                </p>
+              ) : (
+                similar.map((s) => (
+                  <div key={s.cardId} className="rounded-md border p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{s.title}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(s.similarity * 100)}%
+                      </span>
+                    </div>
+                    {s.isClosed && (
+                      <span className="text-[10px] text-muted-foreground">
+                        🔒 closed
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
