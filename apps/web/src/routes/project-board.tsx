@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { useParams } from "react-router"
+import { lazy, Suspense, useState } from "react"
+import { useParams, useSearchParams } from "react-router"
 import { useProject } from "@/hooks/use-projects"
 import { useCards, useMoveCard } from "@/hooks/use-cards"
 import { useBoardStore } from "@/stores/board-store"
@@ -7,9 +7,18 @@ import { KanbanBoard } from "@/components/kanban"
 import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
 import { ProposalReview } from "@/components/proposal-review"
+import { ViewSwitcher } from "@/components/view-switcher"
+
+const GraphView = lazy(() =>
+  import("@/components/graph-view").then((mod) => ({
+    default: mod.GraphView,
+  }))
+)
 
 export function ProjectBoardPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const view = searchParams.get("view") ?? "board"
   const { data: projectDetail, isLoading } = useProject(slug)
   const { data: cards } = useCards(slug)
   const moveCard = useMoveCard(slug ?? "")
@@ -30,23 +39,49 @@ export function ProjectBoardPage() {
         </span>
       </div>
 
+      <ViewSwitcher />
+
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div>
-          {isLoading || !cards ? (
-            <p className="text-sm text-muted-foreground">Loading board...</p>
+          {view === "graph" ? (
+            <Suspense
+              fallback={
+                <div
+                  className="h-64 animate-pulse rounded-lg bg-muted"
+                  data-testid="graph-loading"
+                />
+              }
+            >
+              {slug && (
+                <GraphView
+                  projectSlug={slug}
+                  onSelectCard={(id) => setActiveCardId(id)}
+                />
+              )}
+            </Suspense>
           ) : (
-            <KanbanBoard
-              cards={cards}
-              columns={columns}
-              onMove={(cardId, status) => moveCard.mutate({ cardId, status })}
-              onSelectCard={(card) => setActiveCardId(card.id)}
-            />
-          )}
-          {cards && (
-            <ClosedRail
-              cards={cards}
-              onSelectCard={(card) => setActiveCardId(card.id)}
-            />
+            <>
+              {isLoading || !cards ? (
+                <p className="text-sm text-muted-foreground">
+                  Loading board...
+                </p>
+              ) : (
+                <KanbanBoard
+                  cards={cards}
+                  columns={columns}
+                  onMove={(cardId, status) =>
+                    moveCard.mutate({ cardId, status })
+                  }
+                  onSelectCard={(card) => setActiveCardId(card.id)}
+                />
+              )}
+              {cards && (
+                <ClosedRail
+                  cards={cards}
+                  onSelectCard={(card) => setActiveCardId(card.id)}
+                />
+              )}
+            </>
           )}
         </div>
 

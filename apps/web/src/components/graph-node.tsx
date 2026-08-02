@@ -1,17 +1,19 @@
-import type { NodeProps } from "@xyflow/react"
+import type { NodeProps, Node } from "@xyflow/react"
 import { Layers, Lock } from "lucide-react"
 import type { GraphNode } from "@/hooks/use-graph"
-import { priorityClasses } from "./board-card"
+import { priorityClasses } from "@/lib/priority"
 
 export type GraphNodeData = GraphNode & {
   isImpacted?: boolean
   dimmed?: boolean
 }
 
+export type GraphFlowNode = Node<GraphNodeData>
+
 export function GraphNodeComponent({
   data,
   selected,
-}: NodeProps<{ data: GraphNodeData }>) {
+}: NodeProps<GraphFlowNode>) {
   const isEpic = data.kind === "epic"
   const isImpacted = Boolean(data.isImpacted)
   const dimmed = Boolean(data.dimmed)
@@ -35,6 +37,7 @@ export function GraphNodeComponent({
       tabIndex={0}
       aria-label={`${isEpic ? "Epic" : "Card"}: ${data.title}`}
       data-testid={`graph-node-${data.id}`}
+      data-impact={isImpacted ? "true" : "false"}
       className={`${base} ${stateClasses} cursor-pointer transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none`}
     >
       {isEpic ? (

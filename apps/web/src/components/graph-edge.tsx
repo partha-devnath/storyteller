@@ -1,4 +1,9 @@
-import { BaseEdge, getSmoothStepPath, type EdgeProps } from "@xyflow/react"
+import {
+  BaseEdge,
+  getSmoothStepPath,
+  type EdgeProps,
+  type Edge,
+} from "@xyflow/react"
 import type { CSSProperties } from "react"
 import type { GraphEdge } from "@/hooks/use-graph"
 
@@ -6,6 +11,8 @@ export type GraphEdgeData = GraphEdge & {
   isImpacted?: boolean
   dimmed?: boolean
 }
+
+export type GraphFlowEdge = Edge<GraphEdgeData>
 
 const edgeStrokeVar: Record<GraphEdge["type"], string> = {
   dependency: "var(--color-edge-dependency)",
@@ -24,7 +31,7 @@ export function GraphEdgeComponent({
   targetY,
   sourcePosition,
   targetPosition,
-}: EdgeProps<{ data: GraphEdgeData }>) {
+}: EdgeProps<GraphFlowEdge>) {
   const edgeType = data?.type ?? "dependency"
   const isImpacted = Boolean(data?.isImpacted)
   const dimmed = Boolean(data?.dimmed)
@@ -44,11 +51,11 @@ export function GraphEdgeComponent({
   // CSS variables set here (idle 1.5, hover 2.5, impacted 3). The group-hover
   // class sets the width var on the path itself, which overrides the inherited
   // value from the group. Impacted edges skip the hover class so 3 wins.
-  const groupStyle: CSSProperties = {
+  const groupStyle = {
     "--xy-edge-stroke": edgeStrokeVar[edgeType],
     "--xy-edge-stroke-width": isImpacted ? 3 : 1.5,
     ...(dimmed ? { opacity: 0.2 } : {}),
-  }
+  } as CSSProperties & Record<string, string | number | undefined>
 
   return (
     <g
