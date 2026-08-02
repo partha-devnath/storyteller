@@ -9,6 +9,8 @@ import { file as fileSchema } from "@workspace/schemas"
 import { createS3Storage, uploadFile } from "@workspace/files"
 import { orgsRoutes } from "./routes/orgs"
 import { billingRoutes, stripeWebhookRoutes } from "./routes/billing"
+import { analyticsRoutes } from "./routes/analytics"
+import { templatesRoutes } from "./routes/templates"
 import { projectsRoutes } from "./routes/projects"
 import { aiRoutes } from "./routes/ai"
 import { proposalsRoutes } from "./routes/proposals"
@@ -119,6 +121,8 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
 
 app.route("/api/orgs", orgsRoutes)
 app.route("/api/orgs", billingRoutes)
+app.route("/api/orgs", analyticsRoutes)
+app.route("/api/orgs", templatesRoutes)
 app.route("/api/projects", projectsRoutes)
 app.route("/api/projects", graphRoutes)
 app.route("/api/projects", eventsRoutes)
