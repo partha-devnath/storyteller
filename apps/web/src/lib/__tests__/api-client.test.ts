@@ -70,6 +70,21 @@ describe("apiClient", () => {
     )
   })
 
+  it("attaches the HTTP status to thrown errors (402 limit path)", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 402,
+      json: () =>
+        Promise.resolve({ error: "limit reached", code: "limit_reached" }),
+    })
+
+    const { apiClient } = await import("../api-client")
+    const err = await apiClient("/limit").catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(Error)
+    expect((err as Error & { status?: number }).status).toBe(402)
+    expect((err as Error).message).toBe("limit reached")
+  })
+
   it("sends custom headers", async () => {
     mockFetch.mockResolvedValue({
       ok: true,

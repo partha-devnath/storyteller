@@ -1,8 +1,16 @@
 import { useState } from "react"
 import { useParams } from "react-router"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@workspace/ui/components/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip"
 import { useAiGenerate, useAiClarify } from "@/hooks/use-ai"
 import { useProposals } from "@/hooks/use-proposals"
+import { useProject } from "@/hooks/use-projects"
+import { useUsage, handleLimitError } from "@/hooks/use-billing"
 
 type ThreadItem =
   | { role: "user"; text: string }
@@ -16,9 +24,14 @@ type ThreadItem =
 
 export function ProjectChatPage() {
   const { slug } = useParams<{ slug: string }>()
+  const queryClient = useQueryClient()
   const generate = useAiGenerate(slug ?? "")
   const clarify = useAiClarify(slug ?? "")
   const { data: proposals } = useProposals(slug)
+  const { data: projectDetail } = useProject(slug)
+  const orgId = projectDetail?.project.orgId
+  const usage = useUsage(orgId)
+  const aiActionsLimited = usage.isAtLimit("aiActions")
   const [thread, setThread] = useState<ThreadItem[]>([])
   const [prompt, setPrompt] = useState("")
   const [clarifyAnswers, setClarifyAnswers] = useState<Record<number, string>>(
@@ -53,6 +66,8 @@ export function ProjectChatPage() {
         ])
       }
     } catch (e) {
+      // 402 → limit-banner + destructive toast (V4c), no generic error copy
+      if (handleLimitError(e, orgId ?? "", queryClient)) return
       setThread((t) => [
         ...t,
         { role: "ai", kind: "error", text: (e as Error).message },
@@ -95,12 +110,22 @@ export function ProjectChatPage() {
         ])
       }
     } catch (e) {
+      if (handleLimitError(e, orgId ?? "", queryClient)) return
       setThread((t) => [
         ...t,
         { role: "ai", kind: "error", text: (e as Error).message },
       ])
     }
   }
+
+  const generateButton = (
+    <Button
+      onClick={onGenerate}
+      disabled={generate.isPending || !!pendingQuestions || aiActionsLimited}
+    >
+      {generate.isPending ? "Generating..." : "Generate"}
+    </Button>
+  )
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
@@ -187,14 +212,24 @@ export function ProjectChatPage() {
           placeholder="Describe your product idea..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          disabled={generate.isPending || !!pendingQuestions}
+          disabled={
+            generate.isPending || !!pendingQuestions || aiActionsLimited
+          }
         />
-        <Button
-          onClick={onGenerate}
-          disabled={generate.isPending || !!pendingQuestions}
-        >
-          {generate.isPending ? "Generating..." : "Generate"}
-        </Button>
+        {aiActionsLimited ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="inline-flex" data-testid="limit-tooltip" />
+              }
+            >
+              {generateButton}
+            </TooltipTrigger>
+            <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
+          </Tooltip>
+        ) : (
+          generateButton
+        )}
       </div>
     </div>
   )

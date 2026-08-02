@@ -30,7 +30,9 @@ export async function apiClient<T = unknown>(
   if (!response.ok) {
     const errMsg = data.error ?? `Request failed with status ${response.status}`
     logger.error({ status: response.status, path, method }, errMsg)
-    throw new Error(errMsg)
+    const err = new Error(errMsg) as Error & { status?: number }
+    err.status = response.status
+    throw err
   }
 
   return data

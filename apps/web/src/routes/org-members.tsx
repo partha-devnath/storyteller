@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useParams } from "react-router"
 import { useForm } from "react-hook-form"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
@@ -11,10 +12,17 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip"
+import {
   useOrgMembers,
   useInviteMember,
   useChangeMemberRole,
 } from "@/hooks/use-orgs"
+import { useUsage, handleLimitError } from "@/hooks/use-billing"
+import { toast } from "@/stores/toast-store"
 
 type InviteForm = { email: string; role: "member" | "admin" | "viewer" }
 
@@ -27,27 +35,55 @@ const roleOptions: Array<"member" | "admin" | "owner" | "viewer"> = [
 
 export function OrgMembersPage() {
   const { orgId } = useParams<{ orgId: string }>()
+  const queryClient = useQueryClient()
   const { data: members, isLoading } = useOrgMembers(orgId ?? "")
   const invite = useInviteMember(orgId ?? "")
   const changeRole = useChangeMemberRole(orgId ?? "")
+  const usage = useUsage(orgId)
+  const membersLimited = usage.isAtLimit("members")
   const [showInvite, setShowInvite] = useState(false)
   const { register, handleSubmit, reset } = useForm<InviteForm>({
     defaultValues: { email: "", role: "member" },
   })
 
   async function onInvite(data: InviteForm) {
-    await invite.mutateAsync({ email: data.email, role: data.role })
-    reset()
-    setShowInvite(false)
+    try {
+      await invite.mutateAsync({ email: data.email, role: data.role })
+      reset()
+      setShowInvite(false)
+    } catch (error) {
+      if (!handleLimitError(error, orgId ?? "", queryClient)) {
+        toast.error(
+          (error as Error).message ?? "Something went wrong. Try again."
+        )
+      }
+    }
   }
+
+  const inviteButton = (
+    <Button onClick={() => setShowInvite((s) => !s)} disabled={membersLimited}>
+      {showInvite ? "Cancel" : "Invite"}
+    </Button>
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Members</h1>
-        <Button onClick={() => setShowInvite((s) => !s)}>
-          {showInvite ? "Cancel" : "Invite"}
-        </Button>
+        {membersLimited ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <span className="inline-flex" data-testid="limit-tooltip" />
+              }
+            >
+              {inviteButton}
+            </TooltipTrigger>
+            <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
+          </Tooltip>
+        ) : (
+          inviteButton
+        )}
       </div>
 
       {showInvite && (
