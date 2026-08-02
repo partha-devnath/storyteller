@@ -1,8 +1,11 @@
-import { Navigate, Outlet } from "react-router"
+import { Navigate, Outlet, useLocation } from "react-router"
 import { useSession } from "@/lib/auth-client"
+import { useOnboarding } from "@/hooks/use-onboarding"
 
 export function ProtectedRoute() {
   const { data: session, isPending } = useSession()
+  const location = useLocation()
+  const onboarding = useOnboarding()
 
   if (isPending) {
     return (
@@ -14,6 +17,15 @@ export function ProtectedRoute() {
 
   if (!session) {
     return <Navigate to="/login" replace />
+  }
+
+  if (
+    onboarding.checked &&
+    onboarding.needsOnboarding &&
+    !onboarding.isOnboardingSkipped() &&
+    location.pathname !== "/onboarding"
+  ) {
+    return <Navigate to="/onboarding" replace />
   }
 
   return <Outlet />

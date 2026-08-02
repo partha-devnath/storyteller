@@ -9,6 +9,15 @@ vi.mock("@/lib/auth-client", () => ({
   useSession: () => mockUseSession(),
 }))
 
+vi.mock("@/hooks/use-onboarding", () => ({
+  useOnboarding: () => ({
+    needsOnboarding: false,
+    checked: true,
+    isOnboardingSkipped: () => false,
+    dismissOnboarding: vi.fn(),
+  }),
+}))
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
