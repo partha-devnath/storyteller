@@ -1,4 +1,4 @@
-import { createFactory, createMiddleware } from "hono/factory"
+import { createFactory } from "hono/factory"
 import { cors } from "hono/cors"
 import { eq, sql } from "drizzle-orm"
 import { getConnInfo } from "hono/bun"
@@ -8,6 +8,7 @@ import { db } from "@workspace/db"
 import { file as fileSchema } from "@workspace/schemas"
 import { createS3Storage, uploadFile } from "@workspace/files"
 import { orgsRoutes } from "./routes/orgs"
+import { billingRoutes, stripeWebhookRoutes } from "./routes/billing"
 import { projectsRoutes } from "./routes/projects"
 import { aiRoutes } from "./routes/ai"
 import { proposalsRoutes } from "./routes/proposals"
@@ -15,6 +16,7 @@ import { cardsRoutes } from "./routes/cards"
 import { graphRoutes } from "./routes/graph"
 import { eventsRoutes } from "./routes/events"
 import { exportRoutes } from "./routes/export"
+import { rateLimiter } from "./middleware/rate-limit"
 
 type Env = {
   Variables: {
@@ -80,43 +82,6 @@ app.use(
   })
 )
 
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
-
-function rateLimiter(maxRequests: number, windowMs: number) {
-  return createMiddleware(async (c, next) => {
-    let address: string
-    try {
-      address = getConnInfo(c).remote.address ?? "unknown"
-    } catch {
-      address = "127.0.0.1"
-    }
-    const key = address
-    const now = Date.now()
-
-    const entry = rateLimitStore.get(key)
-    if (!entry || now > entry.resetTime) {
-      rateLimitStore.set(key, { count: 1, resetTime: now + windowMs })
-      return next()
-    }
-
-    if (entry.count >= maxRequests) {
-      return c.json({ success: false, error: "Too many requests" }, 429)
-    }
-
-    entry.count++
-    return next()
-  })
-}
-
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, entry] of rateLimitStore) {
-    if (now > entry.resetTime) {
-      rateLimitStore.delete(key)
-    }
-  }
-}, 60_000).unref()
-
 app.use(
   "*",
   factory.createMiddleware(async (c, next) => {
@@ -153,6 +118,7 @@ app.use(
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
 
 app.route("/api/orgs", orgsRoutes)
+app.route("/api/orgs", billingRoutes)
 app.route("/api/projects", projectsRoutes)
 app.route("/api/projects", graphRoutes)
 app.route("/api/projects", eventsRoutes)
@@ -165,6 +131,12 @@ app.use(
 app.route("/api/ai", aiRoutes)
 app.route("/api/proposals", proposalsRoutes)
 app.route("/api/cards", cardsRoutes)
+
+app.use(
+  "/api/stripe/*",
+  rateLimiter(Number(process.env.STRIPE_RATE_LIMIT_MAX) || 60, 60_000)
+)
+app.route("/api/stripe", stripeWebhookRoutes)
 
 app.get("/api/health", async (c) => {
   try {

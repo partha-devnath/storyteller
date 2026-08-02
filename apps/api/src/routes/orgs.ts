@@ -19,6 +19,7 @@ import { requireOrg } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { validateBody } from "../middleware/validate"
 import { httpError } from "../middleware/org-scope"
+import { assertLimit } from "../services/plan-limits"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -104,6 +105,8 @@ orgsRoutes.post(
     if (existing) {
       throw httpError("Already a member", 409)
     }
+
+    await assertLimit(orgId, "members")
 
     const [inviteeUser] = await db
       .select()

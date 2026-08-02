@@ -9,6 +9,7 @@ import { resolveOrgFromProject } from "../middleware/org-scope"
 import { validateBody } from "../middleware/validate"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
+import { assertLimit } from "../services/plan-limits"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -46,6 +47,8 @@ projectsRoutes.post("/", validateBody(createProjectSchema), async (c) => {
   if (!["owner", "admin", "member"].includes(member.role)) {
     throw httpError("Forbidden: insufficient role", 403)
   }
+
+  await assertLimit(body.orgId, "projects")
 
   const slug = body.slug ?? slugify(body.name)
   const projectId = generateId()

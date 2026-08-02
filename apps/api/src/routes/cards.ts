@@ -24,6 +24,7 @@ import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
 import { publish } from "../services/event-bus"
+import { assertLimit } from "../services/plan-limits"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -60,6 +61,8 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
   if (!session) throw httpError("Unauthorized", 401)
   const projectId = c.var.projectId!
   const body = createCardSchema.parse(await c.req.json())
+
+  await assertLimit(c.var.orgId!, "cards")
 
   const cardId = generateId()
   const slug = slugify(body.title) || "card"

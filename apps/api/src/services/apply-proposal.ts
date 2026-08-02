@@ -8,11 +8,13 @@ import {
   cardRelation,
   cardAttachment,
   epic,
+  project,
 } from "@workspace/schemas"
 import { reindexCard } from "@workspace/vector"
 import { aiProvider } from "@workspace/ai"
 import { createLogger } from "@workspace/logger"
 import { httpError } from "../middleware/org-scope"
+import { assertLimit } from "./plan-limits"
 import { publish } from "./event-bus"
 import { generateId, slugify } from "../utils"
 import type { ProposalChangeRelation } from "@workspace/schemas"
@@ -159,6 +161,15 @@ async function applyCreate(
   change: ChangeRow,
   approverId: string
 ): Promise<number> {
+  // Cards-limit gate: block approvals that would push the org over its card
+  // limit (UI-SPEC V4 "Card creation via AI approval" row).
+  const [proj] = await tx
+    .select()
+    .from(project)
+    .where(eq(project.id, projectId))
+    .limit(1)
+  if (proj) await assertLimit(proj.orgId, "cards")
+
   const f = readCreateFields(change.newData)
   const epicId = await resolveEpic(tx, projectId, f.epicName)
   const slug = await uniqueSlug(tx, projectId, f.title)

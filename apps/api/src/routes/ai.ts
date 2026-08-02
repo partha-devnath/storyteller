@@ -23,6 +23,7 @@ import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
 import { publish } from "../services/event-bus"
+import { assertLimit } from "../services/plan-limits"
 import { generateId } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -108,6 +109,7 @@ aiRoutes.post("/generate", async (c) => {
   if (!session) throw httpError("Unauthorized", 401)
   const body = generateSchema.parse(await c.req.json())
   const projectId = await resolveProjectId(body.projectSlug)
+  await assertLimit(c.var.orgId!, "aiActions")
 
   const snapshot = await buildBoardSnapshot(projectId)
   const result = await generateBoard({
@@ -164,6 +166,7 @@ aiRoutes.post("/process", async (c) => {
   if (!session) throw httpError("Unauthorized", 401)
   const body = processSchema.parse(await c.req.json())
   const projectId = await resolveProjectId(body.projectSlug)
+  await assertLimit(c.var.orgId!, "aiActions")
 
   const semantic = await buildSemanticContext({
     projectId,
@@ -235,6 +238,7 @@ aiRoutes.post("/clarify", async (c) => {
   if (!session) throw httpError("Unauthorized", 401)
   const body = clarifySchema.parse(await c.req.json())
   const projectId = await resolveProjectId(body.projectSlug)
+  await assertLimit(c.var.orgId!, "aiActions")
 
   const snapshot = await buildBoardSnapshot(projectId)
   const result = await answerClarifyingQuestions({
