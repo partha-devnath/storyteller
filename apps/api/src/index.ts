@@ -34,6 +34,7 @@ await waitForDb()
 const server = Bun.serve({
   port: env.PORT,
   fetch: app.fetch,
+  idleTimeout: 0,
 })
 
 logger.info(`API server running on http://localhost:${env.PORT}`)

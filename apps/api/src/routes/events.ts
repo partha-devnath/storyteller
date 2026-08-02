@@ -33,6 +33,10 @@ eventsRoutes.get("/:slug/events", resolveOrgFromProject, async (c) => {
       const unsubscribe = subscribe(projectId, handler)
       const heartbeat = setInterval(() => send(": ping\n\n"), 25_000)
 
+      // Flush the response immediately so the browser EventSource fires
+      // onopen without waiting for the first real event or heartbeat.
+      send(": connected\n\n")
+
       cleanup = () => {
         clearInterval(heartbeat)
         unsubscribe()

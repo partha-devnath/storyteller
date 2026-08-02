@@ -127,8 +127,16 @@ export function CommentComposer({
   function handleSelect(member: MentionMember) {
     const el = textareaRef.current
     const caret = el?.selectionStart ?? text.length
+    const beforeCaret = text.slice(0, caret)
+    const lastAt = beforeCaret.lastIndexOf("@")
+    // Replace the trigger "@" token (no whitespace between it and the caret)
+    // instead of inserting a second "@", so "@Name" never becomes "@@Name".
+    const replaceFrom =
+      lastAt !== -1 && !/\s/.test(beforeCaret.slice(lastAt + 1))
+        ? lastAt
+        : caret
     const insertion = `@${member.name} `
-    const next = text.slice(0, caret) + insertion + text.slice(caret)
+    const next = text.slice(0, replaceFrom) + insertion + text.slice(caret)
     setText(next)
     setMentions((prev) => new Set(prev).add(member.id))
     setPicker({ open: false, query: "", anchor: null })
@@ -136,7 +144,7 @@ export function CommentComposer({
       const node = textareaRef.current
       if (node) {
         node.focus()
-        const pos = caret + insertion.length
+        const pos = replaceFrom + insertion.length
         node.setSelectionRange(pos, pos)
       }
     })

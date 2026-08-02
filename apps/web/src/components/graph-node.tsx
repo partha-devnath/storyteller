@@ -1,4 +1,5 @@
 import type { NodeProps, Node } from "@xyflow/react"
+import { Handle, Position } from "@xyflow/react"
 import { Layers, Lock } from "lucide-react"
 import type { GraphNode } from "@/hooks/use-graph"
 import { priorityClasses } from "@/lib/priority"
@@ -40,6 +41,11 @@ export function GraphNodeComponent({
       data-impact={isImpacted ? "true" : "false"}
       className={`${base} ${stateClasses} cursor-pointer transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none`}
     >
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!h-2 !min-h-0 !w-2 !min-w-0 !border-none !bg-transparent !opacity-0"
+      />
       {isEpic ? (
         <div className="flex items-start gap-1.5">
           <Layers className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
@@ -71,6 +77,11 @@ export function GraphNodeComponent({
           </div>
         </div>
       )}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!h-2 !min-h-0 !w-2 !min-w-0 !border-none !bg-transparent !opacity-0"
+      />
     </div>
   )
 }

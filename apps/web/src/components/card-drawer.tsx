@@ -108,7 +108,12 @@ export function CardDrawer({
       <div className="relative flex h-full w-full max-w-xl flex-col border-l bg-background shadow-xl">
         <div className="flex items-center justify-between border-b p-4">
           <div>
-            <p className="text-lg font-semibold">{card.title}</p>
+            <p
+              className="text-lg font-semibold"
+              data-testid="card-drawer-title"
+            >
+              {card.title}
+            </p>
             <p className="text-xs text-muted-foreground">
               {card.status} · {card.priority}
             </p>

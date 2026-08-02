@@ -1,5 +1,12 @@
-import { test, expect, type Page } from "@playwright/test"
-import { TEST_USER_B } from "./seed"
+import { test, expect, type Page, type Download } from "@playwright/test"
+import {
+  TEST_USER,
+  TEST_USER_B,
+  TEST_USER_ID,
+  GRAPH_PROJECT_SLUG,
+  C1_ID,
+  C2_ID,
+} from "./seed"
 
 const MAILPIT_API = process.env.MAILPIT_API ?? "http://localhost:8025/api/v1"
 
@@ -75,6 +82,14 @@ async function createProject(
 async function runPrompt(page: Page, prompt: string) {
   await page.getByTestId("prompt-input").fill(prompt)
   await page.getByRole("button", { name: "Generate" }).click()
+}
+
+async function readDownloadText(download: Download): Promise<string> {
+  const stream = await download.createReadStream()
+  if (!stream) return ""
+  const chunks: string[] = []
+  for await (const chunk of stream) chunks.push(chunk.toString("utf-8"))
+  return chunks.join("")
 }
 
 test.describe.serial("core loop", () => {
@@ -196,5 +211,165 @@ test.describe.serial("core loop", () => {
     await expect(page.getByTestId("board-card")).toHaveCount(0, {
       timeout: 10_000,
     })
+  })
+})
+
+test.describe.serial("phase 2", () => {
+  test("J1: graph renders seeded nodes and edges; filters, impact, and drawer work", async ({
+    page,
+  }) => {
+    await signIn(page, TEST_USER.email, TEST_USER.password)
+    await page.goto(`/projects/${GRAPH_PROJECT_SLUG}?view=graph`)
+
+    await expect(page.getByTestId("view-switcher-graph")).toBeVisible()
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 15_000,
+    })
+
+    // 2 epics + 5 cards from the seed fixture
+    const nodes = page.locator('[data-testid^="graph-node-"]')
+    await expect(nodes).toHaveCount(7)
+
+    // One edge per type is guaranteed by the fixture: 2 dependency,
+    // 7 hierarchy (5 containment + parent epic + card relation), 1 evolution
+    const dependencyEdges = page.locator('[data-edge-type="dependency"]')
+    const hierarchyEdges = page.locator('[data-edge-type="hierarchy"]')
+    const evolutionEdges = page.locator('[data-edge-type="evolution"]')
+    await expect(dependencyEdges).toHaveCount(2)
+    await expect(hierarchyEdges).toHaveCount(7)
+    await expect(evolutionEdges).toHaveCount(1)
+
+    // Toggle the dependency filter off: dependency edges drop to 0 while
+    // the other types stay, then restore.
+    await page.getByTestId("edge-filter-dependency").click()
+    await expect.poll(() => dependencyEdges.count()).toBe(0)
+    await expect(hierarchyEdges).toHaveCount(7)
+    await expect(evolutionEdges).toHaveCount(1)
+    await page.getByTestId("edge-filter-dependency").click()
+    await expect.poll(() => dependencyEdges.count()).toBe(2)
+
+    // Arm impact and select C2: reverse dependency traversal marks
+    // {C2, C3, C4} — the banner appears with the card title.
+    await page.getByTestId("impact-toggle").click()
+    await page.getByTestId(`graph-node-${C2_ID}`).click()
+    const banner = page.getByTestId("impact-banner")
+    await expect(banner).toBeVisible()
+    await expect(banner).toContainText(
+      "Showing impact of Loyalty points ledger"
+    )
+    await expect(page.locator('[data-impact="true"]')).toHaveCount(3)
+
+    // The node click also opened the CardDrawer; close it so the canvas is
+    // clickable again, then Clear the impact highlight.
+    await page.getByRole("button", { name: "✕" }).click()
+    await page.getByTestId("impact-clear").click()
+    await expect(banner).toBeHidden()
+    await expect(page.locator('[data-impact="true"]')).toHaveCount(0)
+
+    // Clicking a plain card node opens the CardDrawer with its title.
+    await page.getByTestId(`graph-node-${C1_ID}`).click()
+    await expect(page.getByTestId("copy-link")).toBeVisible()
+    await expect(page.getByTestId("card-drawer-title")).toHaveText(
+      "Enrollment form"
+    )
+  })
+
+  test("J2: comments, @mentions, and SSE live updates", async ({ page }) => {
+    await signIn(page, TEST_USER.email, TEST_USER.password)
+    await page.goto(`/projects/${GRAPH_PROJECT_SLUG}?view=graph`)
+
+    await page.getByTestId(`graph-node-${C1_ID}`).click()
+    await expect(page.getByTestId("comment-input")).toBeVisible({
+      timeout: 10_000,
+    })
+
+    // Live indicator reports open (SSE connection established).
+    await expect(page.getByTestId("live-indicator")).toBeVisible()
+    await expect
+      .poll(
+        () => page.getByTestId("live-indicator").getAttribute("data-status"),
+        { timeout: 15_000 }
+      )
+      .toBe("open")
+
+    // Typing @ opens the mention picker with the seeded member.
+    await page.getByTestId("comment-input").click()
+    await page.getByTestId("comment-input").pressSequentially("@")
+    await expect(page.getByTestId("mention-picker")).toBeVisible({
+      timeout: 5_000,
+    })
+    await expect(
+      page.getByTestId(`mention-option-${TEST_USER_ID}`)
+    ).toBeVisible()
+
+    // Selecting a mention inserts "@E2E User " into the composer.
+    await page.getByTestId(`mention-option-${TEST_USER_ID}`).click()
+    const inputValue = await page.getByTestId("comment-input").inputValue()
+    expect(inputValue).toContain("@E2E User")
+
+    // Append a message after the mention (keeps the mention id registered).
+    await page.getByTestId("comment-input").pressSequentially("check this")
+    await page.getByTestId("comment-post").click()
+    await expect(page.getByTestId("comment-item").first()).toBeVisible({
+      timeout: 10_000,
+    })
+    await expect(page.getByTestId("comment-mention")).toContainText("@E2E User")
+
+    // SSE: post a second comment via the API (simulating another user).
+    const API_URL = process.env.VITE_API_URL ?? "http://localhost:3001"
+    const res = await page.request.post(
+      `${API_URL}/api/cards/${C1_ID}/comments?project=${GRAPH_PROJECT_SLUG}`,
+      { data: { body: "Live comment from API", mentions: [] } }
+    )
+    expect(res.ok()).toBeTruthy()
+
+    // Without any reload, the new-comments-pill appears and the list refetches.
+    await expect(page.getByTestId("new-comments-pill")).toBeVisible({
+      timeout: 10_000,
+    })
+    await expect(page.getByText("Live comment from API")).toBeVisible({
+      timeout: 10_000,
+    })
+  })
+
+  test("J3: export downloads CSV, JSON, and Markdown for the fixture board", async ({
+    page,
+  }) => {
+    await signIn(page, TEST_USER.email, TEST_USER.password)
+    await page.goto(`/projects/${GRAPH_PROJECT_SLUG}`)
+
+    const exportMenu = page.getByTestId("export-menu")
+    await expect(exportMenu).toBeVisible()
+    await expect(exportMenu).toBeEnabled()
+
+    // CSV: header row + a card title
+    const csvDl = page.waitForEvent("download")
+    await exportMenu.click()
+    await page.getByTestId("export-csv").click()
+    const csvText = await readDownloadText(await csvDl)
+    expect(csvText).toContain("title,slug,status,priority,is_closed")
+    expect(csvText).toContain("Enrollment form")
+
+    // JSON: parses with nodes (>= 5) and a dependency edge
+    const jsonDl = page.waitForEvent("download")
+    await exportMenu.click()
+    await page.getByTestId("export-json").click()
+    const jsonText = await readDownloadText(await jsonDl)
+    const parsed = JSON.parse(jsonText) as {
+      nodes: unknown[]
+      edges: Array<{ type: string }>
+    }
+    expect(parsed.nodes.length).toBeGreaterThanOrEqual(5)
+    expect(parsed.edges.some((edge) => edge.type === "dependency")).toBe(true)
+
+    // Markdown: project title, card titles, and the closed marker
+    const mdDl = page.waitForEvent("download")
+    await exportMenu.click()
+    await page.getByTestId("export-markdown").click()
+    const mdText = await readDownloadText(await mdDl)
+    expect(mdText).toContain("# Graph Demo")
+    expect(mdText).toContain("Redemption flow")
+    expect(mdText).toContain("Legacy rewards v1")
+    expect(mdText).toContain("(closed)")
   })
 })
