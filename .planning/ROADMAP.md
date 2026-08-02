@@ -53,7 +53,18 @@ UI-06, DATA-04, E2E-02
 4. Export produces CSV, JSON, and Markdown files of the board.
 5. E2E journeys for graph, comments/mentions, and export pass.
 
-**Status:** Not started
+**Status:** Planning complete (5 plans)
+
+**Plans:** 5 plans
+
+```
+Plans:
+- [ ] 02-01-PLAN.md — API data layer: graph payload + SSE events + export routes, event bus, broadcast wiring
+- [ ] 02-02-PLAN.md — Frontend foundation: pin @xyflow/react/@dagrejs/dagre, shadcn primitives, edge tokens, view-switcher/export-menu/live-indicator + use-export/use-project-events
+- [ ] 02-03-PLAN.md — Graph view: dagre layout, custom nodes/edges, filter toggles, impact of X, lazy Graph tab
+- [ ] 02-04-PLAN.md — Comments/mentions + SSE live UI: useCardComments must-fix, comment components, new-comments pill, board toolbar wiring
+- [ ] 02-05-PLAN.md — E2E journeys: seeded graph fixture, J1 graph, J2 comments/mentions/SSE, J3 export
+```
 
 ## Phase 3: SaaS Hardening
 
