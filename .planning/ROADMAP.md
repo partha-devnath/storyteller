@@ -26,6 +26,7 @@ AI-01, AI-02, AI-03, AI-04, AI-05, AI-06, AI-07, AI-08, ORG-01, ORG-02, ORG-03, 
 
 ```
 Plans:
+
 - [x] 01-01-PLAN.md — Data model: 13 Drizzle tables + validations + pgvector infra + migration
 - [x] 01-02-PLAN.md — @workspace/ai: LLMProvider (openai/mock/anthropic-stub), prompts, strict Zod output, operations
 - [x] 01-03-PLAN.md — @workspace/vector: embedCard, semanticSearch, reindexCard (pgvector)
@@ -34,6 +35,7 @@ Plans:
 - [x] 01-06-PLAN.md — Frontend core: landing, app shell, project dashboard, chat/generate panel, org members, hooks + store
 - [x] 01-07-PLAN.md — Kanban board + Closed rail + drag-drop, proposal review + diff, card drawer (versions/diff/relations/similar)
 - [x] 01-08-PLAN.md — E2E journeys: signup→org→project→prompt→proposal→approve→board→versions→close→replacement→isolation
+
 ```
 
 ## Phase 2: Graph & Collaboration Depth
@@ -59,11 +61,13 @@ UI-06, DATA-04, E2E-02
 
 ```
 Plans:
+
 - [x] 02-01-PLAN.md — API data layer: graph payload + SSE events + export routes, event bus, broadcast wiring
 - [x] 02-02-PLAN.md — Frontend foundation: pin @xyflow/react/@dagrejs/dagre, shadcn primitives, edge tokens, view-switcher/export-menu/live-indicator + use-export/use-project-events
 - [x] 02-03-PLAN.md — Graph view: dagre layout, custom nodes/edges, filter toggles, impact of X, lazy Graph tab
 - [x] 02-04-PLAN.md — Comments/mentions + SSE live UI: useCardComments must-fix, comment components, new-comments pill, board toolbar wiring
 - [x] 02-05-PLAN.md — E2E journeys: seeded graph fixture, J1 graph, J2 comments/mentions/SSE, J3 export
+
 ```
 
 ## Phase 3: SaaS Hardening
@@ -86,16 +90,27 @@ E2E-03
 
 **Plans:** 8 plans
 
-```
-Plans:
+```Plans:
+**Wave 1**
+
 - [ ] 03-01-PLAN.md — Billing data layer: subscription table, PLANS config, usage counters, env vars, [BLOCKING] migration
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 03-02-PLAN.md — Billing backend: stripe gate, BillingProvider (stripe+mock), billing/webhook routes, 402 limit enforcement
-- [ ] 03-03-PLAN.md — Analytics aggregation + template seeding endpoints
 - [ ] 03-04-PLAN.md — Frontend foundation: shadcn adds, routes, use-billing/analytics/onboarding hooks, shell nav + banner + env indicator
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Analytics aggregation + template seeding endpoints
 - [ ] 03-05-PLAN.md — Billing page + limit-enforcement UI: plan cards, usage meters, downgrade dialog, disabled actions
 - [ ] 03-06-PLAN.md — Onboarding flow + analytics dashboard (custom SVG charts)
-- [ ] 03-07-PLAN.md — E2E journeys: B1 billing page, B2 limit enforcement, B3 downgrade, O1 onboarding, A1 analytics
 - [ ] 03-08-PLAN.md — Deployment polish: DEPLOYMENT.md, VITE_APP_ENV wiring, CI + build verification
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 03-07-PLAN.md — E2E journeys: B1 billing page, B2 limit enforcement, B3 downgrade, O1 onboarding, A1 analytics
+
 ```
 
 **Waves:** 1 {01} → 2 {02, 04} → 3 {03, 05, 06, 08} → 4 {07}
