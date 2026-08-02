@@ -88,12 +88,12 @@ E2E-03
 
 **Status:** In progress — planning complete (8 plans)
 
-**Plans:** 8 plans
+**Plans:** 1/8 plans executed
 
 ```Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Billing data layer: subscription table, PLANS config, usage counters, env vars, [BLOCKING] migration
+- [x] 03-01-PLAN.md — Billing data layer: subscription table, PLANS config, usage counters, env vars, [BLOCKING] migration
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

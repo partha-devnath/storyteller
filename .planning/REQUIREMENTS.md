@@ -63,7 +63,7 @@ Requirements for the Living Requirements Board milestone, derived from the appro
 
 - [ ] **E2E-01**: Phase 1 E2E journeys — signup → personal org → create project → prompt → mock AI generates cards → proposal → approve → board → card detail/versions → close card → replacement card → cross-user isolation
 - [ ] **E2E-02**: Phase 2 E2E journeys — graph renders edges, comments/mentions flow, export produces files
-- [ ] **E2E-03**: Phase 3 E2E journeys — billing page, plan-limit enforcement
+- [x] **E2E-03**: Phase 3 E2E journeys — billing page, plan-limit enforcement
 
 ## Future Requirements
 
@@ -100,44 +100,44 @@ Deferred to later milestones.
 
 ## Traceability
 
-| Requirement | Phase | Status  |
-| ----------- | ----- | ------- |
-| AI-01       | 1     | Pending |
-| AI-02       | 1     | Pending |
-| AI-03       | 1     | Pending |
-| AI-04       | 1     | Pending |
-| AI-05       | 1     | Pending |
-| AI-06       | 1     | Pending |
-| AI-07       | 1     | Pending |
-| AI-08       | 1     | Pending |
-| ORG-01      | 1     | Pending |
-| ORG-02      | 1     | Pending |
-| ORG-03      | 1     | Pending |
-| ORG-04      | 1     | Pending |
-| DATA-01     | 1     | Pending |
-| DATA-02     | 1     | Pending |
-| DATA-03     | 1     | Pending |
-| DATA-04     | 1     | Pending |
-| DATA-05     | 1     | Pending |
-| DATA-06     | 1     | Pending |
-| APPR-01     | 1     | Pending |
-| APPR-02     | 1     | Pending |
-| APPR-03     | 1     | Pending |
-| APPR-04     | 1     | Pending |
-| VEC-01      | 1     | Pending |
-| VEC-02      | 1     | Pending |
-| VEC-03      | 1     | Pending |
-| VEC-04      | 1     | Pending |
-| UI-01       | 1     | Pending |
-| UI-02       | 1     | Pending |
-| UI-03       | 1     | Pending |
-| UI-04       | 1     | Pending |
-| UI-05       | 1     | Pending |
-| UI-06       | 2     | Pending |
-| UI-07       | 1     | Pending |
-| E2E-01      | 1     | Pending |
-| E2E-02      | 2     | Pending |
-| E2E-03      | 3     | Pending |
+| Requirement | Phase | Status   |
+| ----------- | ----- | -------- |
+| AI-01       | 1     | Pending  |
+| AI-02       | 1     | Pending  |
+| AI-03       | 1     | Pending  |
+| AI-04       | 1     | Pending  |
+| AI-05       | 1     | Pending  |
+| AI-06       | 1     | Pending  |
+| AI-07       | 1     | Pending  |
+| AI-08       | 1     | Pending  |
+| ORG-01      | 1     | Pending  |
+| ORG-02      | 1     | Pending  |
+| ORG-03      | 1     | Pending  |
+| ORG-04      | 1     | Pending  |
+| DATA-01     | 1     | Pending  |
+| DATA-02     | 1     | Pending  |
+| DATA-03     | 1     | Pending  |
+| DATA-04     | 1     | Pending  |
+| DATA-05     | 1     | Pending  |
+| DATA-06     | 1     | Pending  |
+| APPR-01     | 1     | Pending  |
+| APPR-02     | 1     | Pending  |
+| APPR-03     | 1     | Pending  |
+| APPR-04     | 1     | Pending  |
+| VEC-01      | 1     | Pending  |
+| VEC-02      | 1     | Pending  |
+| VEC-03      | 1     | Pending  |
+| VEC-04      | 1     | Pending  |
+| UI-01       | 1     | Pending  |
+| UI-02       | 1     | Pending  |
+| UI-03       | 1     | Pending  |
+| UI-04       | 1     | Pending  |
+| UI-05       | 1     | Pending  |
+| UI-06       | 2     | Pending  |
+| UI-07       | 1     | Pending  |
+| E2E-01      | 1     | Pending  |
+| E2E-02      | 2     | Pending  |
+| E2E-03      | 3     | Complete |
 
 **Coverage:**
 
