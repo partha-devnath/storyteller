@@ -17,10 +17,15 @@ function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    )
+  return {
+    queryClient,
+    Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      )
+    },
   }
 }
 
@@ -33,22 +38,33 @@ describe("useGraph", () => {
     mockApiClient.mockResolvedValue(payload)
 
     const { useGraph } = await import("../use-graph")
+    const { queryClient, Wrapper } = createWrapper()
     const { result } = renderHook(() => useGraph("demo"), {
-      wrapper: createWrapper(),
+      wrapper: Wrapper,
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.queryKey).toEqual(["project", "demo", "graph"])
+    const keys = queryClient
+      .getQueryCache()
+      .findAll()
+      .map((query) => query.queryKey)
+    expect(keys).toContainEqual(["project", "demo", "graph"])
     expect(mockApiClient).toHaveBeenCalledWith("/api/projects/demo/graph")
   })
 
   it("is disabled when no project slug is provided", async () => {
     const { useGraph } = await import("../use-graph")
+    const { queryClient, Wrapper } = createWrapper()
     const { result } = renderHook(() => useGraph(undefined), {
-      wrapper: createWrapper(),
+      wrapper: Wrapper,
     })
 
     expect(result.current.fetchStatus).toBe("idle")
+    const keys = queryClient
+      .getQueryCache()
+      .findAll()
+      .map((query) => query.queryKey)
+    expect(keys).toContainEqual(["project", undefined, "graph"])
     expect(mockApiClient).not.toHaveBeenCalled()
   })
 })
