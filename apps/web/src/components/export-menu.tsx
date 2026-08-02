@@ -37,7 +37,21 @@ export function ExportMenu({
   if (disabled) {
     return (
       <Tooltip>
-        <TooltipTrigger render={trigger} />
+        <TooltipTrigger
+          render={
+            <span className="inline-flex" data-testid="export-menu-trigger" />
+          }
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            data-testid="export-menu"
+          >
+            <Download />
+            Export
+          </Button>
+        </TooltipTrigger>
         <TooltipContent>Add cards before exporting</TooltipContent>
       </Tooltip>
     )
