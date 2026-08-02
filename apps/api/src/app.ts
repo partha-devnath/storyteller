@@ -12,6 +12,9 @@ import { projectsRoutes } from "./routes/projects"
 import { aiRoutes } from "./routes/ai"
 import { proposalsRoutes } from "./routes/proposals"
 import { cardsRoutes } from "./routes/cards"
+import { graphRoutes } from "./routes/graph"
+import { eventsRoutes } from "./routes/events"
+import { exportRoutes } from "./routes/export"
 
 type Env = {
   Variables: {
@@ -151,6 +154,9 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
 
 app.route("/api/orgs", orgsRoutes)
 app.route("/api/projects", projectsRoutes)
+app.route("/api/projects", graphRoutes)
+app.route("/api/projects", eventsRoutes)
+app.route("/api/projects", exportRoutes)
 
 app.use(
   "/api/ai/*",
