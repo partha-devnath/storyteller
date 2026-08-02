@@ -88,7 +88,7 @@ E2E-03
 
 **Status:** In progress — planning complete (8 plans)
 
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans complete
 
 ```Plans:
 **Wave 1**
@@ -109,7 +109,7 @@ E2E-03
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 03-07-PLAN.md — E2E journeys: B1 billing page, B2 limit enforcement, B3 downgrade, O1 onboarding, A1 analytics
+- [x] 03-07-PLAN.md — E2E journeys: B1 billing page, B2 limit enforcement, B3 downgrade, O1 onboarding, A1 analytics
 
 ```
 

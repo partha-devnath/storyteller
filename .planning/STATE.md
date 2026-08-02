@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-08-PLAN.md
-last_updated: "2026-08-02T19:49:33.739Z"
+status: verifying
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-08-02T20:35:39.634Z"
 last_activity: 2026-08-02 -- Phase 3 P06 completed
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 21
-  completed_plans: 20
-  percent: 67
+  completed_plans: 21
+  percent: 100
 ---
 
 # STATE.md
@@ -60,7 +60,7 @@ None.
 
 Phase: 3 (SaaS Hardening) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-02 -- Phase 3 P06 completed
 
 ## Performance Metrics
@@ -74,6 +74,7 @@ Last activity: 2026-08-02 -- Phase 3 P06 completed
 | Phase 03-saas-hardening P05 | 12min | 3 tasks  | 18 files |
 | Phase 03-saas-hardening P06 | 12min | 2 tasks  | 8 files  |
 | Phase 03-saas-hardening P08 | 13min | 3 tasks  | 5 files  |
+| Phase 03-saas-hardening P07 | 34min | 3 tasks  | 4 files  |
 
 ## Decisions
 
@@ -103,10 +104,11 @@ Last activity: 2026-08-02 -- Phase 3 P06 completed
 - [Phase ?]: VITE_APP_ENV baked at build time (default production) — runner serves static dist, runtime env too late; staging builds pass VITE_APP_ENV=staging to render the env badge
 - [Phase 03-08]: CI e2e job provisions gitignored .env files from .env.example — API needs EMAIL_PROVIDER=mailpit (mailpit-API journeys), web needs VITE_API_URL
 - [Phase 03-08]: API Dockerfile copies apps/e2e/package.json so workspace set matches bun.lock — keeps --frozen-lockfile reproducible builds (pre-existing frozen-install failure fixed)
+- [Phase 03-saas-hardening]: Phase 3 E2E (03-07): deterministic fixture orgs via fixed UUIDs (FREE_ORG_ID/PRO_ORG_ID) exported from seed.ts; O1 creates an org via POST /api/orgs mid-flow because the plan's 'NO orgs' seed and its blank-template criterion are mutually exclusive (POST /api/projects 403s without org membership); activity cards live in a second E2E_ORG_ID project so the graph fixture's exact 7-node count stays green; B2 drives org selection via the org switcher since /orgs/:orgId/projects does not exist as a route. — Deterministic E2E that keeps phase 1/2 journeys green and honors the plan's must-have truths (fresh user = zero projects; blank creates a board; over-limit org proven via banner + meters + 402).
 
 ## Last Session
 
-Last session: 2026-08-02T19:49:33.727Z
-Last Date: 2026-08-02T19:49:33.727Z
-Stopped At: Completed 03-08-PLAN.md
+Last session: 2026-08-02T20:35:39.621Z
+Last Date: 2026-08-02T20:35:39.621Z
+Stopped At: Completed 03-07-PLAN.md
 Resume File: None
