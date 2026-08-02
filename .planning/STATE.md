@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-08-02T19:08:35.735Z"
+last_updated: "2026-08-02T19:28:01.072Z"
 last_activity: 2026-08-02 -- Phase 3 P03 completed
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 21
-  completed_plans: 17
-  percent: 81
+  completed_plans: 18
+  percent: 67
 ---
 
 # STATE.md
@@ -56,7 +56,7 @@ None.
 ## Current Position
 
 Phase: 3 (SaaS Hardening) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Status: Ready to execute
 Last activity: 2026-08-02 -- Phase 3 P03 completed
 
@@ -68,6 +68,7 @@ Last activity: 2026-08-02 -- Phase 3 P03 completed
 | Phase 03-saas-hardening P02 | 9min  | 3 tasks  | 21 files |
 | Phase 03-saas-hardening P03 | 7min  | 3 tasks  | 8 files  |
 | Phase 03-saas-hardening P04 | 14min | 3 tasks  | 27 files |
+| Phase 03-saas-hardening P05 | 12min | 3 tasks  | 18 files |
 
 ## Decisions
 
@@ -86,10 +87,7 @@ Last activity: 2026-08-02 -- Phase 3 P03 completed
 - [Phase 03-04]: useUsage exposes isAtLimit/pct as the single derived source for meters/banner/disabled actions (03-05 consumes it directly)
 - [Phase 03-04]: First-run detection fans out useQueries over orgs reusing the ["projects", orgId] cache — no duplicate network fetches
 - [Phase 03-04]: Onboarding skip is session-scoped (sessionStorage), matching UI-SPEC V3 "Skip dismisses for the session"
-
-## Session
-
-- Last session: 2026-08-02T19:08:35Z
-- Last Date: 2026-08-02T19:08:35Z
-- Stopped At: Completed 03-03-PLAN.md
-- Resume File: None
+- [Phase 03-saas-hardening]: Billing page body lives in components/billing.tsx (Billing export) per the component inventory; routes/billing.tsx keeps the BillingPage export rendering it
+- [Phase 03-saas-hardening]: handleLimitError added to use-billing.ts during Task 2 (plan placed it in Task 3) so the Task 2 page honors its own '402 must not show generic message' directive commit-by-commit
+- [Phase 03-saas-hardening]: Meter data-pct carries the raw non-rounded percentage (99.8 at 499/500); fill boundaries land exactly on 80 and 100
+- [Phase 03-saas-hardening]: Toasts use a local zustand store (toast-store.ts) - repo had no toast wrapper; module-level toast singleton lets plain functions (handleLimitError) fire toasts without a hook; no new deps per T-03-SC
