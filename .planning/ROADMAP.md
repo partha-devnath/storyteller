@@ -82,7 +82,23 @@ E2E-03
 3. Onboarding and analytics dashboards are available.
 4. Staging/production deployment pipeline is documented and verified.
 
-**Status:** Not started
+**Status:** In progress — planning complete (8 plans)
+
+**Plans:** 8 plans
+
+```
+Plans:
+- [ ] 03-01-PLAN.md — Billing data layer: subscription table, PLANS config, usage counters, env vars, [BLOCKING] migration
+- [ ] 03-02-PLAN.md — Billing backend: stripe gate, BillingProvider (stripe+mock), billing/webhook routes, 402 limit enforcement
+- [ ] 03-03-PLAN.md — Analytics aggregation + template seeding endpoints
+- [ ] 03-04-PLAN.md — Frontend foundation: shadcn adds, routes, use-billing/analytics/onboarding hooks, shell nav + banner + env indicator
+- [ ] 03-05-PLAN.md — Billing page + limit-enforcement UI: plan cards, usage meters, downgrade dialog, disabled actions
+- [ ] 03-06-PLAN.md — Onboarding flow + analytics dashboard (custom SVG charts)
+- [ ] 03-07-PLAN.md — E2E journeys: B1 billing page, B2 limit enforcement, B3 downgrade, O1 onboarding, A1 analytics
+- [ ] 03-08-PLAN.md — Deployment polish: DEPLOYMENT.md, VITE_APP_ENV wiring, CI + build verification
+```
+
+**Waves:** 1 {01} → 2 {02, 04} → 3 {03, 05, 06, 08} → 4 {07}
 
 ---
 
