@@ -21,6 +21,7 @@ export type ProjectDetail = {
     name: string
     slug: string
     description: string | null
+    orgId: string
     columns: { key: string; title: string }[]
   }
   epics: { id: string; name: string; order: number }[]

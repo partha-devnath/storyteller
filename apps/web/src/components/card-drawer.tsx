@@ -1,13 +1,17 @@
-import { useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import ReactMarkdown from "react-markdown"
 import {
   useCardDetail,
   useCardVersions,
   useCardSimilar,
-  useAddComment,
+  useCardComments,
   useCloseCard,
+  type CommentItem,
 } from "@/hooks/use-cards"
+import { useOrgMembers } from "@/hooks/use-orgs"
 import { DiffPanel } from "./diff-panel"
+import { CommentList } from "./comment-list"
+import { CommentComposer } from "./comment-composer"
 import { Button } from "@workspace/ui/components/button"
 
 type Tab = "details" | "history" | "relations" | "similar"
@@ -17,11 +21,15 @@ export function CardDrawer({
   open,
   onClose,
   projectSlug,
+  orgId,
+  liveComment,
 }: {
   cardId: string
   open: boolean
   onClose: () => void
   projectSlug: string
+  orgId?: string
+  liveComment?: { cardId: string; comment: CommentItem } | null
 }) {
   const { data: detail } = useCardDetail(open ? cardId : undefined, projectSlug)
   const { data: versions } = useCardVersions(
@@ -32,16 +40,49 @@ export function CardDrawer({
     open ? cardId : undefined,
     projectSlug
   )
-  const addComment = useAddComment(open ? cardId : undefined, projectSlug)
+  const { data: comments } = useCardComments(
+    open ? cardId : undefined,
+    projectSlug
+  )
+  const { data: orgMembers } = useOrgMembers(orgId ?? "", {
+    enabled: Boolean(orgId),
+  })
   const closeCard = useCloseCard(projectSlug)
   const [tab, setTab] = useState<Tab>("details")
-  const [comment, setComment] = useState("")
   const [copied, setCopied] = useState(false)
+  const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null)
+  const [newCommentCount, setNewCommentCount] = useState(0)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const lastLiveCommentId = useRef<string | null>(null)
+
+  const memberNameById = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const m of orgMembers ?? []) map[m.userId] = m.name
+    return map
+  }, [orgMembers])
+
+  // Count remote comment.created events addressed to the open card.
+  // setState runs inside a deferred callback (setTimeout) so the update is
+  // not synchronous with the effect body (react-hooks/set-state-in-effect).
+  useEffect(() => {
+    if (!liveComment || liveComment.cardId !== cardId) return
+    if (lastLiveCommentId.current === liveComment.comment.id) return
+    lastLiveCommentId.current = liveComment.comment.id
+    const id = window.setTimeout(() => {
+      setNewCommentCount((n) => n + 1)
+    }, 0)
+    return () => window.clearTimeout(id)
+  }, [liveComment, cardId])
 
   if (!open || !detail) return null
 
   const card = detail.card
   const slug = card.slug
+
+  function handleJump() {
+    listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    setNewCommentCount(0)
+  }
 
   async function copyLink() {
     const url = `/project/${projectSlug}/card/${slug}`
@@ -52,12 +93,6 @@ export function CardDrawer({
     } catch {
       setCopied(false)
     }
-  }
-
-  async function submitComment() {
-    if (!comment.trim()) return
-    await addComment.mutateAsync({ body: comment })
-    setComment("")
   }
 
   const tabs: { key: Tab; label: string }[] = [
@@ -179,33 +214,42 @@ export function CardDrawer({
                 </div>
               )}
               <div>
-                <p className="mb-1 text-sm font-semibold">Comments</p>
-                <div className="space-y-2">
-                  {detail.comments.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      No comments.
-                    </p>
+                <div className="mb-1 flex items-center gap-2">
+                  <p className="text-sm font-semibold">Comments</p>
+                  {newCommentCount > 0 && (
+                    <span
+                      data-testid="new-comments-pill"
+                      className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary"
+                    >
+                      {newCommentCount === 1
+                        ? "1 new comment"
+                        : `${newCommentCount} new comments`}
+                    </span>
                   )}
-                  {detail.comments.map((cm) => (
-                    <div key={cm.id} className="rounded-md border p-2 text-sm">
-                      <p className="text-xs text-muted-foreground">
-                        {cm.userName}
-                      </p>
-                      <p>{cm.body}</p>
-                    </div>
-                  ))}
+                  {newCommentCount > 0 && (
+                    <Button variant="ghost" size="xs" onClick={handleJump}>
+                      Jump
+                    </Button>
+                  )}
+                </div>
+                <div ref={listRef}>
+                  <CommentList
+                    comments={comments ?? []}
+                    memberNameById={memberNameById}
+                    onReply={(c) => setReplyTarget(c)}
+                  />
                 </div>
                 {!card.isClosed && (
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm"
-                      placeholder="Add a comment..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
+                  <div className="mt-4">
+                    <CommentComposer
+                      cardId={cardId}
+                      projectSlug={projectSlug}
+                      orgId={orgId ?? ""}
+                      parentId={replyTarget?.id}
+                      replyingToName={replyTarget?.userName}
+                      onCancelReply={() => setReplyTarget(null)}
+                      onPosted={() => setReplyTarget(null)}
                     />
-                    <Button size="sm" onClick={submitComment}>
-                      Post
-                    </Button>
                   </div>
                 )}
               </div>

@@ -52,8 +52,13 @@ vi.mock("@/hooks/use-cards", () => ({
   useCardDetail: () => ({ data: mockDetail }),
   useCardVersions: () => ({ data: mockVersions }),
   useCardSimilar: () => ({ data: [] }),
-  useAddComment: () => ({ mutateAsync: vi.fn() }),
+  useCardComments: () => ({ data: [] }),
+  useAddComment: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCloseCard: () => ({ mutate: vi.fn(), isPending: false }),
+}))
+
+vi.mock("@/hooks/use-orgs", () => ({
+  useOrgMembers: () => ({ data: [] }),
 }))
 
 const writeText = vi.fn()

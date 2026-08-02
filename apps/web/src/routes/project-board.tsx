@@ -1,13 +1,17 @@
 import { lazy, Suspense, useState } from "react"
 import { useParams, useSearchParams } from "react-router"
 import { useProject } from "@/hooks/use-projects"
-import { useCards, useMoveCard } from "@/hooks/use-cards"
+import { useCards, useMoveCard, type CommentItem } from "@/hooks/use-cards"
+import { useProjectEvents } from "@/hooks/use-project-events"
+import { useExport, type ExportFormat } from "@/hooks/use-export"
 import { useBoardStore } from "@/stores/board-store"
 import { KanbanBoard } from "@/components/kanban"
 import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
 import { ProposalReview } from "@/components/proposal-review"
 import { ViewSwitcher } from "@/components/view-switcher"
+import { LiveIndicator } from "@/components/live-indicator"
+import { ExportMenu } from "@/components/export-menu"
 
 const GraphView = lazy(() =>
   import("@/components/graph-view").then((mod) => ({
@@ -27,6 +31,24 @@ export function ProjectBoardPage() {
     ? projectDetail.project.columns
     : defaultColumns
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [liveComment, setLiveComment] = useState<{
+    cardId: string
+    comment: CommentItem
+  } | null>(null)
+  const [exportError, setExportError] = useState(false)
+  const events = useProjectEvents(slug, {
+    onCommentCreated: (payload) => setLiveComment(payload),
+  })
+  const { exportBoard } = useExport(slug ?? "")
+
+  async function handleExport(format: ExportFormat) {
+    setExportError(false)
+    try {
+      await exportBoard(format)
+    } catch {
+      setExportError(true)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -34,9 +56,12 @@ export function ProjectBoardPage() {
         <h1 className="text-2xl font-semibold">
           {projectDetail?.project.name}
         </h1>
-        <span className="text-xs text-muted-foreground">
-          {cards?.length ?? 0} cards
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-xs text-muted-foreground">
+            {cards?.length ?? 0} cards
+          </span>
+          <LiveIndicator status={events.status} onRetry={events.reconnect} />
+        </div>
       </div>
 
       <ViewSwitcher />
@@ -61,6 +86,17 @@ export function ProjectBoardPage() {
             </Suspense>
           ) : (
             <>
+              <div className="mb-4 flex items-center justify-end gap-2">
+                {exportError && (
+                  <p className="text-xs text-destructive">
+                    Export failed. Please try again.
+                  </p>
+                )}
+                <ExportMenu
+                  disabled={!cards || cards.length === 0}
+                  onExport={handleExport}
+                />
+              </div>
               {isLoading || !cards ? (
                 <p className="text-sm text-muted-foreground">
                   Loading board...
@@ -94,6 +130,8 @@ export function ProjectBoardPage() {
           open={Boolean(activeCardId)}
           onClose={() => setActiveCardId(null)}
           projectSlug={slug ?? ""}
+          orgId={projectDetail?.project.orgId}
+          liveComment={liveComment}
         />
       )}
     </div>
