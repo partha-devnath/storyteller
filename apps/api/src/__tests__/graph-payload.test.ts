@@ -1,12 +1,21 @@
 import { describe, it, expect } from "bun:test"
 import { buildGraphPayload } from "../services/graph-payload"
 
-const epics = [
-  { id: "epic-1", name: "Epic One", parentEpicId: null },
-  { id: "epic-2", name: "Epic Two", parentEpicId: "epic-1" },
-]
+const epics: Array<{ id: string; name: string; parentEpicId: string | null }> =
+  [
+    { id: "epic-1", name: "Epic One", parentEpicId: null },
+    { id: "epic-2", name: "Epic Two", parentEpicId: "epic-1" },
+  ]
 
-const cards = [
+const cards: Array<{
+  id: string
+  title: string
+  slug: string
+  status: string
+  priority: "low" | "medium" | "high" | "critical"
+  isClosed: boolean
+  epicId: string | null
+}> = [
   {
     id: "card-1",
     title: "Card One",
@@ -36,7 +45,15 @@ const cards = [
   },
 ]
 
-const relations = [
+const relations: Array<{
+  id: string
+  projectId: string
+  sourceCardId: string
+  targetCardId: string
+  type: "dependency" | "evolution"
+  createdAt: Date
+  updatedAt: Date
+}> = [
   {
     id: "rel-1",
     projectId: "proj-x",
@@ -55,7 +72,7 @@ const relations = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-] as const
+]
 
 describe("buildGraphPayload", () => {
   it("maps epics and cards to nodes with correct kinds and counts", () => {
