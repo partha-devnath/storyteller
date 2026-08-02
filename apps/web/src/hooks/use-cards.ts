@@ -58,6 +58,16 @@ export type CardDetail = {
   }[]
 }
 
+export type CommentItem = {
+  id: string
+  body: string
+  parentId: string | null
+  mentions: string[]
+  userId: string
+  userName: string
+  createdAt: string
+}
+
 export type CardVersion = {
   id: string
   versionNo: number
@@ -117,6 +127,22 @@ export function useCardVersions(
     queryFn: async () => {
       const res = await apiClient<Envelope<CardVersion[]>>(
         `/api/cards/${cardId}/versions?project=${encodeURIComponent(projectSlug ?? "")}`
+      )
+      return res.data
+    },
+    enabled: Boolean(cardId),
+  })
+}
+
+export function useCardComments(
+  cardId: string | undefined,
+  projectSlug?: string
+) {
+  return useQuery({
+    queryKey: ["card", cardId, "comments"],
+    queryFn: async () => {
+      const res = await apiClient<Envelope<CommentItem[]>>(
+        `/api/cards/${cardId}/comments?project=${encodeURIComponent(projectSlug ?? "")}`
       )
       return res.data
     },
@@ -197,7 +223,11 @@ export function useAddComment(
 ) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { body: string; parentId?: string }) => {
+    mutationFn: async (input: {
+      body: string
+      parentId?: string
+      mentions?: string[]
+    }) => {
       const res = await apiClient<Envelope<{ id: string }>>(
         `/api/cards/${cardId}/comments?project=${encodeURIComponent(projectSlug ?? "")}`,
         { method: "POST", body: input }
