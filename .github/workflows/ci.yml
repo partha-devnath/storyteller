@@ -82,3 +82,61 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
       - run: bun install --frozen-lockfile
       - run: bun run test
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.5"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - name: Start E2E infra (postgres + mailpit)
+        run: docker compose up -d postgres mailpit
+      - name: Wait for postgres
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U template >/dev/null 2>&1; then
+              echo "postgres ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "postgres not ready"
+          exit 1
+      - name: Wait for mailpit
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8025/api/v1 >/dev/null 2>&1; then
+              echo "mailpit ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "mailpit not ready"
+          exit 1
+      - name: Prepare app env files (EMAIL_PROVIDER=mailpit, VITE_API_URL)
+        run: |
+          cp apps/api/.env.example apps/api/.env
+          cp apps/web/.env.example apps/web/.env
+      - name: Install Playwright browsers
+        working-directory: apps/e2e
+        run: bunx playwright install --with-deps chromium
+      - name: Run E2E suite
+        env:
+          DATABASE_URL: postgres://template:template@localhost:5432/template
+        run: bun run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/e2e/playwright-report/
+          retention-days: 7

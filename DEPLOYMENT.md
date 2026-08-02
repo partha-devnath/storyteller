@@ -141,12 +141,15 @@ Commits additionally pass commitlint (Conventional Commits) via the husky hook.
 
 ## Verified Commands
 
-Verified on **2026-08-02**:
+Full repo suite verified on **2026-08-02**:
 
-| Command                    | Result                                              |
-| -------------------------- | --------------------------------------------------- |
-| `docker compose config -q` | exit 0 — compose file valid                         |
-| `bun --filter web build`   | success — Vite production build, `✓ built in 1.38s` |
-| `bun run build` (turbo)    | 2/2 tasks successful, 14.1s                         |
+| Command                        | Result                                                   |
+| ------------------------------ | -------------------------------------------------------- |
+| `docker compose config -q`     | exit 0 — compose file valid                              |
+| `bun --filter web build`       | success — Vite production build, `✓ built in 1.38s`      |
+| `bun run build` (turbo)        | 2/2 tasks successful (api + web)                         |
+| `bun run lint` (turbo)         | 12/12 tasks pass                                         |
+| `bun run typecheck` (turbo)    | 12/12 tasks pass                                         |
+| `docker compose build api web` | both images built — `storyteller-web`, `storyteller-api` |
 
-Full repo suite (`bun run lint`, `bun run typecheck`, `docker compose build api web`) verified in plan 03-08 Task 3 — see the updated table below.
+Note: the API Dockerfile base stage copies `apps/e2e/package.json` alongside the api/web manifests so the workspace set matches `bun.lock` — required for `bun install --frozen-lockfile` to pass inside the container build.
