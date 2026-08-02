@@ -205,6 +205,10 @@ app.post("/api/files/upload", rateLimiter(10, 60_000), async (c) => {
 })
 
 app.get("/api/files/raw/:id", async (c) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers })
+  if (!session) {
+    return c.json({ success: false, error: "Unauthorized" }, 401)
+  }
   const id = c.req.param("id")
   const [record] = await db
     .select()
@@ -214,10 +218,17 @@ app.get("/api/files/raw/:id", async (c) => {
   if (!record) {
     return c.json({ success: false, error: "File not found" }, 404)
   }
+  if (record.userId !== session.user.id) {
+    return c.json({ success: false, error: "Forbidden" }, 403)
+  }
   return storage.serve(record.storedName)
 })
 
 app.get("/api/files/:id", async (c) => {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers })
+  if (!session) {
+    return c.json({ success: false, error: "Unauthorized" }, 401)
+  }
   const id = c.req.param("id")
   const [record] = await db
     .select()
@@ -226,6 +237,9 @@ app.get("/api/files/:id", async (c) => {
     .limit(1)
   if (!record) {
     return c.json({ success: false, error: "File not found" }, 404)
+  }
+  if (record.userId !== session.user.id) {
+    return c.json({ success: false, error: "Forbidden" }, 403)
   }
   return c.json({ success: true, data: record })
 })
