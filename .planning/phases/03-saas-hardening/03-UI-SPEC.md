@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: saas-hardening
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "shadcn v4 + Base UI — custom oklch tokens in packages/ui/src/styles/globals.css"
 created: 2026-08-02
+reviewed_at: 2026-08-02
 ---
 
 # Phase 3 — SaaS Hardening: UI Design Contract
