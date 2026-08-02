@@ -25,6 +25,10 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
   CHAT_MODEL: z.string().default("gpt-4o-mini"),
+  BILLING_PROVIDER: z.enum(["stripe", "mock"]).default("mock"),
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_PRO: z.string().optional(),
 })
 
 export function validateEnv() {
