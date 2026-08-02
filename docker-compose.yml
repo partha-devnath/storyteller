@@ -62,10 +62,15 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      # Staging deploys build with VITE_APP_ENV=staging to render the env badge;
+      # production (default) bakes "production" and the badge stays hidden.
+      args:
+        VITE_APP_ENV: ${VITE_APP_ENV:-production}
     ports:
       - "5173:5173"
     environment:
       VITE_API_URL: http://localhost:3001
+      VITE_APP_ENV: ${VITE_APP_ENV:-production}
     depends_on:
       api:
         condition: service_healthy

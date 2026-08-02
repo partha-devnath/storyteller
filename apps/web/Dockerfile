@@ -19,6 +19,10 @@ COPY . .
 RUN bun install
 ARG VITE_API_URL=http://localhost:3001
 ENV VITE_API_URL=$VITE_API_URL
+# Build-time env flag for the EnvIndicator (staging badge). The runner serves the
+# static dist — runtime env is too late, so VITE_APP_ENV must be baked here.
+ARG VITE_APP_ENV=production
+ENV VITE_APP_ENV=$VITE_APP_ENV
 RUN bun run --cwd apps/web build:docker
 
 # --- Stage 3: Runner ---
