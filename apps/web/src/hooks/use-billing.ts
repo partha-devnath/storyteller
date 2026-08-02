@@ -1,5 +1,10 @@
 import { useMemo } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query"
 import {
   type BillingState,
   type LimitMetric,
@@ -7,6 +12,7 @@ import {
   type PlanLimits,
 } from "@workspace/schemas"
 import { apiClient } from "@/lib/api-client"
+import { toast } from "@/stores/toast-store"
 
 type Envelope<T> = { success: boolean; data: T }
 
@@ -60,6 +66,24 @@ export type UsageView = {
   plan: PlanId | null
   isAtLimit: (metric: LimitMetric) => boolean
   pct: (metric: LimitMetric) => number
+}
+
+/**
+ * Shared 402 handler for mutation error paths (UI-SPEC V4c). Routes a
+ * limit-blocked mutation to the limit surface: invalidates the billing query
+ * so the shell's limit-banner reflects server truth, and fires the exact
+ * destructive toast copy. Returns true when it handled a 402 — callers then
+ * skip their generic error toast.
+ */
+export function handleLimitError(
+  error: unknown,
+  orgId: string,
+  queryClient: QueryClient
+): boolean {
+  if ((error as { status?: number } | null)?.status !== 402) return false
+  queryClient.invalidateQueries({ queryKey: ["billing", orgId] })
+  toast.error("Limit reached — upgrade to Pro to continue.")
+  return true
 }
 
 const EMPTY_LIMITS: PlanLimits = {
