@@ -23,6 +23,7 @@ import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
+import { publish } from "../services/event-bus"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -97,6 +98,11 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
     })
   }
 
+  publish(projectId, {
+    type: "card.created",
+    card: { id: cardId, title: body.title, slug, status: body.status },
+  })
+
   return c.json({ success: true, data: { id: cardId, slug } }, 201)
 })
 
@@ -147,6 +153,17 @@ cardsRoutes.patch(
       createdBy: session.user.id,
     })
 
+    publish(projectId, {
+      type: "card.updated",
+      card: {
+        id: cardId,
+        title: updates.title ?? target.title,
+        slug: target.slug,
+        status: (updates.status as string) ?? target.status,
+        isClosed: target.isClosed,
+      },
+    })
+
     return c.json({ success: true, data: { id: cardId } })
   }
 )
@@ -190,6 +207,17 @@ cardsRoutes.post(
       customFields: target.customFields,
       changeType: "close",
       createdBy: session.user.id,
+    })
+
+    publish(projectId, {
+      type: "card.updated",
+      card: {
+        id: cardId,
+        title: target.title,
+        slug: target.slug,
+        status: target.status,
+        isClosed: true,
+      },
     })
 
     return c.json({ success: true, data: { id: cardId, closed: true } })
@@ -306,6 +334,21 @@ cardsRoutes.post(
       parentId: body.parentId ?? null,
       mentions: body.mentions ?? [],
     })
+
+    publish(projectId, {
+      type: "comment.created",
+      cardId,
+      comment: {
+        id,
+        body: body.body,
+        parentId: body.parentId ?? null,
+        mentions: body.mentions ?? [],
+        userId: session.user.id,
+        userName: session.user.name,
+        createdAt: new Date().toISOString(),
+      },
+    })
+
     return c.json({ success: true, data: { id } }, 201)
   }
 )

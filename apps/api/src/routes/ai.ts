@@ -22,6 +22,7 @@ import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
+import { publish } from "../services/event-bus"
 import { generateId } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -147,6 +148,11 @@ aiRoutes.post("/generate", async (c) => {
     changes,
   })
 
+  publish(c.var.projectId!, {
+    type: "proposal.ready",
+    proposalId: created.proposalId,
+  })
+
   return c.json(
     { success: true, data: { kind: "board", proposal: created } },
     201
@@ -216,6 +222,11 @@ aiRoutes.post("/process", async (c) => {
     changes,
   })
 
+  publish(c.var.projectId!, {
+    type: "proposal.ready",
+    proposalId: created.proposalId,
+  })
+
   return c.json({ success: true, data: { proposal: created } }, 201)
 })
 
@@ -265,6 +276,10 @@ aiRoutes.post("/clarify", async (c) => {
     promptText: body.prompt,
     aiResponse: JSON.stringify(result),
     changes,
+  })
+  publish(c.var.projectId!, {
+    type: "proposal.ready",
+    proposalId: created.proposalId,
   })
   return c.json(
     { success: true, data: { kind: "board", proposal: created } },

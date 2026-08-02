@@ -13,6 +13,7 @@ import { reindexCard } from "@workspace/vector"
 import { aiProvider } from "@workspace/ai"
 import { createLogger } from "@workspace/logger"
 import { httpError } from "../middleware/org-scope"
+import { publish } from "./event-bus"
 import { generateId, slugify } from "../utils"
 import type { ProposalChangeRelation } from "@workspace/schemas"
 
@@ -133,7 +134,7 @@ export async function applyProposal({
         await applyUpdate(tx, proposalRow.projectId, change, approverId)
         applied += 1
       } else if (change.changeType === "close") {
-        await applyClose(tx, change, approverId)
+        await applyClose(tx, proposalRow.projectId, change, approverId)
         applied += 1
       }
     }
@@ -192,6 +193,10 @@ async function applyCreate(
   await insertRelations(tx, projectId, change.relationSummary)
   await insertAttachments(tx, cardId, approverId, change.newData)
   await reindexSafe(cardId, versionId)
+  publish(projectId, {
+    type: "card.created",
+    card: { id: cardId, title: f.title, slug, status: f.status },
+  })
   return 1
 }
 
@@ -272,10 +277,21 @@ async function applyUpdate(
   })
   await insertRelations(tx, projectId, change.relationSummary)
   await reindexSafe(targetCardId, versionId)
+  publish(projectId, {
+    type: "card.updated",
+    card: {
+      id: targetCardId,
+      title: updates.title ?? target.title,
+      slug: target.slug,
+      status: (updates.status as string) ?? target.status,
+      isClosed: target.isClosed,
+    },
+  })
 }
 
 async function applyClose(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  projectId: string,
   change: ChangeRow,
   approverId: string
 ): Promise<void> {
@@ -323,6 +339,16 @@ async function applyClose(
     sourceProposalChangeId: change.id,
   })
   await reindexSafe(targetCardId, versionId)
+  publish(projectId, {
+    type: "card.updated",
+    card: {
+      id: targetCardId,
+      title: target.title,
+      slug: target.slug,
+      status: target.status,
+      isClosed: true,
+    },
+  })
 }
 
 async function insertRelations(
