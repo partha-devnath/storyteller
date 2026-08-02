@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-06-PLAN.md
-last_updated: "2026-08-02T19:40:21.962Z"
+stopped_at: Completed 03-08-PLAN.md
+last_updated: "2026-08-02T19:49:33.739Z"
 last_activity: 2026-08-02 -- Phase 3 P06 completed
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 21
-  completed_plans: 19
+  completed_plans: 20
   percent: 67
 ---
 
@@ -59,7 +59,7 @@ None.
 ## Current Position
 
 Phase: 3 (SaaS Hardening) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
 Last activity: 2026-08-02 -- Phase 3 P06 completed
 
@@ -73,6 +73,7 @@ Last activity: 2026-08-02 -- Phase 3 P06 completed
 | Phase 03-saas-hardening P04 | 14min | 3 tasks  | 27 files |
 | Phase 03-saas-hardening P05 | 12min | 3 tasks  | 18 files |
 | Phase 03-saas-hardening P06 | 12min | 2 tasks  | 8 files  |
+| Phase 03-saas-hardening P08 | 13min | 3 tasks  | 5 files  |
 
 ## Decisions
 
@@ -99,10 +100,13 @@ Last activity: 2026-08-02 -- Phase 3 P06 completed
 - [Phase 03-saas-hardening]: Template card testids live on wrapper divs in onboarding.tsx ("data-testid prop passed via parent wrapper") — TemplateCard stays generic, the route owns the O1 anchors
 - [Phase 03-saas-hardening]: Welcome heading falls back to "Welcome to {orgName}" when the user has orgs (zero-project first-run state), else "Welcome to Storyteller"
 - [Phase 03-saas-hardening]: Chart bar metric derived from the svg testid (analytics-chart-{metric} → analytics-bar-{metric}-{index}) — one prop drives both anchor namespaces
+- [Phase ?]: VITE_APP_ENV baked at build time (default production) — runner serves static dist, runtime env too late; staging builds pass VITE_APP_ENV=staging to render the env badge
+- [Phase 03-08]: CI e2e job provisions gitignored .env files from .env.example — API needs EMAIL_PROVIDER=mailpit (mailpit-API journeys), web needs VITE_API_URL
+- [Phase 03-08]: API Dockerfile copies apps/e2e/package.json so workspace set matches bun.lock — keeps --frozen-lockfile reproducible builds (pre-existing frozen-install failure fixed)
 
 ## Last Session
 
-Last session: 2026-08-02T19:40:21.949Z
-Last Date: 2026-08-02T19:40:21.949Z
-Stopped At: Completed 03-06-PLAN.md
+Last session: 2026-08-02T19:49:33.727Z
+Last Date: 2026-08-02T19:49:33.727Z
+Stopped At: Completed 03-08-PLAN.md
 Resume File: None

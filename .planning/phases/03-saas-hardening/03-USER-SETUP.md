@@ -33,6 +33,25 @@ curl -si "http://localhost:3001/api/stripe/webhook" -X POST \
   -H "content-type: application/json" -d '{}'   # → 400 (no signature)
 ```
 
+## AI (staging/production)
+
+Required when `AI_PROVIDER` is set to a real provider (staging/production). Dev/E2E use `AI_PROVIDER=mock` (default).
+
+| Variable            | Source                | Required                          |
+| ------------------- | --------------------- | --------------------------------- |
+| `AI_PROVIDER`       | —                     | `openai` \| `anthropic` \| `mock` |
+| `OPENAI_API_KEY`    | platform.openai.com   | Yes when `AI_PROVIDER=openai`     |
+| `ANTHROPIC_API_KEY` | console.anthropic.com | Yes when `AI_PROVIDER=anthropic`  |
+
+## Deployment env (03-08)
+
+| Variable           | Source                                                   | Required                                                            |
+| ------------------ | -------------------------------------------------------- | ------------------------------------------------------------------- |
+| `VITE_APP_ENV`     | Set per environment at build time (web Docker build arg) | `staging` to render the env badge; `production` (default) for prod  |
+| `BILLING_PROVIDER` | —                                                        | **Production must set `stripe` explicitly** — mock is dev/test only |
+
+The full environment variable table for all environments lives in [DEPLOYMENT.md](../../../DEPLOYMENT.md) (repo root). No keys are committed.
+
 ## Notes
 
 - Mock mode (`BILLING_PROVIDER=mock`, default) needs no Stripe account — checkout returns `http://localhost:5173/mock-checkout?orgId=...&tier=pro`, portal returns `mock-portal` URLs.
