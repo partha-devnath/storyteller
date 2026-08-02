@@ -88,7 +88,7 @@ E2E-03
 
 **Status:** In progress — planning complete (8 plans)
 
-**Plans:** 1/8 plans executed
+**Plans:** 2/8 plans executed
 
 ```Plans:
 **Wave 1**
@@ -97,7 +97,7 @@ E2E-03
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-02-PLAN.md — Billing backend: stripe gate, BillingProvider (stripe+mock), billing/webhook routes, 402 limit enforcement
+- [x] 03-02-PLAN.md — Billing backend: stripe gate, BillingProvider (stripe+mock), billing/webhook routes, 402 limit enforcement
 - [ ] 03-04-PLAN.md — Frontend foundation: shadcn adds, routes, use-billing/analytics/onboarding hooks, shell nav + banner + env indicator
 
 **Wave 3** *(blocked on Wave 2 completion)*
