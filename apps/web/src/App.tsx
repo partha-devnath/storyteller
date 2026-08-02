@@ -11,6 +11,9 @@ import { ProjectChatPage } from "@/routes/project-chat"
 import { OrgMembersPage } from "@/routes/org-members"
 import { ProjectBoardPage } from "@/routes/project-board"
 import { CardDetailPage } from "@/routes/card-detail"
+import { OnboardingPage } from "@/routes/onboarding"
+import { BillingPage } from "@/routes/billing"
+import { AnalyticsPage } from "@/routes/analytics"
 import { ProtectedRoute, PublicRoute } from "@/components/protected-route"
 import { AppShell } from "@/components/app-shell"
 
@@ -38,6 +41,9 @@ export function App() {
             element={<CardDetailPage />}
           />
           <Route path="/orgs/:orgId/members" element={<OrgMembersPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/orgs/:orgId/billing" element={<BillingPage />} />
+          <Route path="/orgs/:orgId/analytics" element={<AnalyticsPage />} />
         </Route>
       </Route>
 
