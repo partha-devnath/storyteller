@@ -3,13 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-08-02T19:28:01.072Z"
-last_activity: 2026-08-02 -- Phase 3 P03 completed
+stopped_at: Completed 03-06-PLAN.md
+last_updated: "2026-08-02T19:40:21.962Z"
+last_activity: 2026-08-02 -- Phase 3 P06 completed
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 21
-  completed_plans: 18
+  completed_plans: 19
   percent: 67
 ---
 
@@ -29,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-08-02)
 - Milestone v2.0 (Living Requirements Board): Phase 1 + Phase 2 complete
 - Phase 1 (Core Loop): **Complete** — all 8 plans; E2E-01 verified
 - Phase 2 (Graph & Collaboration): **Complete** — all 5 plans; E2E-02 verified (12/12 E2E journeys pass)
-- Phase 3 (SaaS Hardening): **Executing** — 4 of 8 plans complete
+- Phase 3 (SaaS Hardening): **Executing** — 6 of 8 plans complete
 
 ## Recent Work
 
@@ -37,6 +38,8 @@ See: `.planning/PROJECT.md` (updated 2026-08-02)
 - Phase 3 P02 (billing API): stripe@22.4.0 installed (human-vetted), BillingProvider (stripe+mock), subscription transitions, assertLimit wired at 7 mutation sites (402 limit_reached), billing + webhook routes, shared rate limiter extracted.
 - Phase 3 P03 (analytics/template API): getAnalytics org-scoped 30d aggregation (totals + daily series + activeMembers), PRODUCT_LAUNCH_TEMPLATE seeder (2 epics / 6 cards, atomic transaction), GET /:id/analytics + POST /:id/projects/template routes mounted, 75 tests green.
 - Phase 3 P04 (frontend foundation): 6 shadcn primitives, use-billing/use-analytics/use-onboarding hooks, app-shell wiring (nav-billing/nav-analytics, env-indicator, limit-banner, disabled New board), first-run onboarding redirect.
+- Phase 3 P05 (billing page): Billing page body (current-plan, plan grid, usage meters, downgrade dialog), 402-aware api-client + handleLimitError, disabled limit actions with tooltips, local toast store.
+- Phase 3 P06 (onboarding + analytics UI): 2-step onboarding flow (blank + product-launch template + session skip), analytics dashboard (4 stat cards + 3 custom SVG bar charts + empty/error states), all O1/A1 E2E anchors in place.
 
 ## Next Actions
 
@@ -56,9 +59,9 @@ None.
 ## Current Position
 
 Phase: 3 (SaaS Hardening) — EXECUTING
-Plan: 6 of 8
+Plan: 7 of 8
 Status: Ready to execute
-Last activity: 2026-08-02 -- Phase 3 P03 completed
+Last activity: 2026-08-02 -- Phase 3 P06 completed
 
 ## Performance Metrics
 
@@ -69,6 +72,7 @@ Last activity: 2026-08-02 -- Phase 3 P03 completed
 | Phase 03-saas-hardening P03 | 7min  | 3 tasks  | 8 files  |
 | Phase 03-saas-hardening P04 | 14min | 3 tasks  | 27 files |
 | Phase 03-saas-hardening P05 | 12min | 3 tasks  | 18 files |
+| Phase 03-saas-hardening P06 | 12min | 2 tasks  | 8 files  |
 
 ## Decisions
 
@@ -91,3 +95,14 @@ Last activity: 2026-08-02 -- Phase 3 P03 completed
 - [Phase 03-saas-hardening]: handleLimitError added to use-billing.ts during Task 2 (plan placed it in Task 3) so the Task 2 page honors its own '402 must not show generic message' directive commit-by-commit
 - [Phase 03-saas-hardening]: Meter data-pct carries the raw non-rounded percentage (99.8 at 499/500); fill boundaries land exactly on 80 and 100
 - [Phase 03-saas-hardening]: Toasts use a local zustand store (toast-store.ts) - repo had no toast wrapper; module-level toast singleton lets plain functions (handleLimitError) fire toasts without a hook; no new deps per T-03-SC
+- [Phase 03-saas-hardening]: BarChart fill uses an explicit FILLS map with literal var(--chart-1/2/3) strings, not a var(--${colorVar}) template literal — keeps the token-only fill contract greppable per the acceptance criterion
+- [Phase 03-saas-hardening]: Template card testids live on wrapper divs in onboarding.tsx ("data-testid prop passed via parent wrapper") — TemplateCard stays generic, the route owns the O1 anchors
+- [Phase 03-saas-hardening]: Welcome heading falls back to "Welcome to {orgName}" when the user has orgs (zero-project first-run state), else "Welcome to Storyteller"
+- [Phase 03-saas-hardening]: Chart bar metric derived from the svg testid (analytics-chart-{metric} → analytics-bar-{metric}-{index}) — one prop drives both anchor namespaces
+
+## Last Session
+
+Last session: 2026-08-02T19:40:21.949Z
+Last Date: 2026-08-02T19:40:21.949Z
+Stopped At: Completed 03-06-PLAN.md
+Resume File: None
