@@ -1,7 +1,8 @@
 import { readFileSync, unlinkSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { dropTestDatabase } from "./db"
 
-const STATE_FILE = new URL("../.e2e-state.json", import.meta.url).pathname
+const STATE_FILE = fileURLToPath(new URL("../.e2e-state.json", import.meta.url))
 
 async function globalTeardown() {
   try {

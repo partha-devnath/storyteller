@@ -7,16 +7,16 @@ import {
 } from "@/hooks/use-proposals"
 import { Button } from "@workspace/ui/components/button"
 
-export function ProposalReview({ projectId }: { projectId: string }) {
-  const { data: proposals } = useProposals(projectId)
-  const approve = useApproveProposal()
-  const reject = useRejectProposal()
+export function ProposalReview({ projectSlug }: { projectSlug: string }) {
+  const { data: proposals } = useProposals(projectSlug)
+  const approve = useApproveProposal(projectSlug)
+  const reject = useRejectProposal(projectSlug)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")
 
   const pending = proposals?.filter((p) => p.status === "pending") ?? []
-  const expanded = useProposal(expandedId ?? undefined)
+  const expanded = useProposal(expandedId ?? undefined, projectSlug)
 
   return (
     <div className="rounded-lg border p-3" data-testid="proposal-review">

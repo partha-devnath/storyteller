@@ -142,14 +142,20 @@ app.get("/", (c) =>
   c.json({ success: true, data: { service: "storyteller-api" } })
 )
 
-app.use("/api/auth/*", rateLimiter(30, 60_000))
+app.use(
+  "/api/auth/*",
+  rateLimiter(Number(process.env.AUTH_RATE_LIMIT_MAX) || 30, 60_000)
+)
 
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
 
 app.route("/api/orgs", orgsRoutes)
 app.route("/api/projects", projectsRoutes)
 
-app.use("/api/ai/*", rateLimiter(10, 60_000))
+app.use(
+  "/api/ai/*",
+  rateLimiter(Number(process.env.AI_RATE_LIMIT_MAX) || 10, 60_000)
+)
 app.route("/api/ai", aiRoutes)
 app.route("/api/proposals", proposalsRoutes)
 app.route("/api/cards", cardsRoutes)

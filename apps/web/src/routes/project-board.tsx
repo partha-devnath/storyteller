@@ -12,14 +12,12 @@ export function ProjectBoardPage() {
   const { slug } = useParams<{ slug: string }>()
   const { data: projectDetail, isLoading } = useProject(slug)
   const { data: cards } = useCards(slug)
-  const moveCard = useMoveCard()
+  const moveCard = useMoveCard(slug ?? "")
   const defaultColumns = useBoardStore((s) => s.columns)
   const columns = projectDetail?.project.columns?.length
     ? projectDetail.project.columns
     : defaultColumns
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
-
-  const projectId = projectDetail?.project.id
 
   return (
     <div className="space-y-4">
@@ -52,7 +50,7 @@ export function ProjectBoardPage() {
           )}
         </div>
 
-        {projectId && <ProposalReview projectId={projectId} />}
+        {slug && <ProposalReview projectSlug={slug} />}
       </div>
 
       {activeCardId && (

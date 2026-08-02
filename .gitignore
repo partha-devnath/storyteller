@@ -47,3 +47,8 @@ graphify-out/
 
 # Test coverage
 coverage/
+
+# Playwright
+playwright-report/
+test-results/
+apps/e2e/.e2e-state.json

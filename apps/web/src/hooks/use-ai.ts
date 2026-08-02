@@ -14,10 +14,13 @@ export function useAiGenerate(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { prompt: string }) => {
-      const res = await apiClient<Envelope<AiResult>>("/api/ai/generate", {
-        method: "POST",
-        body: { projectSlug, prompt: input.prompt },
-      })
+      const res = await apiClient<Envelope<AiResult>>(
+        `/api/ai/generate?project=${encodeURIComponent(projectSlug)}`,
+        {
+          method: "POST",
+          body: { projectSlug, prompt: input.prompt },
+        }
+      )
       return res.data
     },
     onSuccess: () =>
@@ -31,7 +34,7 @@ export function useAiProcess(projectSlug: string) {
     mutationFn: async (input: { instruction: string }) => {
       const res = await apiClient<
         Envelope<{ proposal: { proposalId: string; changeCount: number } }>
-      >("/api/ai/process", {
+      >(`/api/ai/process?project=${encodeURIComponent(projectSlug)}`, {
         method: "POST",
         body: { projectSlug, instruction: input.instruction },
       })
@@ -51,10 +54,13 @@ export function useAiClarify(projectSlug: string) {
       priorAnswers: string
       prompt: string
     }) => {
-      const res = await apiClient<Envelope<AiResult>>("/api/ai/clarify", {
-        method: "POST",
-        body: { projectSlug, ...input },
-      })
+      const res = await apiClient<Envelope<AiResult>>(
+        `/api/ai/clarify?project=${encodeURIComponent(projectSlug)}`,
+        {
+          method: "POST",
+          body: { projectSlug, ...input },
+        }
+      )
       return res.data
     },
     onSuccess: () =>

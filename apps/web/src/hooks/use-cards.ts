@@ -81,7 +81,7 @@ export type SimilarCard = {
 
 export function useCards(projectSlug: string | undefined) {
   return useQuery({
-    queryKey: ["project", projectSlug],
+    queryKey: ["project", projectSlug, "cards"],
     queryFn: async () => {
       const res = await apiClient<Envelope<{ cards: BoardCard[] }>>(
         `/api/projects/${projectSlug}`
@@ -92,23 +92,31 @@ export function useCards(projectSlug: string | undefined) {
   })
 }
 
-export function useCardDetail(cardId: string | undefined) {
+export function useCardDetail(
+  cardId: string | undefined,
+  projectSlug?: string
+) {
   return useQuery({
     queryKey: ["card", cardId],
     queryFn: async () => {
-      const res = await apiClient<Envelope<CardDetail>>(`/api/cards/${cardId}`)
+      const res = await apiClient<Envelope<CardDetail>>(
+        `/api/cards/${cardId}?project=${encodeURIComponent(projectSlug ?? "")}`
+      )
       return res.data
     },
     enabled: Boolean(cardId),
   })
 }
 
-export function useCardVersions(cardId: string | undefined) {
+export function useCardVersions(
+  cardId: string | undefined,
+  projectSlug?: string
+) {
   return useQuery({
     queryKey: ["card", cardId, "versions"],
     queryFn: async () => {
       const res = await apiClient<Envelope<CardVersion[]>>(
-        `/api/cards/${cardId}/versions`
+        `/api/cards/${cardId}/versions?project=${encodeURIComponent(projectSlug ?? "")}`
       )
       return res.data
     },
@@ -116,12 +124,15 @@ export function useCardVersions(cardId: string | undefined) {
   })
 }
 
-export function useCardSimilar(cardId: string | undefined) {
+export function useCardSimilar(
+  cardId: string | undefined,
+  projectSlug?: string
+) {
   return useQuery({
     queryKey: ["card", cardId, "similar"],
     queryFn: async () => {
       const res = await apiClient<Envelope<SimilarCard[]>>(
-        `/api/cards/${cardId}/similar`
+        `/api/cards/${cardId}/similar?project=${encodeURIComponent(projectSlug ?? "")}`
       )
       return res.data
     },
@@ -129,11 +140,10 @@ export function useCardSimilar(cardId: string | undefined) {
   })
 }
 
-export function useCreateCard() {
+export function useCreateCard(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: {
-      projectId: string
       title: string
       description?: string
       status: string
@@ -141,7 +151,7 @@ export function useCreateCard() {
       acceptanceCriteria?: string[]
     }) => {
       const res = await apiClient<Envelope<{ id: string; slug: string }>>(
-        "/api/cards",
+        `/api/cards?project=${encodeURIComponent(projectSlug)}`,
         { method: "POST", body: input }
       )
       return res.data
@@ -150,12 +160,12 @@ export function useCreateCard() {
   })
 }
 
-export function useMoveCard() {
+export function useMoveCard(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { cardId: string; status: string }) => {
       const res = await apiClient<Envelope<{ id: string }>>(
-        `/api/cards/${input.cardId}`,
+        `/api/cards/${input.cardId}?project=${encodeURIComponent(projectSlug)}`,
         { method: "PATCH", body: { status: input.status } }
       )
       return res.data
@@ -164,26 +174,32 @@ export function useMoveCard() {
   })
 }
 
-export function useCloseCard() {
+export function useCloseCard(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { cardId: string; reason?: string }) => {
       const res = await apiClient<Envelope<{ id: string; closed: boolean }>>(
-        `/api/cards/${input.cardId}/close`,
+        `/api/cards/${input.cardId}/close?project=${encodeURIComponent(projectSlug)}`,
         { method: "POST", body: { reason: input.reason } }
       )
       return res.data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["project"] }),
+    onSuccess: (_data, input) => {
+      qc.invalidateQueries({ queryKey: ["project"] })
+      qc.invalidateQueries({ queryKey: ["card", input.cardId] })
+    },
   })
 }
 
-export function useAddComment(cardId: string | undefined) {
+export function useAddComment(
+  cardId: string | undefined,
+  projectSlug?: string
+) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { body: string; parentId?: string }) => {
       const res = await apiClient<Envelope<{ id: string }>>(
-        `/api/cards/${cardId}/comments`,
+        `/api/cards/${cardId}/comments?project=${encodeURIComponent(projectSlug ?? "")}`,
         { method: "POST", body: input }
       )
       return res.data

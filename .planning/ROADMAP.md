@@ -20,20 +20,20 @@ AI-01, AI-02, AI-03, AI-04, AI-05, AI-06, AI-07, AI-08, ORG-01, ORG-02, ORG-03, 
 4. Cross-org isolation holds — a second user cannot see the first user's project.
 5. E2E journeys pass end-to-end with the mock AI provider; unit + API + component tests pass.
 
-**Status:** Not started
+**Status:** Complete (E2E-01 verified — 9/9 Playwright journeys pass with mock AI)
 
 **Plans:** 8 plans
 
 ```
 Plans:
-- [ ] 01-01-PLAN.md — Data model: 13 Drizzle tables + validations + pgvector infra + migration
-- [ ] 01-02-PLAN.md — @workspace/ai: LLMProvider (openai/mock/anthropic-stub), prompts, strict Zod output, operations
-- [ ] 01-03-PLAN.md — @workspace/vector: embedCard, semanticSearch, reindexCard (pgvector)
-- [ ] 01-04-PLAN.md — API foundation: org-scope/role middleware, orgs + projects routes, auth (personal org + invites)
-- [ ] 01-05-PLAN.md — AI + approval + cards routes: generate/process/clarify, proposal approve/reject, card CRUD/versions/similar/comments
-- [ ] 01-06-PLAN.md — Frontend core: landing, app shell, project dashboard, chat/generate panel, org members, hooks + store
-- [ ] 01-07-PLAN.md — Kanban board + Closed rail + drag-drop, proposal review + diff, card drawer (versions/diff/relations/similar)
-- [ ] 01-08-PLAN.md — E2E journeys: signup→org→project→prompt→proposal→approve→board→versions→close→replacement→isolation
+- [x] 01-01-PLAN.md — Data model: 13 Drizzle tables + validations + pgvector infra + migration
+- [x] 01-02-PLAN.md — @workspace/ai: LLMProvider (openai/mock/anthropic-stub), prompts, strict Zod output, operations
+- [x] 01-03-PLAN.md — @workspace/vector: embedCard, semanticSearch, reindexCard (pgvector)
+- [x] 01-04-PLAN.md — API foundation: org-scope/role middleware, orgs + projects routes, auth (personal org + invites)
+- [x] 01-05-PLAN.md — AI + approval + cards routes: generate/process/clarify, proposal approve/reject, card CRUD/versions/similar/comments
+- [x] 01-06-PLAN.md — Frontend core: landing, app shell, project dashboard, chat/generate panel, org members, hooks + store
+- [x] 01-07-PLAN.md — Kanban board + Closed rail + drag-drop, proposal review + diff, card drawer (versions/diff/relations/similar)
+- [x] 01-08-PLAN.md — E2E journeys: signup→org→project→prompt→proposal→approve→board→versions→close→replacement→isolation
 ```
 
 ## Phase 2: Graph & Collaboration Depth
@@ -77,9 +77,10 @@ E2E-03
 
 ## Phase Transition Log
 
-| Date       | Phase | Action  | Notes                              |
-| ---------- | ----- | ------- | ---------------------------------- |
-| 2026-08-02 | 1     | Created | Milestone v2.0 roadmap initialized |
+| Date       | Phase | Action    | Notes                                                     |
+| ---------- | ----- | --------- | --------------------------------------------------------- |
+| 2026-08-02 | 1     | Created   | Milestone v2.0 roadmap initialized                        |
+| 2026-08-02 | 1     | Completed | All 8 plans done; E2E-01 verified (9/9 journeys, mock AI) |
 
 ---
 

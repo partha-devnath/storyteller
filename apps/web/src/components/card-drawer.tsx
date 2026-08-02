@@ -5,6 +5,7 @@ import {
   useCardVersions,
   useCardSimilar,
   useAddComment,
+  useCloseCard,
 } from "@/hooks/use-cards"
 import { DiffPanel } from "./diff-panel"
 import { Button } from "@workspace/ui/components/button"
@@ -22,10 +23,17 @@ export function CardDrawer({
   onClose: () => void
   projectSlug: string
 }) {
-  const { data: detail } = useCardDetail(open ? cardId : undefined)
-  const { data: versions } = useCardVersions(open ? cardId : undefined)
-  const { data: similar } = useCardSimilar(open ? cardId : undefined)
-  const addComment = useAddComment(open ? cardId : undefined)
+  const { data: detail } = useCardDetail(open ? cardId : undefined, projectSlug)
+  const { data: versions } = useCardVersions(
+    open ? cardId : undefined,
+    projectSlug
+  )
+  const { data: similar } = useCardSimilar(
+    open ? cardId : undefined,
+    projectSlug
+  )
+  const addComment = useAddComment(open ? cardId : undefined, projectSlug)
+  const closeCard = useCloseCard(projectSlug)
   const [tab, setTab] = useState<Tab>("details")
   const [comment, setComment] = useState("")
   const [copied, setCopied] = useState(false)
@@ -71,6 +79,17 @@ export function CardDrawer({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {!card.isClosed && (
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="close-card"
+                disabled={closeCard.isPending}
+                onClick={() => closeCard.mutate({ cardId: card.id })}
+              >
+                {closeCard.isPending ? "Closing..." : "Close card"}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"

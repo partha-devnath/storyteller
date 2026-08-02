@@ -49,6 +49,7 @@
       "name": "e2e",
       "version": "0.0.1",
       "dependencies": {
+        "@better-auth/utils": "0.4.2",
         "@workspace/db": "workspace:*",
         "@workspace/schemas": "workspace:*",
         "drizzle-orm": "0.45.2",

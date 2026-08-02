@@ -1,6 +1,7 @@
 import postgres from "postgres"
+import { fileURLToPath } from "node:url"
 
-const STATE_FILE = new URL("../.e2e-state.json", import.meta.url).pathname
+const STATE_FILE = fileURLToPath(new URL("../.e2e-state.json", import.meta.url))
 
 export function deriveTestDatabaseUrl(sourceUrl: string): string {
   const url = new URL(sourceUrl)

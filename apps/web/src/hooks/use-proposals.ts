@@ -38,25 +38,25 @@ export type ProposalDetail = {
   changes: ProposalChangeRow[]
 }
 
-export function useProposals(projectId: string | undefined) {
+export function useProposals(projectSlug: string | undefined) {
   return useQuery({
-    queryKey: ["proposals", projectId],
+    queryKey: ["proposals", projectSlug],
     queryFn: async () => {
       const res = await apiClient<Envelope<ProposalSummary[]>>(
-        `/api/proposals?project=${encodeURIComponent(projectId ?? "")}`
+        `/api/proposals?project=${encodeURIComponent(projectSlug ?? "")}`
       )
       return res.data
     },
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectSlug),
   })
 }
 
-export function useProposal(id: string | undefined) {
+export function useProposal(id: string | undefined, projectSlug?: string) {
   return useQuery({
     queryKey: ["proposal", id],
     queryFn: async () => {
       const res = await apiClient<Envelope<ProposalDetail>>(
-        `/api/proposals/${id}?project=`
+        `/api/proposals/${id}?project=${encodeURIComponent(projectSlug ?? "")}`
       )
       return res.data
     },
@@ -64,12 +64,12 @@ export function useProposal(id: string | undefined) {
   })
 }
 
-export function useApproveProposal() {
+export function useApproveProposal(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await apiClient<Envelope<{ applied: number }>>(
-        `/api/proposals/${id}/approve`,
+        `/api/proposals/${id}/approve?project=${encodeURIComponent(projectSlug)}`,
         { method: "POST" }
       )
       return res.data
@@ -78,12 +78,12 @@ export function useApproveProposal() {
   })
 }
 
-export function useRejectProposal() {
+export function useRejectProposal(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { id: string; reason?: string }) => {
       const res = await apiClient<Envelope<{ rejected: string }>>(
-        `/api/proposals/${input.id}/reject`,
+        `/api/proposals/${input.id}/reject?project=${encodeURIComponent(projectSlug)}`,
         { method: "POST", body: { reason: input.reason } }
       )
       return res.data

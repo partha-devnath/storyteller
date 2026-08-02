@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { eq, and, asc, desc } from "drizzle-orm"
+import { eq, and, asc, desc, count } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import { proposal, proposalChange } from "@workspace/schemas"
@@ -24,7 +24,7 @@ proposalsRoutes.get("/", async (c) => {
       instruction: proposal.instruction,
       status: proposal.status,
       createdAt: proposal.createdAt,
-      changeCount: proposalChange.id,
+      changeCount: count(proposalChange.id),
     })
     .from(proposal)
     .where(eq(proposal.projectId, projectId!))

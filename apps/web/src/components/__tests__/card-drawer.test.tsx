@@ -53,6 +53,7 @@ vi.mock("@/hooks/use-cards", () => ({
   useCardVersions: () => ({ data: mockVersions }),
   useCardSimilar: () => ({ data: [] }),
   useAddComment: () => ({ mutateAsync: vi.fn() }),
+  useCloseCard: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
 const writeText = vi.fn()
