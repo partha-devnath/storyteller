@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-08-02T18:41:06.217Z"
-last_activity: 2026-08-02 -- Phase 3 execution started
+last_updated: "2026-08-02T18:56:21.135Z"
+last_activity: 2026-08-02 -- Phase 3 P04 completed
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 21
-  completed_plans: 15
+  completed_plans: 16
   percent: 67
 ---
 
@@ -35,6 +35,7 @@ See: `.planning/PROJECT.md` (updated 2026-08-02)
 
 - Phase 3 P01 (billing data layer): subscription table migrated, PLANS config, usage counters, computeBillingState.
 - Phase 3 P02 (billing API): stripe@22.4.0 installed (human-vetted), BillingProvider (stripe+mock), subscription transitions, assertLimit wired at 7 mutation sites (402 limit_reached), billing + webhook routes, shared rate limiter extracted.
+- Phase 3 P04 (frontend foundation): 6 shadcn primitives, use-billing/use-analytics/use-onboarding hooks, app-shell wiring (nav-billing/nav-analytics, env-indicator, limit-banner, disabled New board), first-run onboarding redirect.
 
 ## Next Actions
 
@@ -54,17 +55,18 @@ None.
 ## Current Position
 
 Phase: 3 (SaaS Hardening) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
-Last activity: 2026-08-02 -- Phase 3 P02 completed
+Last activity: 2026-08-02 -- Phase 3 P04 completed
 
 ## Performance Metrics
 
-| Phase                       | Plan | Duration | Notes    |
-| --------------------------- | ---- | -------- | -------- |
-| Phase 03-saas-hardening P01 | 4min | 3 tasks  | 12 files |
-| Phase 03-saas-hardening P02 | 9min | 3 tasks  | 21 files |
-| Phase 03-saas-hardening P02 | 9min | 3 tasks  | 21 files |
+| Phase                       | Plan  | Duration | Notes    |
+| --------------------------- | ----- | -------- | -------- |
+| Phase 03-saas-hardening P01 | 4min  | 3 tasks  | 12 files |
+| Phase 03-saas-hardening P02 | 9min  | 3 tasks  | 21 files |
+| Phase 03-saas-hardening P02 | 9min  | 3 tasks  | 21 files |
+| Phase 03-saas-hardening P04 | 14min | 3 tasks  | 27 files |
 
 ## Decisions
 
@@ -75,10 +77,14 @@ Last activity: 2026-08-02 -- Phase 3 P02 completed
 - [Phase 03-02]: assertLimit placed after input validation but BEFORE the AI provider call in ai routes — blocks over-limit orgs before burning tokens
 - [Phase 03-02]: Webhook events normalized into SubscriptionEvent and funneled through pure mapSubscriptionEventToState so stripe + mock share one testable transition path
 - [Phase 03-02]: current_period_end read defensively (stripe v22 generated types omit it from Subscription/Session interfaces)
+- [Phase 03-04]: useCheckout redirects via window.location.href to the hosted checkout URL — no Stripe.js in the web bundle (UI-SPEC V2b)
+- [Phase 03-04]: useUsage exposes isAtLimit/pct as the single derived source for meters/banner/disabled actions (03-05 consumes it directly)
+- [Phase 03-04]: First-run detection fans out useQueries over orgs reusing the ["projects", orgId] cache — no duplicate network fetches
+- [Phase 03-04]: Onboarding skip is session-scoped (sessionStorage), matching UI-SPEC V3 "Skip dismisses for the session"
 
 ## Session
 
-- Last session: 2026-08-02T18:39:12Z
-- Last Date: 2026-08-02T18:39:12Z
-- Stopped At: Completed 03-02-PLAN.md
+- Last session: 2026-08-02T18:55:22Z
+- Last Date: 2026-08-02T18:55:22Z
+- Stopped At: Completed 03-04-PLAN.md
 - Resume File: None
