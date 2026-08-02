@@ -31,6 +31,17 @@ vi.mock("@/hooks/use-orgs", () => ({
   }),
 }))
 
+vi.mock("@/hooks/use-billing", () => ({
+  useBilling: () => ({ data: undefined }),
+  useUsage: () => ({
+    usage: { projects: 0, members: 0, aiActions: 0, cards: 0 },
+    limits: { projects: null, members: null, aiActions: null, cards: null },
+    plan: null,
+    isAtLimit: () => false,
+    pct: () => 0,
+  }),
+}))
+
 const { AppShell } = await import("../app-shell")
 const { OrgSwitcher } = await import("../org-switcher")
 

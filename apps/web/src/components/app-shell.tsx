@@ -3,10 +3,19 @@ import { useAppStore } from "@/stores/app-store"
 import { useBoardStore } from "@/stores/board-store"
 import { useAuth } from "@/hooks/use-auth"
 import { useOrgs } from "@/hooks/use-orgs"
+import { useUsage } from "@/hooks/use-billing"
 import { OrgSwitcher } from "./org-switcher"
 import { UserMenu } from "./user-menu"
+import { EnvIndicator } from "./env-indicator"
+import { LimitBanner } from "./limit-banner"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip"
+import { BarChart3, CreditCard } from "lucide-react"
 
 const navItems = [
   { label: "Boards", to: "/projects" },
@@ -22,6 +31,20 @@ export function AppShell() {
   const { data: orgs } = useOrgs()
   const activeOrg = orgs?.find((o) => o.id === selectedOrgId) ?? orgs?.[0]
   const role = activeOrg?.role
+  const { isAtLimit } = useUsage(activeOrg?.id)
+  const projectsLimited = isAtLimit("projects")
+
+  const newBoardButton = (
+    <Button
+      variant="default"
+      size="sm"
+      disabled={projectsLimited}
+      data-testid="new-board"
+      onClick={() => navigate("/projects")}
+    >
+      New board
+    </Button>
+  )
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -42,16 +65,26 @@ export function AppShell() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => navigate("/projects")}
-          >
-            New board
-          </Button>
+          {projectsLimited ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="inline-flex" data-testid="limit-tooltip" />
+                }
+              >
+                {newBoardButton}
+              </TooltipTrigger>
+              <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
+            </Tooltip>
+          ) : (
+            newBoardButton
+          )}
+          <EnvIndicator />
           {user && <UserMenu name={user.name} role={role} onLogout={logout} />}
         </div>
       </header>
+
+      <LimitBanner orgId={selectedOrgId ?? activeOrg?.id} />
 
       <div className="flex flex-1">
         {sidebarOpen && (
@@ -92,6 +125,44 @@ export function AppShell() {
                   }
                 >
                   Members
+                </NavLink>
+              )}
+              {selectedOrgId && (
+                <NavLink
+                  to={`/orgs/${selectedOrgId}/billing`}
+                  className={({ isActive }) =>
+                    cn(
+                      "block rounded-md px-3 py-2 text-sm",
+                      isActive
+                        ? "bg-muted font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )
+                  }
+                  data-testid="nav-billing"
+                >
+                  <span className="flex items-center gap-2">
+                    <CreditCard className="size-4" />
+                    Billing
+                  </span>
+                </NavLink>
+              )}
+              {selectedOrgId && (
+                <NavLink
+                  to={`/orgs/${selectedOrgId}/analytics`}
+                  className={({ isActive }) =>
+                    cn(
+                      "block rounded-md px-3 py-2 text-sm",
+                      isActive
+                        ? "bg-muted font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )
+                  }
+                  data-testid="nav-analytics"
+                >
+                  <span className="flex items-center gap-2">
+                    <BarChart3 className="size-4" />
+                    Analytics
+                  </span>
                 </NavLink>
               )}
             </nav>
