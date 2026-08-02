@@ -1,6 +1,6 @@
 import type { BoardCard } from "@/hooks/use-cards"
 
-const priorityClasses: Record<string, string> = {
+export const priorityClasses: Record<string, string> = {
   critical: "bg-destructive/10 text-destructive",
   high: "bg-orange-500/10 text-orange-600",
   medium: "bg-yellow-500/10 text-yellow-700",
