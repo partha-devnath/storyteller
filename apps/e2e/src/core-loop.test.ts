@@ -53,7 +53,11 @@ async function signupViaUi(
 
   const verifyUrl = await getVerificationUrl(email)
   await page.goto(verifyUrl)
-  await expect(page).toHaveURL(/dashboard|projects/, { timeout: 15_000 })
+  // A fresh zero-project user may be redirected to /onboarding by the
+  // first-run guard before the post-verification landing renders.
+  await expect(page).toHaveURL(/dashboard|projects|onboarding/, {
+    timeout: 15_000,
+  })
 }
 
 async function signIn(page: Page, email: string, password: string) {
@@ -61,7 +65,17 @@ async function signIn(page: Page, email: string, password: string) {
   await page.getByLabel("Email").fill(email)
   await page.getByLabel("Password").fill(password)
   await page.getByRole("button", { name: "Sign in" }).click()
-  await expect(page).toHaveURL(/dashboard|projects/, { timeout: 10_000 })
+  await expect(page).toHaveURL(/dashboard|projects|onboarding/, {
+    timeout: 10_000,
+  })
+  // First-run guard (Phase 3, 03-04): a zero-project user lands on
+  // /onboarding — dismiss it for the session so legacy journeys start from
+  // /projects. Users with projects never hit this branch.
+  if (/onboarding/.test(page.url())) {
+    await page.getByTestId("onboarding-start").click()
+    await page.getByTestId("onboarding-skip").click()
+    await expect(page).toHaveURL(/projects/, { timeout: 10_000 })
+  }
 }
 
 async function createProject(
@@ -106,6 +120,19 @@ test.describe.serial("core loop", () => {
       password: "TestPass123!",
     }
     await signupViaUi(page, userA.name, userA.email, userA.password)
+
+    // The first-run onboarding guard (Phase 3, 03-04) redirects a fresh user
+    // with zero projects to /onboarding. Dismiss it for the session so the
+    // legacy board-creation flow runs (deterministic: the guard always fires
+    // for a zero-project user, so the welcome step is guaranteed to render).
+    await page.goto("/onboarding")
+    await expect(page.getByTestId("onboarding-welcome")).toBeVisible({
+      timeout: 10_000,
+    })
+    await page.getByTestId("onboarding-start").click()
+    await expect(page.getByTestId("onboarding-template")).toBeVisible()
+    await page.getByTestId("onboarding-skip").click()
+    await expect(page).toHaveURL(/projects/)
 
     await page.goto("/projects")
     await expect(page.getByRole("heading", { name: "Boards" })).toBeVisible()
