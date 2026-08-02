@@ -71,7 +71,7 @@ export function useAcceptInvite() {
   })
 }
 
-export function useOrgMembers(orgId: string) {
+export function useOrgMembers(orgId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["orgs", orgId, "members"],
     queryFn: async () => {
@@ -80,6 +80,7 @@ export function useOrgMembers(orgId: string) {
       )
       return res.data
     },
+    enabled: options?.enabled ?? Boolean(orgId),
   })
 }
 
