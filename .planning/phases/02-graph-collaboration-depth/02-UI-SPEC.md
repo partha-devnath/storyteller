@@ -56,13 +56,14 @@ Exceptions:
 
 Weights declared: **400 (regular)** + **600 (semibold)** only. Sizes declared: **4** (12/14/18/20px).
 
-| Role         | Size                 | Weight | Line Height | Where                                                               |
-| ------------ | -------------------- | ------ | ----------- | ------------------------------------------------------------------- |
-| Label / meta | 12px (`text-xs`)     | 400    | 1.4         | Node sub-lines, timestamps, legend, badges, live indicator          |
-| Body         | 14px (`text-sm`)     | 400    | 1.5         | Comments, empty-state body, toolbar text                            |
-| Node title   | 13px (`text-[13px]`) | 600    | 1.3         | Graph node titles (both epic + card)                                |
-| Heading      | 18px (`text-lg`)     | 600    | 1.2         | Drawer card title (existing), section headings, empty-state heading |
-| Display      | 20px (`text-xl`)     | 600    | 1.2         | Graph view page title "Graph"                                       |
+| Role         | Size             | Weight | Line Height | Where                                                               |
+| ------------ | ---------------- | ------ | ----------- | ------------------------------------------------------------------- |
+| Label / meta | 12px (`text-xs`) | 400    | 1.4         | Node sub-lines, timestamps, legend, badges, live indicator          |
+| Body         | 14px (`text-sm`) | 400    | 1.5         | Comments, empty-state body, toolbar text, graph node titles         |
+| Heading      | 18px (`text-lg`) | 600    | 1.2         | Drawer card title (existing), section headings, empty-state heading |
+| Display      | 20px (`text-xl`) | 600    | 1.2         | Graph view page title "Graph"                                       |
+
+Graph node titles (epic name + card title) render at the **Body size 14px (`text-sm`) with weight 600** — no dedicated node-title size; titles clamp to 2 lines (`line-clamp-2`).
 
 Rules: no font-weight 500 in new Phase 2 UI (existing code uses `font-medium`; Phase 2 keeps `font-medium` where it already exists, but new components use 400/600). All copy inherits `text-foreground` / `text-muted-foreground`.
 
@@ -77,7 +78,9 @@ Rules: no font-weight 500 in new Phase 2 UI (existing code uses `font-medium`; P
 | Accent (10%)    | `--primary` (neutral: light `oklch(0.205 0 0)` / dark `oklch(0.922 0 0)`) | **Reserved for:** active view tab, active filter toggle, impact highlight ring, focus rings, links, primary action buttons, selected node border                                                           |
 | Destructive     | `--destructive` (existing red)                                            | Destructive actions only. **Phase 2 adds zero destructive actions** (no deletes in graph/comments/export). Existing `close-card` (Phase 1) is the only destructive-ish flow and keeps its current styling. |
 
-**Accent reserved for:** active view-switcher tab, active edge-filter toggle, impact highlight ring (`ring-2 ring-primary`), node selection border, primary CTA buttons. Never used for decorative fills.
+**Accent reserved for:** active view-switcher tab, active edge-filter toggle, impact highlight ring (`ring-2 ring-primary`), selected-node border, primary CTA buttons. Never used for decorative fills.
+
+**Selected-node border contract (concrete):** node borders are neutral by default — card nodes keep the existing `--border` token, epic nodes use `border-2 border-foreground/20` (hierarchy level-1 emphasis via border **weight**, not accent color). While impacted (impact mode active), a node's border token switches to `--primary` (`border-primary`) in addition to the `ring-2 ring-primary` highlight. `--primary` as a border color therefore appears **only** on selected/impacted nodes — never as a default node outline.
 
 ### New semantic data-color tokens (graph edges) — NOT part of the 60/30/10 budget
 
@@ -136,8 +139,8 @@ Node kinds: epics from `epic` table (incl. `parentEpicId` → hierarchy edges), 
 
 **Node shapes:**
 
-- **Epic node**: width 160px, `rounded-lg border-2 border-primary bg-card px-3 py-2`, `Layers` lucide icon at 14px + name (`text-[13px] font-semibold`), child-count badge `text-xs text-muted-foreground` ("{n} stories").
-- **Card node**: width 140px, `rounded-lg border bg-card px-3 py-2 shadow-sm`, title (2-line clamp) + priority chip (reuse `priorityClasses`). Closed cards: `border-dashed opacity-60` + `Lock` icon 12px inline.
+- **Epic node**: width 160px, `rounded-lg border-2 border-foreground/20 bg-card px-3 py-2`, `Layers` lucide icon at 14px + name (`text-sm font-semibold line-clamp-2`), child-count badge `text-xs text-muted-foreground` ("{n} stories").
+- **Card node**: width 140px, `rounded-lg border bg-card px-3 py-2 shadow-sm`, title (`text-sm font-semibold line-clamp-2`) + priority chip (reuse `priorityClasses`). Closed cards: `border-dashed opacity-60` + `Lock` icon 12px inline.
 - **Node interaction:** click → opens the existing `CardDrawer` for that card (epics: no drawer — show a `Tooltip` "Epic — {name}", click is no-op) + `cursor-pointer`. Hover: `bg-muted` + `Tooltip` showing full title + (for cards) status · priority.
 - `data-testid`: `graph-node-{nodeId}` on the node root.
 
@@ -158,7 +161,7 @@ Node kinds: epics from `epic` table (incl. `parentEpicId` → hierarchy edges), 
 
 - When impact mode is armed, clicking a card node triggers impact computation **client-side** from the graph payload: `impact(X)` = X plus every node reachable from X by traversing dependency edges in the **reverse direction** (i.e., all cards that transitively depend on X — "downstream" as rendered). Edges render `source → target` where "source depends on target".
 - Rendering while impact active:
-  - Impacted nodes + X: full opacity, `ring-2 ring-primary`.
+  - Impacted nodes + X: full opacity, `ring-2 ring-primary` + `border-primary` (selected-node border contract: border token switches to `--primary` while impacted).
   - All other nodes: `opacity-25`.
   - Impacted edges (dependency edges between impacted nodes, plus hierarchy/evolution edges connecting them): stroke-width **3** (keeps their type color); non-impacted edges `opacity-20`.
   - A banner appears above the canvas: `data-testid="impact-banner"` — "Showing impact of **{card title}**" + `Clear` button (`data-testid="impact-clear"`, ghost, "Clear").
@@ -201,7 +204,7 @@ Replace the raw input + comment list with extracted components:
   - `open` → green dot (`bg-emerald-500`), "Live"
   - `closed` → muted dot, "Offline — updates paused" + ghost `Retry` button (re-runs connect)
   - `data-testid="live-indicator"` + attr `data-status`.
-- **"N new" pill** (in the drawer, under the Comments header): when a `comment.created` event arrives for the open card and the list is not focused, show `data-testid="new-comments-pill"` — "{n} new comment{s}" (12px, `bg-primary/10 text-primary rounded-full px-2 py-0.5`) with "Jump" action that scrolls the list and clears the count. Non-intrusive — no toast spam, no page reload.
+- **"N new" pill** (in the drawer, under the Comments header): when a `comment.created` event arrives for the open card and the list is not focused, show `data-testid="new-comments-pill"` — "{n} new comment{s}" (12px, `bg-primary/10 text-primary rounded-full px-2 py-1`) with "Jump" action that scrolls the list and clears the count. Non-intrusive — no toast spam, no page reload.
 
 ### V5. Export (`export-menu.tsx`, in Board toolbar)
 
