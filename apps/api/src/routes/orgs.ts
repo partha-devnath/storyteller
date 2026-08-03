@@ -216,6 +216,13 @@ orgsRoutes.patch(
     }
     const { role } = result.data
 
+    if (targetUserId === c.var.userId) {
+      throw httpError("Cannot change your own role", 400)
+    }
+    if (role === "owner" && c.var.role !== "owner") {
+      throw httpError("Only owners can grant owner", 403)
+    }
+
     const [target] = await db
       .select()
       .from(organizationMember)
