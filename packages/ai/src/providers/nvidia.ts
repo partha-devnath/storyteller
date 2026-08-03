@@ -21,16 +21,34 @@ export function createNVIDIAProvider(env: NVIDIAProviderEnv): LLMProvider {
 
   async function loadClient() {
     const { default: OpenAI } = await import("openai")
-    return new OpenAI({ apiKey, baseURL: NVIDIA_BASE_URL })
+    return new OpenAI({
+      apiKey,
+      baseURL: NVIDIA_BASE_URL,
+      maxRetries: 4,
+      timeout: 120_000,
+    })
+  }
+
+  async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn()
+    } catch (error) {
+      throw new Error(
+        `NVIDIA API request failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
+      )
+    }
   }
 
   return {
     async chat(messages: ChatMessage[]): Promise<string> {
       const client = await loadClient()
-      const completion = await client.chat.completions.create({
-        model: chatModel,
-        messages,
-      })
+      const completion = await withRetry(() =>
+        client.chat.completions.create({
+          model: chatModel,
+          messages,
+        })
+      )
       const content = completion.choices[0]?.message?.content
       if (content == null) {
         throw new Error("NVIDIA returned an empty chat completion")
@@ -40,12 +58,14 @@ export function createNVIDIAProvider(env: NVIDIAProviderEnv): LLMProvider {
 
     async embed(texts: string[]): Promise<number[][]> {
       const client = await loadClient()
-      const result = await client.embeddings.create({
-        model: embeddingModel,
-        input: texts,
-        input_type: "passage",
-        truncate: "NONE",
-      } as Parameters<typeof client.embeddings.create>[0])
+      const result = await withRetry(() =>
+        client.embeddings.create({
+          model: embeddingModel,
+          input: texts,
+          input_type: "passage",
+          truncate: "NONE",
+        } as Parameters<typeof client.embeddings.create>[0])
+      )
       return result.data.map((entry) => entry.embedding)
     },
   }
