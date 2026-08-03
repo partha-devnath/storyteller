@@ -1,19 +1,24 @@
-import { useParams } from "react-router"
+import { Link, useNavigate, useParams } from "react-router"
 import { useCards } from "@/hooks/use-cards"
 import { CardDrawer } from "@/components/card-drawer"
-import { useState } from "react"
+import { buttonVariants } from "@workspace/ui/components/button"
 
 export function CardDetailPage() {
   const { slug, cardSlug } = useParams<{ slug: string; cardSlug: string }>()
+  const navigate = useNavigate()
   const { data: cards } = useCards(slug)
-  const [dismissed, setDismissed] = useState(false)
-
   const card = cards?.find((c) => c.slug === cardSlug)
 
   if (!card) {
     return (
-      <div className="p-6">
+      <div className="flex flex-col items-start gap-4 p-6">
         <p className="text-sm text-muted-foreground">Card not found.</p>
+        <Link
+          to={`/projects/${slug ?? ""}`}
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          Back to board
+        </Link>
       </div>
     )
   }
@@ -21,8 +26,8 @@ export function CardDetailPage() {
   return (
     <CardDrawer
       cardId={card.id}
-      open={!dismissed}
-      onClose={() => setDismissed(true)}
+      open
+      onClose={() => navigate(`/projects/${slug ?? ""}`, { replace: true })}
       projectSlug={slug ?? ""}
     />
   )
