@@ -40,8 +40,11 @@ const commentSchema = z.object({
 
 cardsRoutes.use("*", resolveOrgFromProject)
 
-async function nextVersionNo(cardId: string): Promise<number> {
-  const [row] = await db
+async function nextVersionNo(
+  executor: typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0],
+  cardId: string
+): Promise<number> {
+  const [row] = await executor
     .select({ maxNo: max(cardVersion.versionNo) })
     .from(cardVersion)
     .where(eq(cardVersion.cardId, cardId))
@@ -135,53 +138,66 @@ cardsRoutes.patch(
     if (!session) throw httpError("Unauthorized", 401)
     const projectId = c.var.projectId!
     const cardId = c.req.param("id")
-    const target = await loadCardInProject(cardId, projectId)
-    if (!target) throw httpError("Not Found", 404)
-    if (target.isClosed) throw httpError("Closed cards are immutable", 409)
 
     const body = updateCardSchema.parse(await c.req.json())
-    const updates: Partial<typeof card.$inferInsert> = { updatedAt: new Date() }
-    if (body.title !== undefined) updates.title = body.title
-    if (body.description !== undefined) updates.description = body.description
-    if (body.acceptanceCriteria !== undefined) {
-      updates.acceptanceCriteria = body.acceptanceCriteria
-    }
-    if (body.status !== undefined) updates.status = body.status
-    if (body.priority !== undefined) updates.priority = body.priority
-    if (body.customFields !== undefined)
-      updates.customFields = body.customFields
-    if (body.assigneeId !== undefined) updates.assigneeId = body.assigneeId
 
-    await db.update(card).set(updates).where(eq(card.id, cardId))
+    const result = await db.transaction(async (tx) => {
+      const [locked] = await tx
+        .select()
+        .from(card)
+        .where(eq(card.id, cardId))
+        .for("update")
+      if (!locked) throw httpError("Not Found", 404)
+      if (locked.isClosed) throw httpError("Closed cards are immutable", 409)
 
-    await db.insert(cardVersion).values({
-      id: generateId(),
-      cardId,
-      versionNo: await nextVersionNo(cardId),
-      title: updates.title ?? target.title,
-      description: updates.description ?? target.description,
-      acceptanceCriteria:
-        (updates.acceptanceCriteria as string[]) ?? target.acceptanceCriteria,
-      status:
-        (updates.status as typeof cardVersion.$inferSelect.status) ??
-        target.status,
-      priority:
-        (updates.priority as typeof cardVersion.$inferSelect.priority) ??
-        target.priority,
-      customFields:
-        (updates.customFields as Record<string, string>) ?? target.customFields,
-      changeType: "update",
-      createdBy: session.user.id,
+      const updates: Partial<typeof card.$inferInsert> = {
+        updatedAt: new Date(),
+      }
+      if (body.title !== undefined) updates.title = body.title
+      if (body.description !== undefined) updates.description = body.description
+      if (body.acceptanceCriteria !== undefined) {
+        updates.acceptanceCriteria = body.acceptanceCriteria
+      }
+      if (body.status !== undefined) updates.status = body.status
+      if (body.priority !== undefined) updates.priority = body.priority
+      if (body.customFields !== undefined)
+        updates.customFields = body.customFields
+      if (body.assigneeId !== undefined) updates.assigneeId = body.assigneeId
+
+      await tx.update(card).set(updates).where(eq(card.id, cardId))
+
+      await tx.insert(cardVersion).values({
+        id: generateId(),
+        cardId,
+        versionNo: await nextVersionNo(tx, cardId),
+        title: updates.title ?? locked.title,
+        description: updates.description ?? locked.description,
+        acceptanceCriteria:
+          (updates.acceptanceCriteria as string[]) ?? locked.acceptanceCriteria,
+        status:
+          (updates.status as typeof cardVersion.$inferSelect.status) ??
+          locked.status,
+        priority:
+          (updates.priority as typeof cardVersion.$inferSelect.priority) ??
+          locked.priority,
+        customFields:
+          (updates.customFields as Record<string, string>) ??
+          locked.customFields,
+        changeType: "update",
+        createdBy: session.user.id,
+      })
+
+      return { card: locked }
     })
 
     publish(projectId, {
       type: "card.updated",
       card: {
         id: cardId,
-        title: updates.title ?? target.title,
-        slug: target.slug,
-        status: (updates.status as string) ?? target.status,
-        isClosed: target.isClosed,
+        title: body.title ?? result.card.title,
+        slug: result.card.slug,
+        status: (body.status as string) ?? result.card.status,
+        isClosed: result.card.isClosed,
       },
     })
 
@@ -197,46 +213,58 @@ cardsRoutes.post(
     if (!session) throw httpError("Unauthorized", 401)
     const projectId = c.var.projectId!
     const cardId = c.req.param("id")
-    const target = await loadCardInProject(cardId, projectId)
-    if (!target) throw httpError("Not Found", 404)
-    if (target.isClosed)
-      return c.json({ success: true, data: { id: cardId, closed: true } })
 
     const body = closeCardSchema.safeParse(await c.req.json().catch(() => ({})))
     if (!body.success) {
       throw httpError(body.error.issues.map((i) => i.message).join("; "), 400)
     }
 
-    await db
-      .update(card)
-      .set({
-        isClosed: true,
-        closedBy: session.user.id,
-        closedAt: new Date(),
-        updatedAt: new Date(),
+    const result = await db.transaction(async (tx) => {
+      const [locked] = await tx
+        .select()
+        .from(card)
+        .where(eq(card.id, cardId))
+        .for("update")
+      if (!locked) throw httpError("Not Found", 404)
+      if (locked.isClosed) return { card: locked, alreadyClosed: true }
+
+      await tx
+        .update(card)
+        .set({
+          isClosed: true,
+          closedBy: session.user.id,
+          closedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(card.id, cardId))
+      await tx.insert(cardVersion).values({
+        id: generateId(),
+        cardId,
+        versionNo: await nextVersionNo(tx, cardId),
+        title: locked.title,
+        description: locked.description,
+        acceptanceCriteria: locked.acceptanceCriteria,
+        status: locked.status,
+        priority: locked.priority,
+        customFields: locked.customFields,
+        changeType: "close",
+        createdBy: session.user.id,
       })
-      .where(eq(card.id, cardId))
-    await db.insert(cardVersion).values({
-      id: generateId(),
-      cardId,
-      versionNo: await nextVersionNo(cardId),
-      title: target.title,
-      description: target.description,
-      acceptanceCriteria: target.acceptanceCriteria,
-      status: target.status,
-      priority: target.priority,
-      customFields: target.customFields,
-      changeType: "close",
-      createdBy: session.user.id,
+
+      return { card: locked, alreadyClosed: false }
     })
+
+    if (result.alreadyClosed) {
+      return c.json({ success: true, data: { id: cardId, closed: true } })
+    }
 
     publish(projectId, {
       type: "card.updated",
       card: {
         id: cardId,
-        title: target.title,
-        slug: target.slug,
-        status: target.status,
+        title: result.card.title,
+        slug: result.card.slug,
+        status: result.card.status,
         isClosed: true,
       },
     })

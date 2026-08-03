@@ -231,6 +231,7 @@ async function applyUpdate(
     .select()
     .from(card)
     .where(and(eq(card.id, targetCardId), eq(card.projectId, projectId)))
+    .for("update")
     .limit(1)
   if (!target) {
     logger.warn(
@@ -314,6 +315,7 @@ async function applyClose(
     .select()
     .from(card)
     .where(and(eq(card.id, targetCardId), eq(card.projectId, projectId)))
+    .for("update")
     .limit(1)
   if (!target) {
     logger.warn(
