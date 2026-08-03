@@ -29,6 +29,7 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_PRICE_PRO: z.string().optional(),
+  TRUSTED_PROXY: z.string().optional(),
 })
 
 export function validateEnv() {
