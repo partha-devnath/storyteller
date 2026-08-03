@@ -11,17 +11,9 @@ import { useAiGenerate, useAiClarify } from "@/hooks/use-ai"
 import { useProposals } from "@/hooks/use-proposals"
 import { useProject } from "@/hooks/use-projects"
 import { useUsage, handleLimitError } from "@/hooks/use-billing"
+import { useChatMessages, useAddChatMessage } from "@/hooks/use-chat"
 import { ProjectTabs } from "@/components/project-tabs"
-
-type ThreadItem =
-  | { role: "user"; text: string }
-  | {
-      role: "ai"
-      kind: "clarifying"
-      questions: { question: string; options?: string[] }[]
-    }
-  | { role: "ai"; kind: "board"; changeCount: number }
-  | { role: "ai"; kind: "error"; text: string }
+import { ChatThread } from "@/components/chat-thread"
 
 export function ProjectChatPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -33,103 +25,130 @@ export function ProjectChatPage() {
   const orgId = projectDetail?.project.orgId
   const usage = useUsage(orgId)
   const aiActionsLimited = usage.isAtLimit("aiActions")
-  const [thread, setThread] = useState<ThreadItem[]>([])
+  const { data: chatMessages = [] } = useChatMessages(slug)
+  const addMessage = useAddChatMessage(slug ?? "")
   const [prompt, setPrompt] = useState("")
-  const [clarifyAnswers, setClarifyAnswers] = useState<Record<number, string>>(
-    {}
-  )
-  const [pendingQuestions, setPendingQuestions] = useState<
-    { question: string; options?: string[] }[] | null
-  >(null)
+  const [pending, setPending] = useState(false)
+  const [answerPrompts, setAnswerPrompts] = useState<{
+    index: number
+    questions: { question: string; options?: string[] }[]
+    answers: string[]
+  } | null>(null)
   const [priorAnswers, setPriorAnswers] = useState("")
 
+  async function persistPair(
+    userText: string,
+    aiReply: {
+      kind: "board" | "clarifying" | "error"
+      content?: string
+      questions?: { question: string; options?: string[] }[]
+      proposalId?: string
+    }
+  ) {
+    if (!slug) return
+    await addMessage.mutateAsync({
+      role: "user",
+      kind: "prompt",
+      content: userText,
+    })
+    await addMessage.mutateAsync({
+      role: "ai",
+      kind: aiReply.kind,
+      content: aiReply.content ?? "",
+      questions: aiReply.questions ?? null,
+      proposalId: aiReply.proposalId ?? null,
+    })
+  }
+
   async function onGenerate() {
-    if (!prompt.trim()) return
+    if (!prompt.trim() || pending) return
     const userPrompt = prompt
-    setThread((t) => [...t, { role: "user", text: userPrompt }])
     setPrompt("")
+    setPending(true)
     try {
       const result = await generate.mutateAsync({ prompt: userPrompt })
       if (result.kind === "clarifying") {
-        setPendingQuestions(result.questions)
-        setThread((t) => [
-          ...t,
-          { role: "ai", kind: "clarifying", questions: result.questions },
-        ])
+        await persistPair(userPrompt, {
+          kind: "clarifying",
+          questions: result.questions,
+        })
       } else {
-        setThread((t) => [
-          ...t,
-          {
-            role: "ai",
-            kind: "board",
-            changeCount: result.proposal.changeCount,
-          },
-        ])
+        await persistPair(userPrompt, {
+          kind: "board",
+          content: `Generated ${result.proposal.changeCount} story cards.`,
+          proposalId: result.proposal.proposalId,
+        })
       }
     } catch (e) {
-      // 402 → limit-banner + destructive toast (V4c), no generic error copy
       if (handleLimitError(e, orgId ?? "", queryClient)) return
-      setThread((t) => [
-        ...t,
-        { role: "ai", kind: "error", text: (e as Error).message },
-      ])
+      await persistPair(userPrompt, {
+        kind: "error",
+        content: (e as Error).message,
+      })
+    } finally {
+      setPending(false)
     }
   }
 
-  async function onClarify() {
-    if (!pendingQuestions) return
-    const answers = pendingQuestions.map((q, i) => ({
-      question: q.question,
-      answer: clarifyAnswers[i] ?? "",
-    }))
-    const summary = answers.map((a) => `${a.question} → ${a.answer}`).join("\n")
+  async function onClarifyAnswer(index: number, answers: string[]) {
+    if (!answerPrompts) return
+    const message = chatMessages[index]
+    const qs = message?.questions ?? []
+    const summary = qs
+      .map((q, qi) => `${q.question} → ${answers[qi] ?? ""}`)
+      .join("\n")
     const newPrior = priorAnswers ? `${priorAnswers}\n${summary}` : summary
     setPriorAnswers(newPrior)
+    setPending(true)
     try {
       const result = await clarify.mutateAsync({
-        question: pendingQuestions.map((q) => q.question).join(" | "),
-        answer: answers.map((a) => a.answer).join(" | "),
+        question: qs.map((q) => q.question).join(" | "),
+        answer: answers.join(" | "),
         priorAnswers: newPrior,
-        prompt: thread.find((t) => t.role === "user")?.text ?? "",
+        prompt:
+          chatMessages
+            .filter((m) => m.kind === "prompt")
+            .map((m) => m.content)
+            .join(" ") || "",
       })
       if (result.kind === "clarifying") {
-        setPendingQuestions(result.questions)
-        setClarifyAnswers({})
-        setThread((t) => [
-          ...t,
-          { role: "ai", kind: "clarifying", questions: result.questions },
-        ])
+        await addMessage.mutateAsync({
+          role: "ai",
+          kind: "clarifying",
+          questions: result.questions,
+        })
       } else {
-        setPendingQuestions(null)
-        setThread((t) => [
-          ...t,
-          {
-            role: "ai",
-            kind: "board",
-            changeCount: result.proposal.changeCount,
-          },
-        ])
+        await addMessage.mutateAsync({
+          role: "ai",
+          kind: "board",
+          content: `Generated ${result.proposal.changeCount} story cards.`,
+          proposalId: result.proposal.proposalId,
+        })
       }
     } catch (e) {
       if (handleLimitError(e, orgId ?? "", queryClient)) return
-      setThread((t) => [
-        ...t,
-        { role: "ai", kind: "error", text: (e as Error).message },
-      ])
+      await addMessage.mutateAsync({
+        role: "ai",
+        kind: "error",
+        content: (e as Error).message,
+      })
+    } finally {
+      setAnswerPrompts(null)
+      setPending(false)
     }
   }
 
   const generateButton = (
     <Button
       onClick={onGenerate}
-      disabled={generate.isPending || !!pendingQuestions || aiActionsLimited}
+      disabled={generate.isPending || pending || aiActionsLimited}
     >
-      {generate.isPending ? "Generating..." : "Generate"}
+      {pending ? "Generating..." : "Generate"}
     </Button>
   )
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+    <div className="flex w-full max-w-3xl flex-col gap-4">
       <ProjectTabs slug={slug ?? ""} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Chat</h1>
@@ -138,73 +157,63 @@ export function ProjectChatPage() {
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 rounded-lg border p-4">
-        {thread.length === 0 && (
+      <div className="flex flex-col gap-3 rounded-lg border p-4">
+        {chatMessages.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Describe the product you want to build. Storyteller will generate a
             board of stories you can review and approve.
           </p>
+        ) : (
+          <ChatThread
+            messages={chatMessages}
+            projectSlug={slug ?? ""}
+            onClarifyAnswer={(i, _a) => {
+              const m = chatMessages[i]
+              if (!m?.questions) return
+              setAnswerPrompts({
+                index: i,
+                questions: m.questions,
+                answers: m.questions.map(() => ""),
+              })
+            }}
+          />
         )}
-        {thread.map((item, i) => (
-          <div
-            key={i}
-            className={
-              item.role === "user"
-                ? "self-end rounded-lg bg-primary/10 px-3 py-2 text-sm"
-                : "self-start rounded-lg border px-3 py-2 text-sm"
-            }
-          >
-            {item.role === "user" && <p>{item.text}</p>}
-            {item.role === "ai" && item.kind === "clarifying" && (
-              <div className="space-y-2">
-                <p className="font-medium">
-                  A few questions to clarify the board:
-                </p>
-                {item.questions.map((q, qi) => (
-                  <div key={qi}>
-                    <p>{q.question}</p>
-                    {q.options && (
-                      <p className="text-xs text-muted-foreground">
-                        Options: {q.options.join(", ")}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {item.role === "ai" && item.kind === "board" && (
-              <p>
-                Generated {item.changeCount} story cards. Review them in the
-                board's proposal queue.
-              </p>
-            )}
-            {item.role === "ai" && item.kind === "error" && (
-              <p className="text-destructive">{item.text}</p>
-            )}
-          </div>
-        ))}
-      </div>
 
-      {pendingQuestions && (
-        <div className="space-y-2 rounded-lg border p-4">
-          {pendingQuestions.map((q, i) => (
-            <div key={i} className="space-y-1">
-              <label className="text-sm">{q.question}</label>
-              <input
-                data-testid="clarify-answer"
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                value={clarifyAnswers[i] ?? ""}
-                onChange={(e) =>
-                  setClarifyAnswers((a) => ({ ...a, [i]: e.target.value }))
-                }
-              />
-            </div>
-          ))}
-          <Button onClick={onClarify} disabled={clarify.isPending}>
-            {clarify.isPending ? "Generating..." : "Submit answers"}
-          </Button>
-        </div>
-      )}
+        {answerPrompts && (
+          <div className="space-y-2 rounded-lg border p-4">
+            {answerPrompts.questions.map((q, qi) => (
+              <div key={qi} className="space-y-1">
+                <label className="text-sm">{q.question}</label>
+                <input
+                  data-testid="clarify-answer"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  value={answerPrompts.answers[qi] ?? ""}
+                  onChange={(e) =>
+                    setAnswerPrompts((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            answers: prev.answers.map((a, i) =>
+                              i === qi ? e.target.value : a
+                            ),
+                          }
+                        : prev
+                    )
+                  }
+                />
+              </div>
+            ))}
+            <Button
+              onClick={() =>
+                onClarifyAnswer(answerPrompts.index, answerPrompts.answers)
+              }
+              disabled={clarify.isPending || pending}
+            >
+              {pending ? "Generating..." : "Submit answers"}
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <textarea
@@ -214,9 +223,7 @@ export function ProjectChatPage() {
           placeholder="Describe your product idea..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          disabled={
-            generate.isPending || !!pendingQuestions || aiActionsLimited
-          }
+          disabled={generate.isPending || pending || aiActionsLimited}
         />
         {aiActionsLimited ? (
           <Tooltip>
