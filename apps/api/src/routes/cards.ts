@@ -25,7 +25,7 @@ import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
 import { publish } from "../services/event-bus"
-import { assertLimit } from "../services/plan-limits"
+import { assertLimitTx } from "../services/plan-limits"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -63,59 +63,61 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
   const projectId = c.var.projectId!
   const body = createCardSchema.parse(await c.req.json())
 
-  await assertLimit(c.var.orgId!, "cards")
-
   const cardId = generateId()
   const slug = slugify(body.title) || "card"
-  await db.insert(card).values({
-    id: cardId,
-    projectId,
-    epicId: body.epicId ?? null,
-    title: body.title,
-    description: body.description ?? "",
-    acceptanceCriteria: body.acceptanceCriteria ?? [],
-    status: body.status,
-    priority: body.priority,
-    assigneeId: body.assigneeId ?? null,
-    customFields: body.customFields ?? null,
-    slug,
-  })
-  await db.insert(cardVersion).values({
-    id: generateId(),
-    cardId,
-    versionNo: 1,
-    title: body.title,
-    description: body.description ?? "",
-    acceptanceCriteria: body.acceptanceCriteria ?? [],
-    status: body.status,
-    priority: body.priority,
-    customFields: body.customFields ?? null,
-    changeType: "create",
-    createdBy: session.user.id,
-  })
-  for (const fileId of body.attachmentFileIds ?? []) {
-    const [owned] = await db
-      .select({ id: fileSchema.id })
-      .from(fileSchema)
-      .innerJoin(
-        organizationMember,
-        eq(fileSchema.userId, organizationMember.userId)
-      )
-      .where(
-        and(
-          eq(fileSchema.id, fileId),
-          eq(organizationMember.orgId, c.var.orgId!)
-        )
-      )
-      .limit(1)
-    if (!owned) throw httpError("Forbidden", 403)
-    await db.insert(cardAttachment).values({
+  await db.transaction(async (tx) => {
+    await assertLimitTx(tx, c.var.orgId!, "cards")
+
+    await tx.insert(card).values({
+      id: cardId,
+      projectId,
+      epicId: body.epicId ?? null,
+      title: body.title,
+      description: body.description ?? "",
+      acceptanceCriteria: body.acceptanceCriteria ?? [],
+      status: body.status,
+      priority: body.priority,
+      assigneeId: body.assigneeId ?? null,
+      customFields: body.customFields ?? null,
+      slug,
+    })
+    await tx.insert(cardVersion).values({
       id: generateId(),
       cardId,
-      fileId,
-      uploadedBy: session.user.id,
+      versionNo: 1,
+      title: body.title,
+      description: body.description ?? "",
+      acceptanceCriteria: body.acceptanceCriteria ?? [],
+      status: body.status,
+      priority: body.priority,
+      customFields: body.customFields ?? null,
+      changeType: "create",
+      createdBy: session.user.id,
     })
-  }
+    for (const fileId of body.attachmentFileIds ?? []) {
+      const [owned] = await tx
+        .select({ id: fileSchema.id })
+        .from(fileSchema)
+        .innerJoin(
+          organizationMember,
+          eq(fileSchema.userId, organizationMember.userId)
+        )
+        .where(
+          and(
+            eq(fileSchema.id, fileId),
+            eq(organizationMember.orgId, c.var.orgId!)
+          )
+        )
+        .limit(1)
+      if (!owned) throw httpError("Forbidden", 403)
+      await tx.insert(cardAttachment).values({
+        id: generateId(),
+        cardId,
+        fileId,
+        uploadedBy: session.user.id,
+      })
+    }
+  })
 
   publish(projectId, {
     type: "card.created",

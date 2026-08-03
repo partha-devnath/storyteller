@@ -250,15 +250,18 @@ export function buildSeedRows(
 export async function seedTemplateProject(
   orgId: string,
   userId: string,
-  templateId: TemplateDefinition["id"]
+  templateId: TemplateDefinition["id"],
+  tx?: Parameters<Parameters<typeof db.transaction>[0]>[0]
 ): Promise<{ slug: string }> {
   if (templateId !== "product-launch") {
     throw httpError("Unknown template", 400)
   }
 
   const rows = buildSeedRows(PRODUCT_LAUNCH_TEMPLATE, orgId, userId)
-  await db.transaction(async (tx) => {
-    await tx.insert(project).values({
+  const seed = async (executor: {
+    insert: typeof db.insert
+  }): Promise<void> => {
+    await executor.insert(project).values({
       id: rows.project.id,
       orgId: rows.project.orgId,
       name: rows.project.name,
@@ -268,15 +271,21 @@ export async function seedTemplateProject(
       customFields: rows.project.customFields,
     })
     for (const epicRow of rows.epics) {
-      await tx.insert(epic).values(epicRow)
+      await executor.insert(epic).values(epicRow)
     }
     for (const cardRow of rows.cards) {
-      await tx.insert(card).values(cardRow)
+      await executor.insert(card).values(cardRow)
     }
     for (const versionRow of rows.versions) {
-      await tx.insert(cardVersion).values(versionRow)
+      await executor.insert(cardVersion).values(versionRow)
     }
-  })
+  }
+
+  if (tx) {
+    await seed(tx)
+  } else {
+    await db.transaction(seed)
+  }
 
   return { slug: rows.project.slug }
 }

@@ -110,6 +110,19 @@ export async function getOrgPlan(orgId: string): Promise<PlanId> {
   return (await getOrgSubscription(orgId)).plan
 }
 
+/** Same read as getOrgPlan but executed on a caller-supplied executor. */
+export async function getOrgPlanTx(
+  tx: typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0],
+  orgId: string
+): Promise<PlanId> {
+  const [row] = await tx
+    .select()
+    .from(subscription)
+    .where(eq(subscription.orgId, orgId))
+    .limit(1)
+  return row?.plan ?? "free"
+}
+
 /** Find the orgId owning a stripe subscription id (webhook sync path). */
 export async function getOrgIdByStripeSubscriptionId(
   stripeSubscriptionId: string

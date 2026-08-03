@@ -1,10 +1,11 @@
 import { Hono } from "hono"
+import { db } from "@workspace/db"
 import { templateCreateSchema } from "@workspace/schemas/validations/billing"
 import { errorHandler } from "../middleware/error-handler"
 import { requireOrg } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { validateBody } from "../middleware/validate"
-import { assertLimit } from "../services/plan-limits"
+import { assertLimitTx } from "../services/plan-limits"
 import { seedTemplateProject } from "../services/template-seed"
 import type { AppEnv } from "../middleware/env"
 
@@ -26,12 +27,10 @@ templatesRoutes.post(
   async (c) => {
     const orgId = c.var.orgId
     const body = c.var.body as { templateId: "product-launch" }
-    await assertLimit(orgId, "projects")
-    const result = await seedTemplateProject(
-      orgId,
-      c.var.userId,
-      body.templateId
-    )
+    const result = await db.transaction(async (tx) => {
+      await assertLimitTx(tx, orgId, "projects")
+      return seedTemplateProject(orgId, c.var.userId, body.templateId, tx)
+    })
     return c.json({ success: true, data: result }, 201)
   }
 )

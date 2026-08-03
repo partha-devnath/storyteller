@@ -5,12 +5,19 @@ import type { LimitMetric } from "@workspace/schemas"
 
 export type UsageState = Record<LimitMetric, number>
 
+export type Executor =
+  | typeof db
+  | Parameters<Parameters<typeof db.transaction>[0]>[0]
+
 /**
  * Count projects for an org. Org-scoped by project.orgId — a missing
  * orgId filter would leak cross-org counts into limit decisions.
  */
-export async function countProjects(orgId: string): Promise<number> {
-  const [row] = await db
+export async function countProjects(
+  orgId: string,
+  executor: Executor = db
+): Promise<number> {
+  const [row] = await executor
     .select({ value: count() })
     .from(project)
     .where(eq(project.orgId, orgId))
@@ -21,8 +28,11 @@ export async function countProjects(orgId: string): Promise<number> {
  * Count accepted members for an org. Only rows with a linked userId count —
  * pending invites (userId null) do not consume the members limit.
  */
-export async function countAcceptedMembers(orgId: string): Promise<number> {
-  const [row] = await db
+export async function countAcceptedMembers(
+  orgId: string,
+  executor: Executor = db
+): Promise<number> {
+  const [row] = await executor
     .select({ value: count() })
     .from(organizationMember)
     .where(
@@ -40,8 +50,11 @@ export async function countAcceptedMembers(orgId: string): Promise<number> {
  * Resolves the org's project ids first, then counts proposals created at or
  * after the start of the current calendar month (UTC).
  */
-export async function countAiActionsThisMonth(orgId: string): Promise<number> {
-  const projectIds = await db
+export async function countAiActionsThisMonth(
+  orgId: string,
+  executor: Executor = db
+): Promise<number> {
+  const projectIds = await executor
     .select({ id: project.id })
     .from(project)
     .where(eq(project.orgId, orgId))
@@ -51,7 +64,7 @@ export async function countAiActionsThisMonth(orgId: string): Promise<number> {
   const monthStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
   )
-  const [row] = await db
+  const [row] = await executor
     .select({ value: count() })
     .from(proposal)
     .where(
@@ -70,14 +83,17 @@ export async function countAiActionsThisMonth(orgId: string): Promise<number> {
  * Count cards across all of an org's projects. Counts open + closed cards —
  * both consume storage (UI-SPEC "cards" metric).
  */
-export async function countCards(orgId: string): Promise<number> {
-  const projectIds = await db
+export async function countCards(
+  orgId: string,
+  executor: Executor = db
+): Promise<number> {
+  const projectIds = await executor
     .select({ id: project.id })
     .from(project)
     .where(eq(project.orgId, orgId))
   if (projectIds.length === 0) return 0
 
-  const [row] = await db
+  const [row] = await executor
     .select({ value: count() })
     .from(card)
     .where(

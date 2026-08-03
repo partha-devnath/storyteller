@@ -23,7 +23,7 @@ import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
 import { publish } from "../services/event-bus"
-import { assertLimit } from "../services/plan-limits"
+import { assertLimitTx } from "../services/plan-limits"
 import { generateId } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -59,6 +59,7 @@ async function resolveProjectId(projectSlug: string): Promise<string> {
 }
 
 function persistProposal(params: {
+  orgId: string
   projectId: string
   userId: string
   instruction: string
@@ -74,6 +75,7 @@ function persistProposal(params: {
 }): Promise<{ proposalId: string; changeCount: number }> {
   const proposalId = generateId()
   return db.transaction(async (tx) => {
+    await assertLimitTx(tx, params.orgId, "aiActions")
     await tx.insert(proposal).values({
       id: proposalId,
       projectId: params.projectId,
@@ -111,7 +113,6 @@ aiRoutes.post("/generate", async (c) => {
   const projectId = c.var.projectId!
   const resolved = await resolveProjectId(body.projectSlug)
   if (resolved !== projectId) throw httpError("Forbidden", 403)
-  await assertLimit(c.var.orgId!, "aiActions")
 
   const snapshot = await buildBoardSnapshot(projectId)
   const result = await generateBoard({
@@ -144,6 +145,7 @@ aiRoutes.post("/generate", async (c) => {
   )
 
   const created = await persistProposal({
+    orgId: c.var.orgId!,
     projectId,
     userId: session.user.id,
     instruction: body.prompt,
@@ -170,7 +172,6 @@ aiRoutes.post("/process", async (c) => {
   const projectId = c.var.projectId!
   const resolved = await resolveProjectId(body.projectSlug)
   if (resolved !== projectId) throw httpError("Forbidden", 403)
-  await assertLimit(c.var.orgId!, "aiActions")
 
   const semantic = await buildSemanticContext({
     projectId,
@@ -221,6 +222,7 @@ aiRoutes.post("/process", async (c) => {
   })
 
   const created = await persistProposal({
+    orgId: c.var.orgId!,
     projectId,
     userId: session.user.id,
     instruction: body.instruction,
@@ -244,7 +246,6 @@ aiRoutes.post("/clarify", async (c) => {
   const projectId = c.var.projectId!
   const resolved = await resolveProjectId(body.projectSlug)
   if (resolved !== projectId) throw httpError("Forbidden", 403)
-  await assertLimit(c.var.orgId!, "aiActions")
 
   const snapshot = await buildBoardSnapshot(projectId)
   const result = await answerClarifyingQuestions({
@@ -280,6 +281,7 @@ aiRoutes.post("/clarify", async (c) => {
   )
 
   const created = await persistProposal({
+    orgId: c.var.orgId!,
     projectId,
     userId: session.user.id,
     instruction: body.prompt,

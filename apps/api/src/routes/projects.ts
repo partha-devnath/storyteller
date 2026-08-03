@@ -9,7 +9,7 @@ import { resolveOrgFromProject } from "../middleware/org-scope"
 import { validateBody } from "../middleware/validate"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
-import { assertLimit } from "../services/plan-limits"
+import { assertLimitTx } from "../services/plan-limits"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -49,31 +49,33 @@ projectsRoutes.post("/", validateBody(createProjectSchema), async (c) => {
     throw httpError("Forbidden: insufficient role", 403)
   }
 
-  await assertLimit(body.orgId, "projects")
+  await db.transaction(async (tx) => {
+    await assertLimitTx(tx, body.orgId, "projects")
 
-  const slug = body.slug ?? slugify(body.name)
-  const projectId = generateId()
-  await db.insert(project).values({
-    id: projectId,
-    orgId: body.orgId,
-    name: body.name,
-    slug,
-    description: body.description ?? null,
-    columns: body.columns ?? [
-      { key: "backlog", title: "Backlog" },
-      { key: "todo", title: "To Do" },
-      { key: "in_progress", title: "In Progress" },
-      { key: "review", title: "Review" },
-      { key: "done", title: "Done" },
-    ],
-    customFields:
-      (body.customFields as typeof project.$inferSelect.customFields) ?? [],
+    const slug = body.slug ?? slugify(body.name)
+    const projectId = generateId()
+    await tx.insert(project).values({
+      id: projectId,
+      orgId: body.orgId,
+      name: body.name,
+      slug,
+      description: body.description ?? null,
+      columns: body.columns ?? [
+        { key: "backlog", title: "Backlog" },
+        { key: "todo", title: "To Do" },
+        { key: "in_progress", title: "In Progress" },
+        { key: "review", title: "Review" },
+        { key: "done", title: "Done" },
+      ],
+      customFields:
+        (body.customFields as typeof project.$inferSelect.customFields) ?? [],
+    })
+
+    return c.json(
+      { success: true, data: { id: projectId, name: body.name, slug } },
+      201
+    )
   })
-
-  return c.json(
-    { success: true, data: { id: projectId, name: body.name, slug } },
-    201
-  )
 })
 
 projectsRoutes.get("/", requireOrg, async (c) => {
