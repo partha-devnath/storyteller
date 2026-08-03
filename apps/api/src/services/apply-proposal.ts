@@ -9,6 +9,8 @@ import {
   cardAttachment,
   epic,
   project,
+  file as fileSchema,
+  organizationMember,
 } from "@workspace/schemas"
 import { reindexCard } from "@workspace/vector"
 import { aiProvider } from "@workspace/ai"
@@ -202,7 +204,7 @@ async function applyCreate(
     sourceProposalChangeId: change.id,
   })
   await insertRelations(tx, projectId, change.relationSummary)
-  await insertAttachments(tx, cardId, approverId, change.newData)
+  await insertAttachments(tx, cardId, approverId, change.newData, proj.orgId)
   await reindexSafe(cardId, versionId)
   publish(projectId, {
     type: "card.created",
@@ -383,10 +385,23 @@ async function insertAttachments(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   cardId: string,
   uploadedBy: string,
-  newData: Record<string, unknown>
+  newData: Record<string, unknown>,
+  orgId: string
 ): Promise<void> {
   const fileIds = (newData.attachmentFileIds as string[]) ?? []
   for (const fileId of fileIds) {
+    const [owned] = await tx
+      .select({ id: fileSchema.id })
+      .from(fileSchema)
+      .innerJoin(
+        organizationMember,
+        eq(fileSchema.userId, organizationMember.userId)
+      )
+      .where(
+        and(eq(fileSchema.id, fileId), eq(organizationMember.orgId, orgId))
+      )
+      .limit(1)
+    if (!owned) throw httpError("Forbidden", 403)
     await tx.insert(cardAttachment).values({
       id: generateId(),
       cardId,

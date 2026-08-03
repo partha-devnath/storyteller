@@ -10,6 +10,7 @@ import {
   cardAttachment,
   file as fileSchema,
   user as userSchema,
+  organizationMember,
 } from "@workspace/schemas"
 import {
   createCardSchema,
@@ -93,6 +94,21 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
     createdBy: session.user.id,
   })
   for (const fileId of body.attachmentFileIds ?? []) {
+    const [owned] = await db
+      .select({ id: fileSchema.id })
+      .from(fileSchema)
+      .innerJoin(
+        organizationMember,
+        eq(fileSchema.userId, organizationMember.userId)
+      )
+      .where(
+        and(
+          eq(fileSchema.id, fileId),
+          eq(organizationMember.orgId, c.var.orgId!)
+        )
+      )
+      .limit(1)
+    if (!owned) throw httpError("Forbidden", 403)
     await db.insert(cardAttachment).values({
       id: generateId(),
       cardId,
