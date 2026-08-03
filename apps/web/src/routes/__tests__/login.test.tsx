@@ -53,7 +53,7 @@ describe("LoginPage", () => {
     expect(await screen.findByText("Invalid email address")).toBeInTheDocument()
   })
 
-  it("calls signIn.email and navigates to /dashboard on success", async () => {
+  it("calls signIn.email and navigates to /projects on success", async () => {
     mockSignInEmail.mockResolvedValue({})
     renderPage()
     const user = userEvent.setup()
@@ -68,7 +68,7 @@ describe("LoginPage", () => {
         password: "Testpass1",
       })
     })
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard")
+    expect(mockNavigate).toHaveBeenCalledWith("/projects")
   })
 
   it("shows error message when sign in returns an error", async () => {

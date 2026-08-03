@@ -40,7 +40,7 @@ export function LoginPage() {
         )
         return
       }
-      navigate("/dashboard")
+      navigate("/projects")
     } catch {
       setError("An unexpected error occurred")
     } finally {

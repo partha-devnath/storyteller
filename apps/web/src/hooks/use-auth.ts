@@ -15,7 +15,7 @@ export function useAuth() {
   const login = async (email: string, password: string) => {
     const result = await signIn.email({ email, password })
     if (result.error) throw new Error(result.error.message ?? "Login failed")
-    navigate("/dashboard")
+    navigate("/projects")
     return result
   }
 

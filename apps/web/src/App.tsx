@@ -1,10 +1,9 @@
-import { Routes, Route } from "react-router"
+import { Routes, Route, Navigate } from "react-router"
 import { LoginPage } from "@/routes/login"
 import { SignupPage } from "@/routes/signup"
 import { VerifyEmailPage } from "@/routes/verify-email"
 import { ForgotPasswordPage } from "@/routes/forgot-password"
 import { ResetPasswordPage } from "@/routes/reset-password"
-import { DashboardPage } from "@/routes/dashboard"
 import { LandingPage } from "@/routes/landing"
 import { ProjectsPage } from "@/routes/projects"
 import { ProjectChatPage } from "@/routes/project-chat"
@@ -32,7 +31,10 @@ export function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route
+            path="/dashboard"
+            element={<Navigate to="/projects" replace />}
+          />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:slug" element={<ProjectBoardPage />} />
           <Route path="/projects/:slug/chat" element={<ProjectChatPage />} />

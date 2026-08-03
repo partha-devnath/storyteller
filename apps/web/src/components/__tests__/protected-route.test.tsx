@@ -55,7 +55,7 @@ describe("PublicRoute", () => {
     expect(screen.getByText("Loading...")).toBeInTheDocument()
   })
 
-  it("redirects to dashboard when authenticated", () => {
+  it("redirects when authenticated", () => {
     mockUseSession.mockReturnValue({
       data: { user: { id: "1", email: "a@b.com" } },
       isPending: false,

@@ -53,7 +53,7 @@ describe("useAuth", () => {
     expect(result.current.session).toBeNull()
   })
 
-  it("login calls signIn.email and navigates to /dashboard", async () => {
+  it("login calls signIn.email and navigates to /projects", async () => {
     mockUseSession.mockReturnValue({ data: null, isPending: false })
     mockSignInEmail.mockResolvedValue({})
     const { useAuth } = await import("../use-auth")
@@ -66,7 +66,7 @@ describe("useAuth", () => {
       email: "a@b.com",
       password: "pass123",
     })
-    expect(mockNavigate).toHaveBeenCalledWith("/dashboard")
+    expect(mockNavigate).toHaveBeenCalledWith("/projects")
   })
 
   it("login throws on auth error", async () => {
