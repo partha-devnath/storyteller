@@ -1,0 +1,47 @@
+import { describe, it, expect } from "vitest"
+import { render, screen } from "@testing-library/react"
+import { MemoryRouter, Route, Routes } from "react-router"
+import { ProjectTabs } from "@/components/project-tabs"
+
+function renderAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/projects/:slug/*" element={<ProjectTabs slug="acme" />} />
+      </Routes>
+    </MemoryRouter>
+  )
+}
+
+describe("ProjectTabs", () => {
+  it("renders Board, Graph, Chat", () => {
+    renderAt("/projects/acme")
+    expect(screen.getByRole("tab", { name: "Board" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Graph" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Chat" })).toBeInTheDocument()
+  })
+
+  it("Board active on board view", () => {
+    renderAt("/projects/acme")
+    expect(screen.getByTestId("view-switcher-board")).toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+  })
+
+  it("Graph active on ?view=graph", () => {
+    renderAt("/projects/acme?view=graph")
+    expect(screen.getByTestId("view-switcher-graph")).toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+  })
+
+  it("Chat active on chat route", () => {
+    renderAt("/projects/acme/chat")
+    expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+  })
+})
