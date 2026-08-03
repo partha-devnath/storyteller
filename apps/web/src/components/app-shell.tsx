@@ -92,6 +92,20 @@ export function AppShell() {
   const projectsLimited = isAtLimit("projects")
 
   const inProject = Boolean(slug)
+  const pageLabel =
+    location.pathname === "/projects"
+      ? "Boards"
+      : inProject
+        ? location.pathname.endsWith("/chat")
+          ? "Chat"
+          : "Board"
+        : location.pathname.includes("/members")
+          ? "Members"
+          : location.pathname.includes("/billing")
+            ? "Billing"
+            : location.pathname.includes("/analytics")
+              ? "Analytics"
+              : ""
 
   useEffect(() => {
     setSidebarOpen(false)
@@ -127,6 +141,7 @@ export function AppShell() {
                 {activeOrg?.name}
                 {inProject && (activeOrg ? " / " : "")}
                 {inProject ? slug : ""}
+                {pageLabel && <> · {pageLabel}</>}
               </span>
             )}
           </div>

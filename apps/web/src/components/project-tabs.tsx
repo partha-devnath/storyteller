@@ -14,7 +14,7 @@ export function ProjectTabs({ slug }: { slug: string }) {
   const [searchParams] = useSearchParams()
   const view = searchParams.get("view") ?? "board"
   const boardBase = `/projects/${slug}`
-  const graphTo = view === "graph" ? boardBase : `${boardBase}?view=graph`
+  const graphTo = `${boardBase}?view=graph`
 
   return (
     <nav className="flex items-center gap-1 border-b bg-background px-4 py-1.5">
@@ -23,6 +23,7 @@ export function ProjectTabs({ slug }: { slug: string }) {
         end
         role="tab"
         className={({ isActive }) => tabClass(isActive && view === "board")}
+        aria-current={view === "board" ? "page" : false}
         data-testid="view-switcher-board"
       >
         Board
@@ -31,6 +32,7 @@ export function ProjectTabs({ slug }: { slug: string }) {
         to={graphTo}
         role="tab"
         className={({ isActive }) => tabClass(isActive && view === "graph")}
+        aria-current={view === "graph" ? "page" : false}
         data-testid="view-switcher-graph"
       >
         Graph

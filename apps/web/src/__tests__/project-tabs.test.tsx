@@ -37,6 +37,18 @@ describe("ProjectTabs", () => {
     )
   })
 
+  it("Board is not active on graph view", () => {
+    renderAt("/projects/acme?view=graph")
+    expect(screen.getByTestId("view-switcher-board")).not.toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+    expect(screen.getByTestId("view-switcher-graph")).toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+  })
+
   it("Chat active on chat route", () => {
     renderAt("/projects/acme/chat")
     expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute(
