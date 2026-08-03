@@ -399,4 +399,29 @@ test.describe.serial("phase 2", () => {
     expect(mdText).toContain("Legacy rewards v1")
     expect(mdText).toContain("(closed)")
   })
+
+  test("J4: chat history persists and board replies approve inline", async ({
+    page,
+  }) => {
+    await signIn(page, TEST_USER.email, TEST_USER.password)
+    await page.goto(`/projects/${GRAPH_PROJECT_SLUG}/chat`)
+    await runPrompt(page, "Add a referral program")
+
+    await expect(page.getByTestId("chat-board-reply").first()).toBeVisible({
+      timeout: 15_000,
+    })
+    await page.getByTestId("approve-proposal").first().click()
+    await expect(page.getByTestId("proposal-status").first()).toContainText(
+      "approved",
+      { timeout: 15_000 }
+    )
+
+    await page.reload()
+    await expect(page.getByText("Add a referral program")).toBeVisible({
+      timeout: 10_000,
+    })
+    await expect(page.getByTestId("chat-board-reply").first()).toBeVisible({
+      timeout: 15_000,
+    })
+  })
 })
