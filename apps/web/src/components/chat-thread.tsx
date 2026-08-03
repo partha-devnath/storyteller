@@ -23,8 +23,10 @@ function BoardReply({
   const [reason, setReason] = useState("")
   const status = data?.proposal.status
 
-  const refresh = () =>
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["proposal"] })
     qc.invalidateQueries({ queryKey: ["proposals", projectSlug] })
+  }
 
   if (!data) return null
 

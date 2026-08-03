@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useParams } from "react-router"
 import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@workspace/ui/components/button"
@@ -35,6 +35,17 @@ export function ProjectChatPage() {
     answers: string[]
   } | null>(null)
   const [priorAnswers, setPriorAnswers] = useState("")
+  const restoredPriorAnswers = useMemo(() => {
+    const persisted = chatMessages.filter(
+      (m) =>
+        m.role === "user" &&
+        m.kind === "prompt" &&
+        m.content.startsWith("Answers:")
+    )
+    if (persisted.length === 0) return ""
+    const last = persisted[persisted.length - 1]
+    return last.content.replace(/^Answers:\n/, "")
+  }, [chatMessages])
 
   async function persistPair(
     userText: string,
@@ -97,8 +108,14 @@ export function ProjectChatPage() {
     const summary = qs
       .map((q, qi) => `${q.question} → ${answers[qi] ?? ""}`)
       .join("\n")
-    const newPrior = priorAnswers ? `${priorAnswers}\n${summary}` : summary
+    const currentPrior = priorAnswers || restoredPriorAnswers
+    const newPrior = currentPrior ? `${currentPrior}\n${summary}` : summary
     setPriorAnswers(newPrior)
+    await addMessage.mutateAsync({
+      role: "user",
+      kind: "prompt",
+      content: `Answers:\n${summary}`,
+    })
     setPending(true)
     try {
       const result = await clarify.mutateAsync({

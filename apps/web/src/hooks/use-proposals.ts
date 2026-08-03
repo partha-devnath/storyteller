@@ -74,7 +74,10 @@ export function useApproveProposal(projectSlug: string) {
       )
       return res.data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["proposals"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["proposal"] })
+      qc.invalidateQueries({ queryKey: ["proposals"] })
+    },
   })
 }
 
@@ -88,6 +91,9 @@ export function useRejectProposal(projectSlug: string) {
       )
       return res.data
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["proposals"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["proposal"] })
+      qc.invalidateQueries({ queryKey: ["proposals"] })
+    },
   })
 }
