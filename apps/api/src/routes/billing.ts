@@ -21,36 +21,24 @@ export const billingRoutes = new Hono<AppEnv>()
 billingRoutes.onError(errorHandler)
 
 /**
- * GET /:id/billing — any org member. Server-truth plan + usage; checkoutUrl
- * only when on free, portalUrl only when on pro (stripe session creation
- * only happens when the plan warrants it — keeps the read path cheap).
+ * GET /:id/billing — any org member. Read-only server-truth plan + usage.
+ * No Stripe session is created on load: session URLs are only generated on
+ * explicit client requests via POST /billing/checkout and GET /billing/portal
+ * (WR-08 — checkout/portal creation was happening on every page view).
  */
 billingRoutes.get("/:id/billing", requireOrg, async (c) => {
   const orgId = c.var.orgId
   const plan = await getOrgPlan(orgId)
   const usage = await getUsage(orgId)
 
-  let checkoutUrl: string | null = null
-  let portalUrl: string | null = null
-  if (plan === "pro") {
-    portalUrl = (await billingProvider.createPortalSession(orgId)).url
-  } else {
-    const successUrl = `${CLIENT_URL}/orgs/${orgId}/billing?checkout=success`
-    const cancelUrl = `${CLIENT_URL}/orgs/${orgId}/billing`
-    checkoutUrl = (
-      await billingProvider.createCheckoutSession({
-        orgId,
-        tier: "pro",
-        userId: c.var.userId,
-        successUrl,
-        cancelUrl,
-      })
-    ).url
-  }
-
   return c.json({
     success: true,
-    data: computeBillingState({ plan, usage, checkoutUrl, portalUrl }),
+    data: computeBillingState({
+      plan,
+      usage,
+      checkoutUrl: null,
+      portalUrl: null,
+    }),
   })
 })
 
