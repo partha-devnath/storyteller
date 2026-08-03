@@ -31,7 +31,7 @@ const steps = ["Prompt", "Review", "Live"]
 export function LandingPage() {
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="flex h-16 items-center justify-between border-b px-6">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between bg-background/80 px-6 backdrop-blur">
         <span className="text-lg font-semibold">Storyteller</span>
         <nav className="flex items-center gap-3">
           <Link to="/login">
@@ -45,7 +45,7 @@ export function LandingPage() {
         </nav>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-20 px-6 py-20">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-14 px-6 py-16 md:py-24">
         <section className="flex flex-col items-center gap-6 text-center">
           <h1 className="max-w-3xl text-4xl font-bold tracking-tight md:text-6xl">
             Turn a product idea into a living requirements board.
@@ -63,15 +63,15 @@ export function LandingPage() {
         <section className="grid gap-4 rounded-2xl border p-6 md:grid-cols-3">
           {steps.map((step, i) => (
             <div key={step} className="flex flex-col gap-2">
-              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Step {i + 1}
+              <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                0{i + 1}
               </span>
               <p className="text-lg font-semibold">{step}</p>
             </div>
           ))}
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
             <Card key={f.title}>
               <CardHeader>
