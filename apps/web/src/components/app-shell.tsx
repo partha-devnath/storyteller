@@ -16,7 +16,6 @@ import { UserMenu } from "./user-menu"
 import { EnvIndicator } from "./env-indicator"
 import { LimitBanner } from "./limit-banner"
 import { ThemeToggle } from "./theme-toggle"
-import { ProjectTabs } from "./project-tabs"
 import { getWorkspaceNavItems, getOrgNavItems } from "@/lib/nav-items"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
@@ -166,8 +165,6 @@ export function AppShell() {
           {user && <UserMenu name={user.name} role={role} onLogout={logout} />}
         </div>
       </header>
-
-      {slug && <ProjectTabs slug={slug} />}
 
       <LimitBanner orgId={selectedOrgId ?? activeOrg?.id} />
 

@@ -11,6 +11,7 @@ import { useAiGenerate, useAiClarify } from "@/hooks/use-ai"
 import { useProposals } from "@/hooks/use-proposals"
 import { useProject } from "@/hooks/use-projects"
 import { useUsage, handleLimitError } from "@/hooks/use-billing"
+import { ProjectTabs } from "@/components/project-tabs"
 
 type ThreadItem =
   | { role: "user"; text: string }
@@ -129,6 +130,7 @@ export function ProjectChatPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <ProjectTabs slug={slug ?? ""} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Chat</h1>
         <span className="text-xs text-muted-foreground">

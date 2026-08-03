@@ -9,6 +9,7 @@ import { KanbanBoard } from "@/components/kanban"
 import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
 import { ProposalReview } from "@/components/proposal-review"
+import { ProjectTabs } from "@/components/project-tabs"
 import { LiveIndicator } from "@/components/live-indicator"
 import { ExportMenu } from "@/components/export-menu"
 
@@ -51,6 +52,7 @@ export function ProjectBoardPage() {
 
   return (
     <div className="space-y-4">
+      <ProjectTabs slug={slug ?? ""} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">
           {projectDetail?.project.name}
