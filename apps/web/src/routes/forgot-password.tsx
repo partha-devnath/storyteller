@@ -9,14 +9,7 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
+import { AuthShell } from "@/components/auth-shell"
 import { requestPasswordReset } from "@/lib/auth-client"
 
 export function ForgotPasswordPage() {
@@ -48,75 +41,59 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-svh items-center justify-center p-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Check your email</CardTitle>
-            <CardDescription>
-              If an account with that email exists, we sent a password reset
-              link.
-            </CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Link
-              to="/login"
-              className="w-full text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              Back to login
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
+      <AuthShell
+        title="Check your email"
+        description="If an account with that email exists, we sent a password reset link."
+      >
+        <Link
+          to="/login"
+          className="w-full text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          Back to login
+        </Link>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Forgot password?</CardTitle>
-          <CardDescription>
-            Enter your email and we'll send you a reset link
-          </CardDescription>
-        </CardHeader>
+    <AuthShell
+      title="Forgot password?"
+      description="Enter your email and we'll send you a reset link"
+    >
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            {...form.register("email")}
+          />
+          {form.formState.errors.email && (
+            <p className="text-xs text-destructive">
+              {form.formState.errors.email.message}
+            </p>
+          )}
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
-          </CardContent>
-
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Sending..." : "Send reset link"}
-            </Button>
-            <Link
-              to="/login"
-              className="text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              Back to login
-            </Link>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+        <div className="flex flex-col gap-4 pt-2">
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? "Sending..." : "Send reset link"}
+          </Button>
+          <Link
+            to="/login"
+            className="text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Back to login
+          </Link>
+        </div>
+      </form>
+    </AuthShell>
   )
 }

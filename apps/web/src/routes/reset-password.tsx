@@ -9,14 +9,7 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
+import { AuthShell } from "@/components/auth-shell"
 import { resetPassword } from "@/lib/auth-client"
 
 export function ResetPasswordPage() {
@@ -53,79 +46,65 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="flex min-h-svh items-center justify-center p-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle>Invalid reset link</CardTitle>
-            <CardDescription>This link is invalid or expired.</CardDescription>
-          </CardHeader>
-          <CardFooter>
-            <Link
-              to="/forgot-password"
-              className="w-full text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-            >
-              Request a new link
-            </Link>
-          </CardFooter>
-        </Card>
-      </div>
+      <AuthShell
+        title="Invalid reset link"
+        description="This link is invalid or expired."
+      >
+        <Link
+          to="/forgot-password"
+          className="w-full text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          Request a new link
+        </Link>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>Reset password</CardTitle>
-          <CardDescription>Enter your new password</CardDescription>
-        </CardHeader>
+    <AuthShell title="Reset password" description="Enter your new password">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+        <div className="space-y-2">
+          <Label htmlFor="password">New password</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            {...form.register("password")}
+          />
+          {form.formState.errors.password && (
+            <p className="text-xs text-destructive">
+              {form.formState.errors.password.message}
+            </p>
+          )}
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...form.register("password")}
-              />
-              {form.formState.errors.password && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.password.message}
-                </p>
-              )}
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm new password</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            {...form.register("confirmPassword")}
+          />
+          {form.formState.errors.confirmPassword && (
+            <p className="text-xs text-destructive">
+              {form.formState.errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm new password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                {...form.register("confirmPassword")}
-              />
-              {form.formState.errors.confirmPassword && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-          </CardContent>
-
-          <CardFooter>
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? "Resetting..." : "Reset password"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+        <div className="flex flex-col gap-4 pt-2">
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? "Resetting..." : "Reset password"}
+          </Button>
+        </div>
+      </form>
+    </AuthShell>
   )
 }

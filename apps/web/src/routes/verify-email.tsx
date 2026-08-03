@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useSearchParams, Link, useNavigate } from "react-router"
 import { Button } from "@workspace/ui/components/button"
+import { AuthShell } from "@/components/auth-shell"
 import { verifyEmail } from "@/lib/auth-client"
 
 export function VerifyEmailPage() {
@@ -37,46 +38,49 @@ export function VerifyEmailPage() {
 
   if (status === "verifying") {
     return (
-      <div className="flex min-h-svh items-center justify-center p-6">
+      <AuthShell title="Verify your email">
         <p className="text-muted-foreground">Verifying your email...</p>
-      </div>
+      </AuthShell>
     )
   }
 
   if (status === "success") {
     return (
-      <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
-        <h1 className="text-2xl font-semibold">Email verified!</h1>
-        <p className="text-sm text-muted-foreground">Redirecting to login...</p>
-        <Button onClick={() => navigate("/login")}>Go to login</Button>
-      </div>
+      <AuthShell title="Email verified!">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            Redirecting to login...
+          </p>
+          <Button onClick={() => navigate("/login")}>Go to login</Button>
+        </div>
+      </AuthShell>
     )
   }
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-2xl font-semibold">Verify your email</h1>
+    <AuthShell title="Verify your email">
+      <div className="flex flex-col items-center gap-4">
+        {token && error ? (
+          <div className="space-y-4 text-center">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button onClick={() => navigate("/login")}>Back to login</Button>
+          </div>
+        ) : (
+          <p className="max-w-md text-center text-sm text-muted-foreground">
+            We sent you a verification link. Check your email and click the link
+            to activate your account.
+          </p>
+        )}
 
-      {token && error ? (
-        <div className="space-y-4 text-center">
-          <p className="text-sm text-destructive">{error}</p>
-          <Button onClick={() => navigate("/login")}>Back to login</Button>
-        </div>
-      ) : (
-        <p className="max-w-md text-center text-sm text-muted-foreground">
-          We sent you a verification link. Check your email and click the link
-          to activate your account.
-        </p>
-      )}
-
-      {!token && (
-        <Link
-          to="/login"
-          className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          Back to login
-        </Link>
-      )}
-    </div>
+        {!token && (
+          <Link
+            to="/login"
+            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Back to login
+          </Link>
+        )}
+      </div>
+    </AuthShell>
   )
 }
