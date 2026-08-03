@@ -13,7 +13,7 @@ export function Toaster() {
 
   return (
     <div
-      className="fixed right-4 bottom-4 z-50 flex w-full max-w-sm flex-col gap-2"
+      className="fixed right-4 bottom-4 z-[60] flex w-full max-w-sm flex-col gap-2"
       data-testid="toaster"
     >
       {toasts.map((t) => (
