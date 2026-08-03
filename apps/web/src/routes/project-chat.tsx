@@ -167,7 +167,7 @@ export function ProjectChatPage() {
           <ChatThread
             messages={chatMessages}
             projectSlug={slug ?? ""}
-            onClarifyAnswer={(i, _a) => {
+            onClarifyAnswer={(i) => {
               const m = chatMessages[i]
               if (!m?.questions) return
               setAnswerPrompts({
