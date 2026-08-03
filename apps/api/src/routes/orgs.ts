@@ -18,6 +18,7 @@ import { errorHandler } from "../middleware/error-handler"
 import { requireOrg } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { validateBody } from "../middleware/validate"
+import { rateLimiter } from "../middleware/rate-limit"
 import { httpError } from "../middleware/org-scope"
 import { assertLimitTx } from "../services/plan-limits"
 import { generateId, slugify } from "../utils"
@@ -25,6 +26,8 @@ import type { AppEnv } from "../middleware/env"
 
 export const orgsRoutes = new Hono<AppEnv>()
 orgsRoutes.onError(errorHandler)
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 orgsRoutes.post("/", validateBody(createOrgSchema), async (c) => {
   const body = c.var.body as {
@@ -85,6 +88,7 @@ orgsRoutes.post(
   "/:id/invite",
   requireOrg,
   requireRole("owner", "admin"),
+  rateLimiter(20, 60_000),
   async (c) => {
     const orgId = c.var.orgId
     const inviterId = c.var.userId
@@ -126,6 +130,7 @@ orgsRoutes.post(
         role,
         invitedEmail: inviteeUser ? null : email,
         inviteToken: token,
+        inviteExpiresAt: new Date(Date.now() + INVITE_TTL_MS),
         inviteStatus: "pending",
         invitedBy: inviterId,
       })
@@ -162,6 +167,9 @@ orgsRoutes.post("/invites/accept", async (c) => {
     .where(eq(organizationMember.inviteToken, token))
     .limit(1)
   if (!member || member.inviteStatus !== "pending") {
+    throw httpError("Invalid or expired invite", 404)
+  }
+  if (member.inviteExpiresAt && member.inviteExpiresAt.getTime() < Date.now()) {
     throw httpError("Invalid or expired invite", 404)
   }
   if (member.userId && member.userId !== session.user.id) {

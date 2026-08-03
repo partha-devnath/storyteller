@@ -15,6 +15,7 @@ export const organizationMember = pgTable(
       .notNull(),
     invitedEmail: text("invited_email"),
     inviteToken: text("invite_token"),
+    inviteExpiresAt: timestamp("invite_expires_at"),
     inviteStatus: text("invite_status").$type<"pending" | "accepted">(),
     invitedBy: text("invited_by").references(() => user.id),
     createdAt: timestamp("created_at").notNull().defaultNow(),
