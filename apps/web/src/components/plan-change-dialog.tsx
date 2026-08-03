@@ -34,9 +34,9 @@ export function PlanChangeDialog({
           </DialogTitle>
         </DialogHeader>
         <DialogDescription className="text-sm">
-          You'll lose Pro features at the end of the billing cycle. If you're
-          over a Free-plan limit, extra projects, members, and cards are kept
-          but locked until you upgrade or reduce usage.
+          You'll lose Pro features immediately after confirming. If you're over
+          a Free-plan limit, extra projects, members, and cards are kept but
+          locked until you upgrade or reduce usage.
         </DialogDescription>
         <DialogFooter>
           <Button
