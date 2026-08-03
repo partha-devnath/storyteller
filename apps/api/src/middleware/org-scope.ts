@@ -22,7 +22,8 @@ async function findMembership(orgId: string, userId: string) {
     .where(
       and(
         eq(organizationMember.orgId, orgId),
-        eq(organizationMember.userId, userId)
+        eq(organizationMember.userId, userId),
+        eq(organizationMember.inviteStatus, "accepted")
       )
     )
     .limit(1)

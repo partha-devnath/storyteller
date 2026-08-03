@@ -37,7 +37,8 @@ projectsRoutes.post("/", validateBody(createProjectSchema), async (c) => {
     .where(
       and(
         eq(organizationMember.orgId, body.orgId),
-        eq(organizationMember.userId, session.user.id)
+        eq(organizationMember.userId, session.user.id),
+        eq(organizationMember.inviteStatus, "accepted")
       )
     )
     .limit(1)
