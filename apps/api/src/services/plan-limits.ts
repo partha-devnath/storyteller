@@ -1,7 +1,6 @@
 import { eq } from "drizzle-orm"
 import { PLANS } from "@workspace/schemas"
 import type { LimitMetric, PlanId } from "@workspace/schemas"
-import { db } from "@workspace/db"
 import { organization } from "@workspace/schemas"
 import { getOrgPlan, getOrgPlanTx } from "./billing/subscription-transitions"
 import {
