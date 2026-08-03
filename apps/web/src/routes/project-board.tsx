@@ -9,7 +9,6 @@ import { KanbanBoard } from "@/components/kanban"
 import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
 import { ProposalReview } from "@/components/proposal-review"
-import { ViewSwitcher } from "@/components/view-switcher"
 import { LiveIndicator } from "@/components/live-indicator"
 import { ExportMenu } from "@/components/export-menu"
 
@@ -63,8 +62,6 @@ export function ProjectBoardPage() {
           <LiveIndicator status={events.status} onRetry={events.reconnect} />
         </div>
       </div>
-
-      <ViewSwitcher />
 
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <div>

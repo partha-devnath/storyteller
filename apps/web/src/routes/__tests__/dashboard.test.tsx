@@ -85,9 +85,9 @@ describe("DashboardPage", () => {
     render(<DashboardPage />, { wrapper: createWrapper() })
     const user = userEvent.setup()
 
-    expect(screen.getByText("Hide sidebar")).toBeInTheDocument()
-    await user.click(screen.getByText("Hide sidebar"))
     expect(screen.getByText("Show sidebar")).toBeInTheDocument()
+    await user.click(screen.getByText("Show sidebar"))
+    expect(screen.getByText("Hide sidebar")).toBeInTheDocument()
   })
 
   it("calls logout when sign out button is clicked", async () => {

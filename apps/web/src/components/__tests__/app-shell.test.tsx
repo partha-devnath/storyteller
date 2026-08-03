@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
+import { ThemeProvider } from "@/components/theme-provider"
 
 vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({
@@ -50,20 +52,30 @@ beforeEach(() => {
 })
 
 function renderWithRouter(element: React.ReactElement) {
-  return render(<MemoryRouter>{element}</MemoryRouter>)
+  return render(
+    <ThemeProvider defaultTheme="light">
+      <MemoryRouter>{element}</MemoryRouter>
+    </ThemeProvider>
+  )
+}
+
+async function openUserMenu() {
+  await userEvent.click(screen.getByText("Ada").closest("button")!)
 }
 
 describe("AppShell", () => {
-  it("renders the brand, org switcher, and a sign-out button", () => {
+  it("renders the brand, org switcher, and a reachable sign-out control", async () => {
     renderWithRouter(<AppShell />)
     expect(screen.getByText("Storyteller")).toBeInTheDocument()
     expect(screen.getAllByText(/Acme/).length).toBeGreaterThan(0)
-    expect(screen.getByText("Sign out")).toBeInTheDocument()
+    await openUserMenu()
+    expect(await screen.findByText("Sign out")).toBeInTheDocument()
   })
 
-  it("shows the org role badge from the active membership", () => {
+  it("shows the org role badge from the active membership", async () => {
     renderWithRouter(<AppShell />)
-    expect(screen.getByText("admin")).toBeInTheDocument()
+    await openUserMenu()
+    expect(await screen.findByText("admin")).toBeInTheDocument()
   })
 })
 
