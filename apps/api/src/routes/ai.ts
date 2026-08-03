@@ -108,7 +108,9 @@ aiRoutes.post("/generate", async (c) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (!session) throw httpError("Unauthorized", 401)
   const body = generateSchema.parse(await c.req.json())
-  const projectId = await resolveProjectId(body.projectSlug)
+  const projectId = c.var.projectId!
+  const resolved = await resolveProjectId(body.projectSlug)
+  if (resolved !== projectId) throw httpError("Forbidden", 403)
   await assertLimit(c.var.orgId!, "aiActions")
 
   const snapshot = await buildBoardSnapshot(projectId)
@@ -165,7 +167,9 @@ aiRoutes.post("/process", async (c) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (!session) throw httpError("Unauthorized", 401)
   const body = processSchema.parse(await c.req.json())
-  const projectId = await resolveProjectId(body.projectSlug)
+  const projectId = c.var.projectId!
+  const resolved = await resolveProjectId(body.projectSlug)
+  if (resolved !== projectId) throw httpError("Forbidden", 403)
   await assertLimit(c.var.orgId!, "aiActions")
 
   const semantic = await buildSemanticContext({
@@ -237,7 +241,9 @@ aiRoutes.post("/clarify", async (c) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (!session) throw httpError("Unauthorized", 401)
   const body = clarifySchema.parse(await c.req.json())
-  const projectId = await resolveProjectId(body.projectSlug)
+  const projectId = c.var.projectId!
+  const resolved = await resolveProjectId(body.projectSlug)
+  if (resolved !== projectId) throw httpError("Forbidden", 403)
   await assertLimit(c.var.orgId!, "aiActions")
 
   const snapshot = await buildBoardSnapshot(projectId)
