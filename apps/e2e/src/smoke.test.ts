@@ -39,14 +39,14 @@ test.describe("smoke", () => {
     ).toBeVisible()
   })
 
-  test("signs in with seeded user and redirects to dashboard", async ({
+  test("signs in with seeded user and redirects to projects", async ({
     page,
   }) => {
     await page.goto("/login")
     await page.getByLabel("Email").fill(TEST_USER.email)
     await page.getByLabel("Password").fill(TEST_USER.password)
     await page.getByRole("button", { name: "Sign in" }).click()
-    await expect(page).toHaveURL("/dashboard", { timeout: 10_000 })
+    await expect(page).toHaveURL("/projects", { timeout: 10_000 })
     await expect(page.getByText(TEST_USER.name, { exact: true })).toBeVisible()
   })
 })
