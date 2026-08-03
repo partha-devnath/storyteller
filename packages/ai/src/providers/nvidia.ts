@@ -1,25 +1,27 @@
 import type { LLMProvider, ChatMessage } from "../types"
 
-export type OpenAIProviderEnv = {
+const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
+
+export type NVIDIAProviderEnv = {
   apiKey?: string
   chatModel?: string
   embeddingModel?: string
 }
 
-export function createOpenAIProvider(env: OpenAIProviderEnv): LLMProvider {
+export function createNVIDIAProvider(env: NVIDIAProviderEnv): LLMProvider {
   const apiKey = env.apiKey
-  const chatModel = env.chatModel ?? "gpt-4o-mini"
-  const embeddingModel = env.embeddingModel ?? "text-embedding-3-small"
+  const chatModel = env.chatModel ?? "deepseek-ai/deepseek-v4-flash"
+  const embeddingModel = env.embeddingModel ?? "nvidia/nv-embed-v1"
 
   if (!apiKey) {
     throw new Error(
-      'OPENAI_API_KEY is required when AI_PROVIDER is set to "openai"'
+      'NVIDIA_API_KEY is required when AI_PROVIDER is set to "nvidia"'
     )
   }
 
   async function loadClient() {
     const { default: OpenAI } = await import("openai")
-    return new OpenAI({ apiKey })
+    return new OpenAI({ apiKey, baseURL: NVIDIA_BASE_URL })
   }
 
   return {
@@ -31,7 +33,7 @@ export function createOpenAIProvider(env: OpenAIProviderEnv): LLMProvider {
       })
       const content = completion.choices[0]?.message?.content
       if (content == null) {
-        throw new Error("OpenAI returned an empty chat completion")
+        throw new Error("NVIDIA returned an empty chat completion")
       }
       return content
     },
@@ -41,7 +43,9 @@ export function createOpenAIProvider(env: OpenAIProviderEnv): LLMProvider {
       const result = await client.embeddings.create({
         model: embeddingModel,
         input: texts,
-      })
+        input_type: "passage",
+        truncate: "NONE",
+      } as Parameters<typeof client.embeddings.create>[0])
       return result.data.map((entry) => entry.embedding)
     },
   }

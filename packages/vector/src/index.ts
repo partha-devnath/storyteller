@@ -52,7 +52,7 @@ export async function embedCard({
 
   await db.delete(cardEmbedding).where(eq(cardEmbedding.cardId, cardId))
 
-  const model = process.env.EMBEDDING_MODEL ?? "text-embedding-3-small"
+  const model = process.env.EMBEDDING_MODEL ?? "nvidia/nv-embed-v1"
   await db.insert(cardEmbedding).values({
     id: crypto.randomUUID().split("-").join("").slice(0, 16),
     cardId,
@@ -94,7 +94,7 @@ export async function reindexCard({
 
   await db.delete(cardEmbedding).where(eq(cardEmbedding.cardId, cardId))
 
-  const model = process.env.EMBEDDING_MODEL ?? "text-embedding-3-small"
+  const model = process.env.EMBEDDING_MODEL ?? "nvidia/nv-embed-v1"
   await db.insert(cardEmbedding).values({
     id: crypto.randomUUID().split("-").join("").slice(0, 16),
     cardId,

@@ -41,6 +41,10 @@ services:
       S3_REGION: us-east-1
       S3_BUCKET: template
       S3_ENDPOINT: http://host.docker.internal:4566
+      AI_PROVIDER: ${AI_PROVIDER:-nvidia}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      CHAT_MODEL: ${CHAT_MODEL:-deepseek-ai/deepseek-v4-flash}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nvidia/nv-embed-v1}
     depends_on:
       postgres:
         condition: service_healthy
