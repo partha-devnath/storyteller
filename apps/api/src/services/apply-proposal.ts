@@ -230,7 +230,7 @@ async function applyUpdate(
   const [target] = await tx
     .select()
     .from(card)
-    .where(eq(card.id, targetCardId))
+    .where(and(eq(card.id, targetCardId), eq(card.projectId, projectId)))
     .limit(1)
   if (!target) {
     logger.warn(
@@ -313,7 +313,7 @@ async function applyClose(
   const [target] = await tx
     .select()
     .from(card)
-    .where(eq(card.id, targetCardId))
+    .where(and(eq(card.id, targetCardId), eq(card.projectId, projectId)))
     .limit(1)
   if (!target) {
     logger.warn(
