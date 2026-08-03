@@ -18,6 +18,7 @@ import { cardsRoutes } from "./routes/cards"
 import { graphRoutes } from "./routes/graph"
 import { eventsRoutes } from "./routes/events"
 import { exportRoutes } from "./routes/export"
+import { chatRoutes } from "./routes/chat"
 import { rateLimiter } from "./middleware/rate-limit"
 
 type Env = {
@@ -134,6 +135,7 @@ app.use(
 )
 app.route("/api/ai", aiRoutes)
 app.route("/api/proposals", proposalsRoutes)
+app.route("/api/chat", chatRoutes)
 app.route("/api/cards", cardsRoutes)
 
 app.use(
