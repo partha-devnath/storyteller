@@ -64,8 +64,7 @@ export function ProposalsPage() {
   const [pending, setPending] = useState(false)
   const [priorAnswers, setPriorAnswers] = useState("")
   const promptRef = useRef<HTMLInputElement | null>(null)
-  const { mentionQuery, mentionPos, handleInput, stopMention } =
-    useMentionPicker()
+  const { mentionQuery, handleInput, stopMention } = useMentionPicker()
 
   const restoredPriorAnswers = useMemo(() => {
     const persisted = chatMessages.filter(
@@ -273,7 +272,16 @@ export function ProposalsPage() {
         </div>
       </div>
 
-      <div className="relative flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
+      {mentionQuery !== null && (
+        <MentionMenu
+          query={mentionQuery}
+          options={mentionOptions}
+          onSelect={applyMention}
+          onClose={stopMention}
+        />
+      )}
+
+      <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
         <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
           <Sparkles className="size-4" />
           AI Instruction
@@ -315,8 +323,7 @@ export function ProposalsPage() {
               setPrompt(e.target.value)
               handleInput(
                 e.target.value,
-                e.target.selectionStart ?? e.target.value.length,
-                e.target.getBoundingClientRect()
+                e.target.selectionStart ?? e.target.value.length
               )
             }}
             onKeyDown={(e) => {
@@ -326,15 +333,6 @@ export function ProposalsPage() {
             disabled={generate.isPending || pending || aiActionsLimited}
           />
         </div>
-        {mentionQuery !== null && (
-          <MentionMenu
-            query={mentionQuery}
-            pos={mentionPos}
-            options={mentionOptions}
-            onSelect={applyMention}
-            onClose={stopMention}
-          />
-        )}
         {aiActionsLimited ? (
           <Tooltip>
             <TooltipTrigger
