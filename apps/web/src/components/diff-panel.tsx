@@ -53,13 +53,13 @@ export function DiffPanel({
             {part.added ? "+" : part.removed ? "−" : " "}
           </span>
           <span
-            className={
+            className={`whitespace-pre-wrap ${
               part.added
                 ? "text-foreground"
                 : part.removed
                   ? "text-muted line-through decoration-destructive/50"
                   : "text-muted-foreground"
-            }
+            }`}
           >
             {part.value}
           </span>
