@@ -23,53 +23,100 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip"
-import { LayoutGrid } from "lucide-react"
+import { Bell, Search } from "lucide-react"
+
+const groupClass =
+  "px-3 pb-1.5 pt-3 font-mono text-[10.5px] font-medium tracking-[0.12em] text-muted-foreground uppercase"
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
-    "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-    isActive
-      ? "bg-muted font-medium"
-      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13.5px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+    isActive &&
+      "border border-border bg-background font-semibold text-foreground"
   )
 
-function SidebarContent() {
+function SidebarContent({
+  name,
+  role,
+  onLogout,
+}: {
+  name: string
+  role?: "owner" | "admin" | "member" | "viewer"
+  onLogout: () => void
+}) {
   const selectedOrgId = useBoardStore((s) => s.selectedOrgId)
+  const workspaceItems = getWorkspaceNavItems()
+  const orgItems = getOrgNavItems(selectedOrgId ?? undefined)
+
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto">
-      <OrgSwitcher />
-      <div>
-        <p className="px-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Workspace
-        </p>
-        <nav className="space-y-1">
-          {getWorkspaceNavItems().map((item) => (
-            <NavLink key={item.label} to={item.to} className={linkClass}>
-              <LayoutGrid className="size-4" />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2.5 px-2 pb-4">
+        <span className="grid size-7.5 place-items-center rounded-lg bg-gradient-to-br from-primary to-blue-500 text-primary-foreground">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            className="size-4"
+          >
+            <path d="M13 2 3 14h6l-2 8 10-12h-6l2-8z" />
+          </svg>
+        </span>
+        <span className="text-[15px] font-bold tracking-tight">
+          Storyteller
+        </span>
       </div>
-      {getOrgNavItems(selectedOrgId ?? undefined).length > 0 && (
-        <div>
-          <p className="px-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Org
-          </p>
-          <nav className="space-y-1">
-            {getOrgNavItems(selectedOrgId ?? undefined).map((item) => (
+
+      <OrgSwitcher />
+
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3">
+        <p className={groupClass}>Workspace</p>
+        {workspaceItems.map((item) => (
+          <NavLink key={item.label} to={item.to} className={linkClass}>
+            {({ isActive }) => (
+              <>
+                <item.icon
+                  className={cn(
+                    "size-4.5 shrink-0 opacity-80",
+                    isActive && "text-primary opacity-100"
+                  )}
+                />
+                {item.label}
+              </>
+            )}
+          </NavLink>
+        ))}
+
+        {orgItems.length > 0 && (
+          <>
+            <p className={cn(groupClass, "pt-4")}>Manage</p>
+            {orgItems.map((item) => (
               <NavLink
                 key={item.label}
                 to={item.to}
                 className={linkClass}
                 data-testid={item.testId}
               >
-                {item.label}
+                {({ isActive }) => (
+                  <>
+                    <item.icon
+                      className={cn(
+                        "size-4.5 shrink-0 opacity-80",
+                        isActive && "text-primary opacity-100"
+                      )}
+                    />
+                    {item.label}
+                  </>
+                )}
               </NavLink>
             ))}
-          </nav>
-        </div>
-      )}
+          </>
+        )}
+      </nav>
+
+      <div className="border-t px-2.5 py-2.5">
+        <UserMenu name={name} role={role} onLogout={onLogout} />
+      </div>
     </div>
   )
 }
@@ -123,28 +170,46 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-3 md:px-4">
-        <div className="flex min-w-0 items-center gap-2">
-          <button
-            onClick={toggleSidebar}
-            className="rounded-md border border-transparent px-2 py-1 text-sm hover:bg-muted md:hidden"
-            aria-label="Toggle sidebar"
-          >
-            ☰
-          </button>
-          <div className="flex min-w-0 items-center gap-1.5 text-sm">
-            <span className="font-semibold whitespace-nowrap">Storyteller</span>
-            {(activeOrg || inProject) && (
-              <span className="truncate text-muted-foreground">
-                {activeOrg?.name}
-                {inProject && (activeOrg ? " / " : "")}
-                {inProject ? slug : ""}
-                {pageLabel && <> · {pageLabel}</>}
-              </span>
-            )}
-          </div>
+      <header className="flex h-13 shrink-0 items-center gap-4 border-b px-6">
+        <button
+          onClick={toggleSidebar}
+          className="rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted md:hidden"
+          aria-label="Toggle sidebar"
+        >
+          ☰
+        </button>
+        <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
+          <span className="font-bold whitespace-nowrap">Storyteller</span>
+          {(activeOrg || inProject) && (
+            <span className="truncate text-muted-foreground">
+              {activeOrg?.name}
+              {inProject && (activeOrg ? " / " : "")}
+              {inProject ? slug : ""}
+              {pageLabel && <> · {pageLabel}</>}
+            </span>
+          )}
         </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+
+        <div className="ml-2 flex max-w-md min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-input bg-card px-3 py-2 text-sm focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/25">
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+          <input
+            aria-label="Global search"
+            placeholder="Search cards, keys, versions…"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          />
+          <kbd className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
+            Ctrl K
+          </kbd>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <button
+            aria-label="Notifications"
+            className="relative grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <Bell className="size-4.5" />
+            <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-warn" />
+          </button>
           {projectsLimited ? (
             <Tooltip>
               <TooltipTrigger
@@ -167,8 +232,12 @@ export function AppShell() {
       <LimitBanner orgId={selectedOrgId ?? activeOrg?.id} />
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="hidden w-60 shrink-0 border-r bg-background p-3 md:block">
-          <SidebarContent />
+        <aside className="hidden w-60 shrink-0 border-r bg-background md:block">
+          <SidebarContent
+            name={user?.name ?? ""}
+            role={role}
+            onLogout={logout}
+          />
         </aside>
 
         {sidebarOpen && (
@@ -178,8 +247,12 @@ export function AppShell() {
               className="absolute inset-0 bg-black/40"
               onClick={() => setSidebarOpen(false)}
             />
-            <aside className="absolute inset-y-0 left-0 w-60 border-r bg-background p-3 shadow-lg">
-              <SidebarContent />
+            <aside className="absolute inset-y-0 left-0 w-60 border-r bg-background shadow-lg">
+              <SidebarContent
+                name={user?.name ?? ""}
+                role={role}
+                onLogout={logout}
+              />
             </aside>
           </div>
         )}

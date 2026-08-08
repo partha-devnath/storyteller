@@ -46,9 +46,11 @@ vi.mock("@/hooks/use-billing", () => ({
 
 const { AppShell } = await import("../app-shell")
 const { OrgSwitcher } = await import("../org-switcher")
+const { useBoardStore } = await import("@/stores/board-store")
 
 beforeEach(() => {
   vi.clearAllMocks()
+  useBoardStore.getState().setSelectedOrgId("org1")
 })
 
 function renderWithRouter(element: React.ReactElement) {
@@ -60,13 +62,13 @@ function renderWithRouter(element: React.ReactElement) {
 }
 
 async function openUserMenu() {
-  await userEvent.click(screen.getByText("Ada").closest("button")!)
+  await userEvent.click(screen.getAllByText("Ada")[0].closest("button")!)
 }
 
 describe("AppShell", () => {
   it("renders the brand, org switcher, and a reachable sign-out control", async () => {
     renderWithRouter(<AppShell />)
-    expect(screen.getByText("Storyteller")).toBeInTheDocument()
+    expect(screen.getAllByText("Storyteller").length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Acme/).length).toBeGreaterThan(0)
     await openUserMenu()
     expect(await screen.findByText("Sign out")).toBeInTheDocument()
@@ -76,6 +78,18 @@ describe("AppShell", () => {
     renderWithRouter(<AppShell />)
     await openUserMenu()
     expect(await screen.findByText("admin")).toBeInTheDocument()
+  })
+
+  it("renders the workspace and manage nav groups", () => {
+    renderWithRouter(<AppShell />)
+    expect(screen.getByText("Workspace")).toBeInTheDocument()
+    expect(screen.getByText("Manage")).toBeInTheDocument()
+    expect(screen.getByText("Boards")).toBeInTheDocument()
+  })
+
+  it("keeps the New board action", () => {
+    renderWithRouter(<AppShell />)
+    expect(screen.getByTestId("new-board")).toBeInTheDocument()
   })
 })
 
