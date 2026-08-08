@@ -2,7 +2,7 @@ import type { NodeProps, Node } from "@xyflow/react"
 import { Handle, Position } from "@xyflow/react"
 import { Layers, Lock } from "lucide-react"
 import type { GraphNode } from "@/hooks/use-graph"
-import { priorityClasses } from "@/lib/priority"
+import { priorityClasses, priorityLabel } from "@/lib/priority"
 
 export type GraphNodeData = GraphNode & {
   isImpacted?: boolean
@@ -71,7 +71,7 @@ export function GraphNodeComponent({
                   priorityClasses[data.priority] ?? priorityClasses.low
                 }`}
               >
-                {data.priority}
+                {priorityLabel(data.priority)}
               </span>
             )}
           </div>

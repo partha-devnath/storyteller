@@ -19,7 +19,7 @@ describe("BoardCard", () => {
   it("renders title, priority badge, and criteria count", () => {
     render(<BoardCard card={card} isClosed={false} />)
     expect(screen.getByText("Loyalty enrollment flow")).toBeInTheDocument()
-    expect(screen.getByText("high")).toBeInTheDocument()
+    expect(screen.getByText("P1")).toBeInTheDocument()
     expect(screen.getByText("3 criteria")).toBeInTheDocument()
   })
 

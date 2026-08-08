@@ -1,5 +1,5 @@
 import type { BoardCard } from "@/hooks/use-cards"
-import { priorityClasses } from "@/lib/priority"
+import { priorityClasses, priorityLabel } from "@/lib/priority"
 
 export function BoardCard({
   card,
@@ -31,7 +31,7 @@ export function BoardCard({
         <span
           className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase ${priorityClasses[card.priority] ?? priorityClasses.low}`}
         >
-          {card.priority}
+          {priorityLabel(card.priority)}
         </span>
       </div>
       {card.acceptanceCriteriaCount > 0 && (
