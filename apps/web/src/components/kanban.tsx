@@ -45,7 +45,7 @@ export function KanbanBoard({
       collisionDetection={closestCorners}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] gap-4">
+      <div className="grid min-w-0 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))] gap-4">
         {columns.map((col) => (
           <BoardColumn
             key={col.key}

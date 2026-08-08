@@ -125,7 +125,7 @@ export function ProjectBoardPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-        <div>
+        <div className="min-w-0">
           {view === "graph" ? (
             <Suspense
               fallback={

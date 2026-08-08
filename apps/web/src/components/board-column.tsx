@@ -53,7 +53,7 @@ export function BoardColumn({
     <div
       ref={setNodeRef}
       data-testid={`column-${columnKey}`}
-      className={`flex max-h-[calc(100vh-16rem)] w-80 min-w-80 flex-col gap-3 rounded-xl border border-border/60 bg-background/60 p-2.5 transition-colors ${
+      className={`flex max-h-[calc(100vh-16rem)] min-w-0 flex-col gap-3 rounded-xl border border-border/60 bg-background/60 p-2.5 transition-colors ${
         isOver ? "border-primary/60 bg-primary/5" : ""
       }`}
     >
