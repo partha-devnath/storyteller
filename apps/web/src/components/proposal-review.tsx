@@ -19,7 +19,11 @@ export function ProposalReview({ projectSlug }: { projectSlug: string }) {
   const expanded = useProposal(expandedId ?? undefined, projectSlug)
 
   return (
-    <div className="rounded-lg border p-3" data-testid="proposal-review">
+    <div
+      className="rounded-lg border p-3"
+      data-testid="proposal-review"
+      id="proposal-review"
+    >
       <p className="mb-2 text-sm font-semibold">Proposals to review</p>
       {pending.length === 0 ? (
         <p className="text-xs text-muted-foreground">Nothing pending.</p>

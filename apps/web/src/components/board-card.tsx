@@ -1,5 +1,5 @@
 import type { BoardCard } from "@/hooks/use-cards"
-import { priorityClasses } from "@/lib/priority"
+import { priorityClasses, priorityLabel } from "@/lib/priority"
 
 export function BoardCard({
   card,
@@ -16,34 +16,56 @@ export function BoardCard({
   }
   onClick?: () => void
 }) {
+  const prio = priorityLabel(card.priority)
   return (
     <div
       data-testid="board-card"
       ref={dragProps?.ref}
       {...(dragProps?.listeners ?? {})}
       onClick={onClick}
-      className={`rounded-lg border bg-background p-3 text-left text-sm shadow-sm ${
-        isClosed ? "opacity-60" : ""
-      } ${dragProps?.isDragging ? "opacity-40" : ""} cursor-pointer transition-shadow hover:shadow-md`}
+      className={`group flex cursor-pointer flex-col gap-2 rounded-xl border bg-card p-4 text-left shadow-sm transition-colors hover:-translate-y-px hover:border-border hover:shadow-lg ${
+        isClosed
+          ? "border-dashed border-destructive/40 bg-card/60 opacity-70"
+          : ""
+      } ${dragProps?.isDragging ? "opacity-40" : ""}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-medium">{card.title}</p>
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[11px] font-semibold tracking-wide text-foreground/80">
+          {card.id}
+        </span>
         <span
-          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium uppercase ${priorityClasses[card.priority] ?? priorityClasses.low}`}
+          className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+            isClosed
+              ? "border border-border bg-muted text-muted-foreground"
+              : "border border-warn/40 bg-warn/10 text-warn"
+          }`}
         >
-          {card.priority}
+          {isClosed ? "frozen" : "proposed"}
+        </span>
+        <span className="ml-auto font-mono text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+          ›
         </span>
       </div>
-      {card.acceptanceCriteriaCount > 0 && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          {card.acceptanceCriteriaCount} criteria
-        </p>
-      )}
-      {isClosed && (
-        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-          🔒 Closed
-        </p>
-      )}
+      <p className="text-[13.5px] leading-snug font-semibold text-foreground">
+        {card.title}
+      </p>
+      <div className="mt-auto flex flex-wrap items-center gap-2">
+        {card.acceptanceCriteriaCount > 0 && (
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {card.acceptanceCriteriaCount} criteria
+          </span>
+        )}
+        {prio && (
+          <span
+            className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${priorityClasses[card.priority] ?? priorityClasses.low}`}
+          >
+            {prio}
+          </span>
+        )}
+        <span className="ml-auto text-[10px] text-muted-foreground">
+          {card.updatedAt ? new Date(card.updatedAt).toLocaleDateString() : ""}
+        </span>
+      </div>
     </div>
   )
 }

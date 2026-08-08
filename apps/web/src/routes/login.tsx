@@ -50,12 +50,18 @@ export function LoginPage() {
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="email"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Email
+          </Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="you@company.com"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("email")}
           />
           {form.formState.errors.email && (
@@ -65,12 +71,18 @@ export function LoginPage() {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="password"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Password
+          </Label>
           <Input
             id="password"
             type="password"
             placeholder="••••••••"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("password")}
           />
           {form.formState.errors.password && (

@@ -17,7 +17,10 @@ export function GraphCanvas({
   onNodeClick: (cardId: string) => void
 }) {
   return (
-    <div data-testid="graph-canvas" className="h-[560px]">
+    <div
+      data-testid="graph-canvas"
+      className="h-[560px] overflow-hidden rounded-2xl border border-border bg-card [background-image:radial-gradient(circle,rgba(142,160,184,0.14)_1px,transparent_1px)] [background-size:26px_26px]"
+    >
       <svg className="absolute size-0" aria-hidden="true">
         <defs>
           <marker

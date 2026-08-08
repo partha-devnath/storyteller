@@ -19,12 +19,18 @@ describe("BoardCard", () => {
   it("renders title, priority badge, and criteria count", () => {
     render(<BoardCard card={card} isClosed={false} />)
     expect(screen.getByText("Loyalty enrollment flow")).toBeInTheDocument()
-    expect(screen.getByText("high")).toBeInTheDocument()
+    expect(screen.getByText("P1")).toBeInTheDocument()
     expect(screen.getByText("3 criteria")).toBeInTheDocument()
   })
 
   it("renders a closed lock state when isClosed", () => {
     render(<BoardCard card={card} isClosed />)
-    expect(screen.getByText(/Closed/i)).toBeInTheDocument()
+    expect(screen.getByText("frozen")).toBeInTheDocument()
+  })
+
+  it("renders the card id and footer meta", () => {
+    render(<BoardCard card={card} isClosed={false} />)
+    expect(screen.getByText("c1")).toBeInTheDocument()
+    expect(screen.getByText("3 criteria")).toBeInTheDocument()
   })
 })

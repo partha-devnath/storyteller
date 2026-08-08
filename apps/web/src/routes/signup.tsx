@@ -57,9 +57,19 @@ export function SignupPage() {
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" placeholder="John Doe" {...form.register("name")} />
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="name"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Name
+          </Label>
+          <Input
+            id="name"
+            placeholder="John Doe"
+            className="h-10.5 rounded-[10px] border-input bg-background"
+            {...form.register("name")}
+          />
           {form.formState.errors.name && (
             <p className="text-xs text-destructive">
               {form.formState.errors.name.message}
@@ -67,12 +77,18 @@ export function SignupPage() {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="email"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Email
+          </Label>
           <Input
             id="email"
             type="email"
             placeholder="you@example.com"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("email")}
           />
           {form.formState.errors.email && (
@@ -82,12 +98,18 @@ export function SignupPage() {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="password"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Password
+          </Label>
           <Input
             id="password"
             type="password"
             placeholder="••••••••"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("password")}
           />
           {form.formState.errors.password && (
@@ -97,12 +119,18 @@ export function SignupPage() {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm password</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="confirmPassword"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Confirm password
+          </Label>
           <Input
             id="confirmPassword"
             type="password"
             placeholder="••••••••"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("confirmPassword")}
           />
           {form.formState.errors.confirmPassword && (

@@ -2,7 +2,7 @@ import type { NodeProps, Node } from "@xyflow/react"
 import { Handle, Position } from "@xyflow/react"
 import { Layers, Lock } from "lucide-react"
 import type { GraphNode } from "@/hooks/use-graph"
-import { priorityClasses } from "@/lib/priority"
+import { priorityClasses, priorityLabel } from "@/lib/priority"
 
 export type GraphNodeData = GraphNode & {
   isImpacted?: boolean
@@ -21,11 +21,13 @@ export function GraphNodeComponent({
   const highlighted = isImpacted || selected
 
   const base = isEpic
-    ? "w-[160px] rounded-lg border-2 border-foreground/20 bg-card px-3 py-2"
-    : "w-[140px] rounded-lg border bg-card px-3 py-2 shadow-sm"
+    ? "relative w-[160px] rounded-lg border-2 border-primary/40 bg-card px-3 py-2"
+    : "relative w-[140px] rounded-lg border bg-card px-3 py-2 shadow-sm"
 
   const stateClasses = [
-    !isEpic && data.isClosed ? "border-dashed opacity-60" : "",
+    !isEpic && data.isClosed
+      ? "border-dashed border-destructive/50 opacity-75"
+      : "",
     dimmed ? "opacity-25" : "",
     highlighted ? "ring-2 ring-primary border-primary" : "",
   ]
@@ -64,14 +66,19 @@ export function GraphNodeComponent({
             {data.title}
           </p>
           <div className="flex shrink-0 items-center gap-1">
+            <span
+              className={`size-2 rounded-full border-2 border-background ${
+                data.isClosed ? "bg-destructive" : "bg-warn"
+              }`}
+            />
             {data.isClosed && <Lock className="size-3 text-muted-foreground" />}
             {data.priority && (
               <span
-                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+                className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
                   priorityClasses[data.priority] ?? priorityClasses.low
                 }`}
               >
-                {data.priority}
+                {priorityLabel(data.priority)}
               </span>
             )}
           </div>

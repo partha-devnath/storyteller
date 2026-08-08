@@ -6,6 +6,7 @@ describe("nav-items", () => {
     const items = getWorkspaceNavItems()
     expect(items.map((i) => i.label)).toEqual(["Boards"])
     expect(items[0].to).toBe("/projects")
+    expect(items[0].icon).toBeDefined()
   })
 
   it("org nav builds from org id", () => {

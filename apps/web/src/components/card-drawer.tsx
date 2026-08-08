@@ -104,21 +104,35 @@ export function CardDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative flex h-full w-full max-w-xl flex-col border-l bg-background shadow-xl">
-        <div className="flex items-center justify-between border-b p-4">
-          <div>
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative flex h-full w-full max-w-xl flex-col border-l border-input bg-background shadow-2xl">
+        <div className="flex items-start justify-between gap-3 border-b border-border p-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] font-semibold text-muted-foreground">
+                {card.id}
+              </span>
+              <span
+                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                  card.isClosed
+                    ? "border border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border border-warn/40 bg-warn/10 text-warn"
+                }`}
+              >
+                {card.isClosed ? "frozen" : card.status}
+              </span>
+            </div>
             <p
-              className="text-lg font-semibold"
+              className="mt-1 text-lg leading-snug font-bold tracking-tight"
               data-testid="card-drawer-title"
             >
               {card.title}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {card.status} · {card.priority}
-            </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {!card.isClosed && (
               <Button
                 size="sm"
@@ -145,20 +159,20 @@ export function CardDrawer({
         </div>
 
         {card.isClosed && (
-          <div className="border-b border-dashed bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+          <div className="border-b border-dashed border-destructive/40 bg-destructive/10 px-5 py-2 text-xs text-destructive">
             🔒 This card is closed and read-only.
           </div>
         )}
 
-        <div className="flex gap-1 border-b px-4 pt-3">
+        <div className="flex gap-1 border-b border-border px-4 pt-3">
           {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               data-testid={t.key === "history" ? "history-tab" : undefined}
-              className={`rounded-t-md px-3 py-1.5 text-sm ${
+              className={`rounded-t-md px-3 py-1.5 font-mono text-[11px] font-medium tracking-wide uppercase ${
                 tab === t.key
-                  ? "border border-b-0 bg-background font-medium"
+                  ? "border border-b-0 border-border bg-background text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -175,13 +189,13 @@ export function CardDrawer({
               </div>
               {card.acceptanceCriteria.length > 0 && (
                 <div>
-                  <p className="mb-1 text-sm font-semibold">
+                  <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
                     Acceptance criteria
                   </p>
                   <ul className="space-y-1 text-sm">
                     {card.acceptanceCriteria.map((c, i) => (
                       <li key={i} className="flex gap-2">
-                        <span>☐</span>
+                        <span className="text-primary">☐</span>
                         <span>{c}</span>
                       </li>
                     ))}
@@ -191,7 +205,9 @@ export function CardDrawer({
               {card.customFields &&
                 Object.keys(card.customFields).length > 0 && (
                   <div>
-                    <p className="mb-1 text-sm font-semibold">Custom fields</p>
+                    <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                      Custom fields
+                    </p>
                     <div className="flex flex-wrap gap-1">
                       {Object.entries(card.customFields).map(([k, v]) => (
                         <span
@@ -206,7 +222,9 @@ export function CardDrawer({
                 )}
               {detail.attachments.length > 0 && (
                 <div>
-                  <p className="mb-1 text-sm font-semibold">Attachments</p>
+                  <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    Attachments
+                  </p>
                   <ul className="space-y-1 text-sm">
                     {detail.attachments.map((a) => (
                       <li key={a.id}>
@@ -220,7 +238,9 @@ export function CardDrawer({
               )}
               <div>
                 <div className="mb-1 flex items-center gap-2">
-                  <p className="text-sm font-semibold">Comments</p>
+                  <p className="font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    Comments
+                  </p>
                   {newCommentCount > 0 && (
                     <span
                       data-testid="new-comments-pill"
