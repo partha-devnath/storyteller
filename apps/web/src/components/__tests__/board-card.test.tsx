@@ -4,6 +4,7 @@ import { BoardCard } from "../board-card"
 
 const card = {
   id: "c1",
+  keyNo: 1,
   title: "Loyalty enrollment flow",
   slug: "loyalty-enroll",
   status: "todo",
@@ -28,9 +29,9 @@ describe("BoardCard", () => {
     expect(screen.getByText("frozen")).toBeInTheDocument()
   })
 
-  it("renders the card id and footer meta", () => {
+  it("renders the req key and footer meta", () => {
     render(<BoardCard card={card} isClosed={false} />)
-    expect(screen.getByText("c1")).toBeInTheDocument()
+    expect(screen.getByText("REQ-001")).toBeInTheDocument()
     expect(screen.getByText("3 criteria")).toBeInTheDocument()
   })
 })

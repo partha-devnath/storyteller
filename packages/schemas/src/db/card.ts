@@ -1,5 +1,6 @@
 import {
   boolean,
+  integer,
   json,
   pgTable,
   text,
@@ -35,6 +36,7 @@ export const card = pgTable(
     isClosed: boolean("is_closed").notNull().default(false),
     closedBy: text("closed_by").references(() => user.id),
     closedAt: timestamp("closed_at"),
+    keyNo: integer("key_no").notNull().default(0),
     slug: text("slug").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

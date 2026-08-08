@@ -4,6 +4,11 @@ import { createMockProvider } from "./providers/mock"
 export { createNVIDIAProvider } from "./providers/nvidia"
 export { createMockProvider } from "./providers/mock"
 export { AiOutputError } from "./errors"
+
+export const EMBEDDING_DIMENSIONS = Number(
+  process.env.EMBEDDING_DIMENSIONS ?? 4096
+)
+
 export type { LLMProvider, ChatMessage } from "./types"
 export {
   generateBoardOutputSchema,

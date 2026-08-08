@@ -1,0 +1,1 @@
+ALTER TABLE "card" ADD COLUMN "key_no" integer DEFAULT 0 NOT NULL;

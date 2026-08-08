@@ -47,8 +47,10 @@ const fakeCard = {
   customFields: { team: "growth" },
 }
 
+const { EMBEDDING_DIMENSIONS } = await import("@workspace/ai")
+
 function fakeProvider(embedding?: number[]) {
-  const v = embedding ?? Array.from({ length: 1536 }, () => 0.5)
+  const v = embedding ?? Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.5)
   return {
     chat: async () => "",
     embed: async () => [v],
@@ -70,10 +72,10 @@ beforeEach(() => {
 })
 
 describe("embedCard", () => {
-  it("builds composite text and calls provider.embed once with 1536 dims", async () => {
+  it("builds composite text and calls provider.embed once", async () => {
     const { embedCard } = await import("../index")
     const embedSpy = vi.fn(async () => [
-      Array.from({ length: 1536 }, () => 0.1),
+      Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.1),
     ])
     const provider = { chat: async () => "", embed: embedSpy }
 
@@ -117,7 +119,7 @@ describe("semanticSearch", () => {
   it("embeds the query and scopes by projectId with cosineDistance ordering", async () => {
     const { semanticSearch } = await import("../index")
     const embedSpy = vi.fn(async () => [
-      Array.from({ length: 1536 }, () => 0.2),
+      Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.2),
     ])
     const provider = { chat: async () => "", embed: embedSpy }
 

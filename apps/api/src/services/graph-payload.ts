@@ -1,5 +1,6 @@
 export type GraphNode = {
   id: string
+  keyNo: number
   kind: "epic" | "card"
   title: string
   subtitle: string | null
@@ -21,6 +22,7 @@ export type GraphPayload = { nodes: GraphNode[]; edges: GraphEdge[] }
 type EpicInput = { id: string; name: string; parentEpicId: string | null }
 type CardInput = {
   id: string
+  keyNo: number
   title: string
   epicId: string | null
   isClosed: boolean
@@ -44,6 +46,7 @@ export function buildGraphPayload(
   for (const epic of epics) {
     nodes.push({
       id: epic.id,
+      keyNo: 0,
       kind: "epic",
       title: epic.name,
       subtitle: null,
@@ -56,6 +59,7 @@ export function buildGraphPayload(
   for (const card of cards) {
     nodes.push({
       id: card.id,
+      keyNo: card.keyNo,
       kind: "card",
       title: card.title,
       subtitle: null,

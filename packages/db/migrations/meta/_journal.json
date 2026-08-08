@@ -36,6 +36,20 @@
       "when": 1785790775284,
       "tag": "0004_lonely_gamora",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786213875814,
+      "tag": "0005_bent_king_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786213960999,
+      "tag": "0006_glossy_nekra",
+      "breakpoints": true
     }
   ]
 }

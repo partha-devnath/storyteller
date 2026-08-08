@@ -45,7 +45,7 @@ export function KanbanBoard({
       collisionDetection={closestCorners}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="flex gap-4 overflow-x-auto pb-3 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
         {columns.map((col) => (
           <BoardColumn
             key={col.key}

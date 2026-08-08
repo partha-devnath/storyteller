@@ -3,6 +3,7 @@ import { apiClient } from "@/lib/api-client"
 
 export type GraphNode = {
   id: string
+  keyNo: number
   kind: "epic" | "card"
   title: string
   subtitle: string | null

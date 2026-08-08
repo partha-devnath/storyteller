@@ -53,34 +53,33 @@ export function BoardColumn({
     <div
       ref={setNodeRef}
       data-testid={`column-${columnKey}`}
-      className={`flex min-h-[120px] flex-col gap-3 rounded-xl border border-border/60 bg-background/60 p-2 transition-colors ${
+      className={`flex max-h-[calc(100vh-16rem)] w-80 min-w-80 flex-col gap-3 rounded-xl border border-border/60 bg-background/60 p-2.5 transition-colors ${
         isOver ? "border-primary/60 bg-primary/5" : ""
       }`}
     >
-      <div className="flex items-center gap-2 px-1.5 py-1">
+      <div className="flex shrink-0 items-center gap-2 px-1.5 py-1">
         <p className="text-[13px] font-bold tracking-wide text-foreground">
           {title}
         </p>
-        <span className="font-mono text-[11px] font-semibold text-muted-foreground">
+        <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
           {cards.length}
         </span>
-        <span className="ml-auto text-[11px] text-muted-foreground">
-          {cards.length === 0 ? "no cards" : ""}
-        </span>
       </div>
-      {cards.length === 0 ? (
-        <p className="p-3 text-center text-xs text-muted-foreground">
-          No cards
-        </p>
-      ) : (
-        cards.map((card) => (
-          <DraggableBoardCard
-            key={card.id}
-            card={card}
-            onSelectCard={onSelectCard}
-          />
-        ))
-      )}
+      <div className="flex flex-col gap-3 overflow-y-auto pr-1">
+        {cards.length === 0 ? (
+          <p className="p-3 text-center text-xs text-muted-foreground">
+            No cards
+          </p>
+        ) : (
+          cards.map((card) => (
+            <DraggableBoardCard
+              key={card.id}
+              card={card}
+              onSelectCard={onSelectCard}
+            />
+          ))
+        )}
+      </div>
     </div>
   )
 }

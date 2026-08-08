@@ -45,8 +45,10 @@ function SidebarContent({
   onLogout: () => void
 }) {
   const selectedOrgId = useBoardStore((s) => s.selectedOrgId)
+  const { data: orgs } = useOrgs()
+  const activeOrgId = selectedOrgId ?? orgs?.[0]?.id
   const workspaceItems = getWorkspaceNavItems()
-  const orgItems = getOrgNavItems(selectedOrgId ?? undefined)
+  const orgItems = getOrgNavItems(activeOrgId)
 
   return (
     <div className="flex h-full flex-col">

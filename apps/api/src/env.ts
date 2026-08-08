@@ -23,7 +23,7 @@ const envSchema = z.object({
   AI_PROVIDER: z.enum(["nvidia", "mock"]).default("mock"),
   NVIDIA_API_KEY: z.string().optional(),
   EMBEDDING_MODEL: z.string().default("nvidia/nv-embed-v1"),
-  CHAT_MODEL: z.string().default("deepseek-ai/deepseek-v4-flash"),
+  CHAT_MODEL: z.string().default("deepseek-ai/deepseek-v4-flash-0731"),
   BILLING_PROVIDER: z.enum(["stripe", "mock"]).default("mock"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),

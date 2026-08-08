@@ -91,21 +91,14 @@ export function GraphView({
     return buildLayout(data.nodes, data.edges)
   }, [data])
 
-  // Client-side edge filtering: drop edges of a toggled-off type, then keep
-  // only nodes incident to the remaining edges plus all epic nodes.
+  // Client-side edge filtering: drop edges of a toggled-off type. All nodes
+  // stay visible — cards without epics or relations render unconnected rather
+  // than vanishing from the graph.
   const visible = useMemo(() => {
     const visibleEdges = layout.edges.filter(
       (edge) => filters[edge.data?.type ?? "dependency"]
     )
-    const incident = new Set<string>()
-    for (const edge of visibleEdges) {
-      incident.add(edge.source)
-      incident.add(edge.target)
-    }
-    const visibleNodes = layout.nodes.filter(
-      (node) => node.data.kind === "epic" || incident.has(node.id)
-    )
-    return { nodes: visibleNodes, edges: visibleEdges }
+    return { nodes: layout.nodes, edges: visibleEdges }
   }, [layout, filters])
 
   // Impact overlay: mark the selected card + all transitive downstream

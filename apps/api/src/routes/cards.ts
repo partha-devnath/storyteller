@@ -26,6 +26,7 @@ import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
 import { publish } from "../services/event-bus"
 import { assertLimitTx } from "../services/plan-limits"
+import { nextCardKeyNo } from "../services/card-key"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -71,6 +72,7 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
   await db.transaction(async (tx) => {
     await assertLimitTx(tx, c.var.orgId!, "cards")
 
+    const keyNo = await nextCardKeyNo(tx, projectId)
     await tx.insert(card).values({
       id: cardId,
       projectId,
@@ -82,6 +84,7 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
       priority: body.priority,
       assigneeId: body.assigneeId ?? null,
       customFields: body.customFields ?? null,
+      keyNo,
       slug,
     })
     await tx.insert(cardVersion).values({

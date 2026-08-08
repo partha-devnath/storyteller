@@ -16,11 +16,12 @@ describe("mock provider", () => {
     expect(createMockProvider).toBeDefined()
   })
 
-  it("embeds deterministically into 1536 dims", async () => {
-    const { createMockProvider } = await import("../index")
+  it("embeds deterministically into the configured dimension", async () => {
+    const { createMockProvider, EMBEDDING_DIMENSIONS } =
+      await import("../index")
     const provider = createMockProvider()
     const [v1] = await provider.embed(["loyalty points"])
-    expect(v1).toHaveLength(1536)
+    expect(v1).toHaveLength(EMBEDDING_DIMENSIONS)
     const [again] = await provider.embed(["loyalty points"])
     expect(again).toEqual(v1)
   })

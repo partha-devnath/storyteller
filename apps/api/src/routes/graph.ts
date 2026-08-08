@@ -28,6 +28,7 @@ graphRoutes.get("/:slug/graph", resolveOrgFromProject, async (c) => {
   const cards = await db
     .select({
       id: card.id,
+      keyNo: card.keyNo,
       title: card.title,
       slug: card.slug,
       status: card.status,

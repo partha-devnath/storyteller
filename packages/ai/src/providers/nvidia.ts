@@ -10,7 +10,7 @@ export type NVIDIAProviderEnv = {
 
 export function createNVIDIAProvider(env: NVIDIAProviderEnv): LLMProvider {
   const apiKey = env.apiKey
-  const chatModel = env.chatModel ?? "deepseek-ai/deepseek-v4-flash"
+  const chatModel = env.chatModel ?? "deepseek-ai/deepseek-v4-flash-0731"
   const embeddingModel = env.embeddingModel ?? "nvidia/nv-embed-v1"
 
   if (!apiKey) {

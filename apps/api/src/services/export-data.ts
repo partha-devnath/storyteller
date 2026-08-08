@@ -12,6 +12,7 @@ export type ExportEpic = {
 }
 export type ExportCard = {
   id: string
+  keyNo: number
   title: string
   slug: string
   status: string
@@ -57,6 +58,7 @@ export async function buildExportData(projectId: string): Promise<ExportData> {
   const cards = await db
     .select({
       id: card.id,
+      keyNo: card.keyNo,
       title: card.title,
       slug: card.slug,
       status: card.status,

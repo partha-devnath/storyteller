@@ -13,6 +13,7 @@ import { DiffPanel } from "./diff-panel"
 import { CommentList } from "./comment-list"
 import { CommentComposer } from "./comment-composer"
 import { Button } from "@workspace/ui/components/button"
+import { cardKey } from "@/lib/card-key"
 
 type Tab = "details" | "history" | "relations" | "similar"
 
@@ -113,7 +114,7 @@ export function CardDrawer({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-mono text-[11px] font-semibold text-muted-foreground">
-                {card.id}
+                {cardKey(card.keyNo)}
               </span>
               <span
                 className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${

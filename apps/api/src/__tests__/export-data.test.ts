@@ -12,6 +12,7 @@ const data: ExportData = {
   cards: [
     {
       id: "card-1",
+      keyNo: 1,
       title: 'Card, "Quoted"',
       slug: "card-one",
       status: "todo",
@@ -22,6 +23,7 @@ const data: ExportData = {
     },
     {
       id: "card-2",
+      keyNo: 2,
       title: "Card Two",
       slug: "card-two",
       status: "done",

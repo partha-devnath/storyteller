@@ -2,11 +2,10 @@ import { and, cosineDistance, desc, eq, sql } from "drizzle-orm"
 import { db } from "@workspace/db"
 import { card, cardEmbedding } from "@workspace/schemas"
 import { createLogger } from "@workspace/logger"
+import { EMBEDDING_DIMENSIONS } from "@workspace/ai"
 import type { LLMProvider, SemanticMatch } from "@workspace/ai/types"
 
 const logger = createLogger("vector")
-
-const EMBEDDING_DIMENSIONS = 1536
 
 function buildEmbeddingText(cardRow: typeof card.$inferSelect): string {
   const customValues = cardRow.customFields

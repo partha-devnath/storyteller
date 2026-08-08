@@ -5,6 +5,7 @@ type Envelope<T> = { success: boolean; data: T }
 
 export type BoardCard = {
   id: string
+  keyNo: number
   title: string
   slug: string
   status: string
@@ -19,6 +20,7 @@ export type BoardCard = {
 export type CardDetail = {
   card: {
     id: string
+    keyNo: number
     title: string
     slug: string
     description: string | null

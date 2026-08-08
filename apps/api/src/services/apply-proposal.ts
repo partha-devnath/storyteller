@@ -17,6 +17,7 @@ import { aiProvider } from "@workspace/ai"
 import { createLogger } from "@workspace/logger"
 import { httpError } from "../middleware/org-scope"
 import { assertLimitTx } from "./plan-limits"
+import { nextCardKeyNo } from "./card-key"
 import { publish } from "./event-bus"
 import { generateId, slugify } from "../utils"
 import type { ProposalChangeRelation } from "@workspace/schemas"
@@ -106,7 +107,9 @@ export async function applyProposal({
   proposalId: string
   approverId: string
 }): Promise<{ applied: number }> {
-  return db.transaction(async (tx) => {
+  const reindexJobs: { cardId: string; versionId: string }[] = []
+
+  const result = await db.transaction(async (tx) => {
     const [proposalRow] = await tx
       .select()
       .from(proposal)
@@ -132,13 +135,26 @@ export async function applyProposal({
           tx,
           proposalRow.projectId,
           change,
-          approverId
+          approverId,
+          reindexJobs
         )
       } else if (change.changeType === "update") {
-        await applyUpdate(tx, proposalRow.projectId, change, approverId)
+        await applyUpdate(
+          tx,
+          proposalRow.projectId,
+          change,
+          approverId,
+          reindexJobs
+        )
         applied += 1
       } else if (change.changeType === "close") {
-        await applyClose(tx, proposalRow.projectId, change, approverId)
+        await applyClose(
+          tx,
+          proposalRow.projectId,
+          change,
+          approverId,
+          reindexJobs
+        )
         applied += 1
       }
     }
@@ -155,13 +171,23 @@ export async function applyProposal({
 
     return { applied }
   })
+
+  // Embedding reindex hits the network (NVIDIA). Running it inside the DB
+  // transaction holds locks for the whole embed round-trip and deadlocks
+  // concurrent approvals — so it runs after the transaction commits.
+  for (const job of reindexJobs) {
+    await reindexSafe(job.cardId, job.versionId)
+  }
+
+  return result
 }
 
 async function applyCreate(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   projectId: string,
   change: ChangeRow,
-  approverId: string
+  approverId: string,
+  reindexJobs: { cardId: string; versionId: string }[]
 ): Promise<number> {
   // Cards-limit gate: block approvals that would push the org over its card
   // limit (UI-SPEC V4 "Card creation via AI approval" row).
@@ -175,6 +201,7 @@ async function applyCreate(
   const f = readCreateFields(change.newData)
   const epicId = await resolveEpic(tx, projectId, f.epicName)
   const slug = await uniqueSlug(tx, projectId, f.title)
+  const keyNo = await nextCardKeyNo(tx, projectId)
   const cardId = generateId()
   await tx.insert(card).values({
     id: cardId,
@@ -186,6 +213,7 @@ async function applyCreate(
     status: f.status,
     priority: f.priority,
     customFields: f.customFields,
+    keyNo,
     slug,
   })
   const versionId = generateId()
@@ -205,7 +233,7 @@ async function applyCreate(
   })
   await insertRelations(tx, projectId, change.relationSummary, cardId)
   await insertAttachments(tx, cardId, approverId, change.newData, proj.orgId)
-  await reindexSafe(cardId, versionId)
+  reindexJobs.push({ cardId, versionId })
   publish(projectId, {
     type: "card.created",
     card: { id: cardId, title: f.title, slug, status: f.status },
@@ -217,7 +245,8 @@ async function applyUpdate(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   projectId: string,
   change: ChangeRow,
-  approverId: string
+  approverId: string,
+  reindexJobs: { cardId: string; versionId: string }[]
 ): Promise<void> {
   const targetCardId = change.targetCardId
   if (!targetCardId) {
@@ -290,7 +319,7 @@ async function applyUpdate(
     sourceProposalChangeId: change.id,
   })
   await insertRelations(tx, projectId, change.relationSummary)
-  await reindexSafe(targetCardId, versionId)
+  reindexJobs.push({ cardId: targetCardId, versionId })
   publish(projectId, {
     type: "card.updated",
     card: {
@@ -307,7 +336,8 @@ async function applyClose(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   projectId: string,
   change: ChangeRow,
-  approverId: string
+  approverId: string,
+  reindexJobs: { cardId: string; versionId: string }[]
 ): Promise<void> {
   const targetCardId = change.targetCardId
   if (!targetCardId) return
@@ -353,7 +383,7 @@ async function applyClose(
     createdBy: approverId,
     sourceProposalChangeId: change.id,
   })
-  await reindexSafe(targetCardId, versionId)
+  reindexJobs.push({ cardId: targetCardId, versionId })
   publish(projectId, {
     type: "card.updated",
     card: {

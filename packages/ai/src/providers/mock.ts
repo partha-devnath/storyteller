@@ -1,6 +1,6 @@
 import type { LLMProvider, ChatMessage } from "../types"
 
-const EMBEDDING_DIMENSIONS = 1536
+const EMBEDDING_DIMENSIONS = Number(process.env.EMBEDDING_DIMENSIONS ?? 4096)
 
 function hashString(input: string): number {
   let hash = 2166136261

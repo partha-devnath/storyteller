@@ -9,6 +9,7 @@ const epics: Array<{ id: string; name: string; parentEpicId: string | null }> =
 
 const cards: Array<{
   id: string
+  keyNo: number
   title: string
   slug: string
   status: string
@@ -18,6 +19,7 @@ const cards: Array<{
 }> = [
   {
     id: "card-1",
+    keyNo: 1,
     title: "Card One",
     slug: "card-one",
     status: "todo",
@@ -27,6 +29,7 @@ const cards: Array<{
   },
   {
     id: "card-2",
+    keyNo: 2,
     title: "Card Two",
     slug: "card-two",
     status: "done",
@@ -36,6 +39,7 @@ const cards: Array<{
   },
   {
     id: "card-3",
+    keyNo: 3,
     title: "Card Three",
     slug: "card-three",
     status: "backlog",

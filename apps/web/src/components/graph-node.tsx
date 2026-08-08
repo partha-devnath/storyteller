@@ -3,6 +3,7 @@ import { Handle, Position } from "@xyflow/react"
 import { Layers, Lock } from "lucide-react"
 import type { GraphNode } from "@/hooks/use-graph"
 import { priorityClasses, priorityLabel } from "@/lib/priority"
+import { cardKey } from "@/lib/card-key"
 
 export type GraphNodeData = GraphNode & {
   isImpacted?: boolean
@@ -61,11 +62,14 @@ export function GraphNodeComponent({
           </div>
         </div>
       ) : (
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1">
           <p className="line-clamp-2 text-sm leading-snug font-semibold">
             {data.title}
           </p>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[10px] font-semibold text-muted-foreground">
+              {cardKey(data.keyNo)}
+            </span>
             <span
               className={`size-2 rounded-full border-2 border-background ${
                 data.isClosed ? "bg-destructive" : "bg-warn"
