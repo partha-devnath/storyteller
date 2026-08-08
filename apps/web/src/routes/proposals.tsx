@@ -280,87 +280,6 @@ export function ProposalsPage() {
         </div>
       </div>
 
-      <div className="relative">
-        <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
-          <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
-            <Sparkles className="size-4" />
-            AI Instruction
-          </span>
-          <div className="min-w-0 flex-1">
-            {mentions.length > 0 && (
-              <div className="mb-1.5 flex flex-wrap gap-1.5">
-                {mentions.map((m) => (
-                  <span
-                    key={`${m.type}-${m.id}`}
-                    data-testid={`mention-chip-${m.type}-${m.id}`}
-                    className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary"
-                  >
-                    @{m.label}
-                    <button
-                      aria-label={`Remove ${m.label}`}
-                      onClick={() =>
-                        setMentions((prev) =>
-                          prev.filter(
-                            (x) => !(x.type === m.type && x.id === m.id)
-                          )
-                        )
-                      }
-                      className="text-primary/70 hover:text-primary"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <input
-              ref={promptRef}
-              aria-label="AI instruction"
-              placeholder="Ask the engine to draft, split, or evolve a requirement… (@ to mention a card or member)"
-              className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
-              value={prompt}
-              onChange={(e) => {
-                setPrompt(e.target.value)
-                handleInput(
-                  e.target.value,
-                  e.target.selectionStart ?? e.target.value.length
-                )
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onGenerate()
-                if (e.key === "Escape") stopMention()
-              }}
-              disabled={generate.isPending || pending || aiActionsLimited}
-            />
-          </div>
-          {aiActionsLimited ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span className="inline-flex" data-testid="limit-tooltip" />
-                }
-              >
-                {generateButton}
-              </TooltipTrigger>
-              <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
-            </Tooltip>
-          ) : (
-            generateButton
-          )}
-        </div>
-
-        {mentionQuery !== null && (
-          <div className="absolute top-full right-0 left-0 z-50 mt-2">
-            <MentionMenu
-              query={mentionQuery}
-              options={mentionOptions}
-              onSelect={applyMention}
-              onClose={stopMention}
-            />
-          </div>
-        )}
-      </div>
-
       {pendingCount > 0 && (
         <div
           data-testid="proposal-banner"
@@ -392,8 +311,8 @@ export function ProposalsPage() {
           }}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="max-h-[calc(100vh-18rem)] flex-1 overflow-y-auto rounded-xl border border-border/60 bg-card p-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="max-h-[calc(100vh-24rem)] flex-1 overflow-y-auto rounded-xl border border-border/60 bg-card p-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
             {chatMessages.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Describe the product you want to build. Storyteller will
@@ -406,6 +325,92 @@ export function ProposalsPage() {
                 pendingPrompt={pendingPrompt}
                 onClarifyAnswer={(i, answers) => onClarifyAnswer(i, answers)}
               />
+            )}
+          </div>
+
+          <div className="relative shrink-0">
+            <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
+              <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
+                <Sparkles className="size-4" />
+                AI Instruction
+              </span>
+              <div className="min-w-0 flex-1">
+                {mentions.length > 0 && (
+                  <div className="mb-1.5 flex flex-wrap gap-1.5">
+                    {mentions.map((m) => (
+                      <span
+                        key={`${m.type}-${m.id}`}
+                        data-testid={`mention-chip-${m.type}-${m.id}`}
+                        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary"
+                      >
+                        @{m.label}
+                        <button
+                          aria-label={`Remove ${m.label}`}
+                          onClick={() =>
+                            setMentions((prev) =>
+                              prev.filter(
+                                (x) => !(x.type === m.type && x.id === m.id)
+                              )
+                            )
+                          }
+                          className="text-primary/70 hover:text-primary"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <input
+                  ref={promptRef}
+                  aria-label="AI instruction"
+                  placeholder="Ask the engine to draft, split, or evolve a requirement… (@ to mention a card or member)"
+                  className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
+                  value={prompt}
+                  onChange={(e) => {
+                    setPrompt(e.target.value)
+                    handleInput(
+                      e.target.value,
+                      e.target.selectionStart ?? e.target.value.length
+                    )
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onGenerate()
+                    if (e.key === "Escape") stopMention()
+                  }}
+                  disabled={generate.isPending || pending || aiActionsLimited}
+                />
+              </div>
+              {aiActionsLimited ? (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <span
+                        className="inline-flex"
+                        data-testid="limit-tooltip"
+                      />
+                    }
+                  >
+                    {generateButton}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Limit reached — upgrade to Pro
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                generateButton
+              )}
+            </div>
+
+            {mentionQuery !== null && (
+              <div className="absolute right-0 bottom-full left-0 z-50 mb-2">
+                <MentionMenu
+                  query={mentionQuery}
+                  options={mentionOptions}
+                  onSelect={applyMention}
+                  onClose={stopMention}
+                />
+              </div>
             )}
           </div>
         </div>
