@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
@@ -53,6 +53,10 @@ beforeEach(() => {
   useBoardStore.getState().setSelectedOrgId("org1")
 })
 
+afterEach(() => {
+  useBoardStore.getState().setSelectedOrgId(null)
+})
+
 function renderWithRouter(element: React.ReactElement) {
   return render(
     <ThemeProvider defaultTheme="light">
@@ -62,13 +66,13 @@ function renderWithRouter(element: React.ReactElement) {
 }
 
 async function openUserMenu() {
-  await userEvent.click(screen.getAllByText("Ada")[0].closest("button")!)
+  await userEvent.click(screen.getByText("Ada").closest("button")!)
 }
 
 describe("AppShell", () => {
   it("renders the brand, org switcher, and a reachable sign-out control", async () => {
     renderWithRouter(<AppShell />)
-    expect(screen.getAllByText("Storyteller").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("Storyteller")).toHaveLength(2)
     expect(screen.getAllByText(/Acme/).length).toBeGreaterThan(0)
     await openUserMenu()
     expect(await screen.findByText("Sign out")).toBeInTheDocument()

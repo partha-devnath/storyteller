@@ -225,7 +225,11 @@ export function AppShell() {
             newBoardButton
           )}
           <EnvIndicator />
-          {user && <UserMenu name={user.name} role={role} onLogout={logout} />}
+          {user && (
+            <span className="grid size-8 shrink-0 place-items-center rounded-full border border-input bg-muted font-mono text-[11px] font-semibold text-primary">
+              {user?.name?.charAt(0).toUpperCase() ?? "U"}
+            </span>
+          )}
         </div>
       </header>
 
