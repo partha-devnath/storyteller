@@ -6,7 +6,7 @@ import {
   useApproveProposal,
   useRejectProposal,
 } from "@/hooks/use-proposals"
-import type { ChatMessageRow } from "@/hooks/use-chat"
+import type { ChatMessageRow, MentionItem } from "@/hooks/use-chat"
 
 function formatTime(iso: string): string {
   if (!iso) return ""
@@ -128,10 +128,12 @@ function BoardReply({
 export function ChatThread({
   messages,
   projectSlug,
+  pendingPrompt,
   onClarifyAnswer,
 }: {
   messages: ChatMessageRow[]
   projectSlug: string
+  pendingPrompt?: { text: string; mentions: MentionItem[] } | null
   onClarifyAnswer: (index: number, answers: string[]) => void
 }) {
   const clarifyingIndex = useMemo(() => {
@@ -291,6 +293,42 @@ export function ChatThread({
         }
         return null
       })}
+
+      {pendingPrompt && (
+        <>
+          <div
+            data-testid="pending-user-bubble"
+            className="ml-auto flex max-w-[85%] flex-col items-end"
+          >
+            {pendingPrompt.mentions.length > 0 && (
+              <div className="mb-1 flex flex-wrap justify-end gap-1">
+                {pendingPrompt.mentions.map((m) => (
+                  <span
+                    key={`${m.type}-${m.id}`}
+                    className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary"
+                  >
+                    @{m.label}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="rounded-xl rounded-br-sm bg-primary px-3.5 py-2 text-sm text-primary-foreground">
+              {pendingPrompt.text}
+            </div>
+          </div>
+          <div
+            data-testid="ai-loading"
+            className="mr-auto flex items-center gap-1.5 self-start rounded-xl rounded-tl-sm border border-border bg-muted/40 px-3.5 py-2.5"
+          >
+            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
+            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
+            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+            <span className="ml-1 text-[11px] text-muted-foreground">
+              Storyteller is thinking…
+            </span>
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react"
-import { useParams, useSearchParams } from "react-router"
+import { useNavigate, useParams, useSearchParams } from "react-router"
 import { useProject, useProposedCards } from "@/hooks/use-projects"
 import { useCards, useMoveCard, type CommentItem } from "@/hooks/use-cards"
 import { useProjectEvents } from "@/hooks/use-project-events"
@@ -21,6 +21,7 @@ const GraphView = lazy(() =>
 
 export function ProjectBoardPage() {
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const view = searchParams.get("view") ?? "board"
   const { data: projectDetail, isLoading } = useProject(slug)
@@ -114,6 +115,11 @@ export function ProjectBoardPage() {
               filters={filters}
               onMove={(cardId, status) => moveCard.mutate({ cardId, status })}
               onSelectCard={(card) => setActiveCardId(card.id)}
+              onOpenProposal={(proposalId) =>
+                navigate(
+                  `/projects/${slug ?? ""}/proposals?proposal=${proposalId}`
+                )
+              }
             />
           )}
           {cards && (

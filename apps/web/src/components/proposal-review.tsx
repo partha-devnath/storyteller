@@ -8,11 +8,19 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { GraphView } from "./graph-view"
 
-export function ProposalReview({ projectSlug }: { projectSlug: string }) {
+export function ProposalReview({
+  projectSlug,
+  initialProposalId,
+}: {
+  projectSlug: string
+  initialProposalId?: string | null
+}) {
   const { data: proposals } = useProposals(projectSlug)
   const approve = useApproveProposal(projectSlug)
   const reject = useRejectProposal(projectSlug)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(
+    initialProposalId ?? null
+  )
   const [graphId, setGraphId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")

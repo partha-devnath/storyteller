@@ -27,6 +27,7 @@ export function KanbanBoard({
   filters,
   onMove,
   onSelectCard,
+  onOpenProposal,
 }: {
   cards: BoardCard[]
   columns: { key: string; title: string }[]
@@ -34,6 +35,7 @@ export function KanbanBoard({
   filters: BoardFilters
   onMove: (cardId: string, status: string) => void
   onSelectCard: (card: BoardCard) => void
+  onOpenProposal?: (proposalId: string) => void
 }) {
   const openCards = cards.filter((c) => !c.isClosed)
   const [activeCard, setActiveCard] = useState<BoardCard | null>(null)
@@ -88,31 +90,44 @@ export function KanbanBoard({
     >
       <div className="[transform:rotateX(180deg)] overflow-x-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
         <div className="flex min-w-0 [transform:rotateX(180deg)] gap-4 pb-3">
-          {proposedCards && proposedCards.length > 0 && (
-            <div
-              data-testid="column-proposed"
-              className="flex max-h-[calc(100vh-16rem)] w-80 min-w-80 flex-col gap-3 rounded-xl border border-dashed border-warn/40 bg-warn/5 p-2.5"
-            >
-              <div className="flex shrink-0 items-center gap-2 px-1.5 py-1">
-                <p className="text-[13px] font-bold tracking-wide text-warn">
-                  Proposed
+          <div
+            data-testid="column-proposed"
+            className="flex max-h-[calc(100vh-16rem)] w-80 min-w-80 flex-col gap-3 rounded-xl border border-dashed border-warn/40 bg-warn/5 p-2.5"
+          >
+            <div className="flex shrink-0 items-center gap-2 px-1.5 py-1">
+              <p className="text-[13px] font-bold tracking-wide text-warn">
+                Proposed
+              </p>
+              <span className="rounded-full bg-warn/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-warn">
+                {proposedCards?.length ?? 0}
+              </span>
+            </div>
+            <div className="flex min-h-[80px] flex-col gap-3 overflow-y-auto pr-1">
+              {!proposedCards || proposedCards.length === 0 ? (
+                <p className="p-3 text-center text-xs text-muted-foreground">
+                  No proposed cards
                 </p>
-                <span className="rounded-full bg-warn/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-warn">
-                  {proposedCards.length}
-                </span>
-              </div>
-              <div className="flex min-h-[80px] flex-col gap-3 overflow-y-auto pr-1">
-                {proposedCards.filter(proposedMatches).map((card) => (
+              ) : (
+                proposedCards.filter(proposedMatches).map((card) => (
                   <div
                     key={card.id}
                     data-testid="proposed-card"
-                    className="flex cursor-default flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onOpenProposal?.(card.proposalId)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        onOpenProposal?.(card.proposalId)
+                      }
+                    }}
+                    className="flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left transition-colors hover:border-warn/70 hover:bg-card"
                   >
                     <div className="flex items-center gap-2">
                       <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
                         proposed
                       </span>
-                      <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                      <span className="ml-auto font-mono text-[11px] text-muted-foreground opacity-0 transition-opacity hover:opacity-100">
                         ›
                       </span>
                     </div>
@@ -125,10 +140,10 @@ export function KanbanBoard({
                       </span>
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
-          )}
+          </div>
 
           {columns.map((col) => (
             <BoardColumn

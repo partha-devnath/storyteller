@@ -44,6 +44,13 @@ export function ProjectTabs({ slug }: { slug: string }) {
       >
         Graph
       </NavLink>
+      <NavLink
+        to={`/projects/${slug}/settings`}
+        role="tab"
+        className={({ isActive }) => tabClass(isActive)}
+      >
+        Settings
+      </NavLink>
     </nav>
   )
 }

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react"
-import { useParams } from "react-router"
+import { useParams, useSearchParams } from "react-router"
 import { useQueryClient } from "@tanstack/react-query"
 import { Sparkles } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
@@ -34,6 +34,8 @@ import { toast } from "@/stores/toast-store"
 
 export function ProposalsPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const deepLinkProposal = searchParams.get("proposal")
   const queryClient = useQueryClient()
   const generate = useAiGenerate(slug ?? "")
   const clarify = useAiClarify(slug ?? "")
@@ -62,6 +64,10 @@ export function ProposalsPage() {
   const [prompt, setPrompt] = useState("")
   const [mentions, setMentions] = useState<MentionItem[]>([])
   const [pending, setPending] = useState(false)
+  const [pendingPrompt, setPendingPrompt] = useState<{
+    text: string
+    mentions: MentionItem[]
+  } | null>(null)
   const [priorAnswers, setPriorAnswers] = useState("")
   const promptRef = useRef<HTMLInputElement | null>(null)
   const { mentionQuery, mentionCaret, mentionEnd, handleInput, stopMention } =
@@ -154,9 +160,11 @@ export function ProposalsPage() {
     setMentions([])
     stopMention()
     setPending(true)
+    setPendingPrompt({ text: userPrompt, mentions: userMentions })
     const sessionId = await ensureSession()
     if (!sessionId) {
       setPending(false)
+      setPendingPrompt(null)
       return
     }
     try {
@@ -187,6 +195,7 @@ export function ProposalsPage() {
       )
     } finally {
       setPending(false)
+      setPendingPrompt(null)
     }
   }
 
@@ -394,6 +403,7 @@ export function ProposalsPage() {
               <ChatThread
                 messages={chatMessages}
                 projectSlug={slug ?? ""}
+                pendingPrompt={pendingPrompt}
                 onClarifyAnswer={(i, answers) => onClarifyAnswer(i, answers)}
               />
             )}
@@ -401,7 +411,12 @@ export function ProposalsPage() {
         </div>
       </div>
 
-      {slug && <ProposalReview projectSlug={slug} />}
+      {slug && (
+        <ProposalReview
+          projectSlug={slug}
+          initialProposalId={deepLinkProposal}
+        />
+      )}
     </div>
   )
 }

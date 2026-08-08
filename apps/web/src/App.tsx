@@ -6,10 +6,10 @@ import { ForgotPasswordPage } from "@/routes/forgot-password"
 import { ResetPasswordPage } from "@/routes/reset-password"
 import { LandingPage } from "@/routes/landing"
 import { ProjectsPage } from "@/routes/projects"
-import { ProjectChatPage } from "@/routes/project-chat"
 import { OrgMembersPage } from "@/routes/org-members"
 import { ProjectBoardPage } from "@/routes/project-board"
 import { ProposalsPage } from "@/routes/proposals"
+import { ProjectSettingsPage } from "@/routes/project-settings"
 import { CardDetailPage } from "@/routes/card-detail"
 import { OnboardingPage } from "@/routes/onboarding"
 import { BillingPage } from "@/routes/billing"
@@ -39,7 +39,10 @@ export function App() {
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:slug" element={<ProjectBoardPage />} />
           <Route path="/projects/:slug/proposals" element={<ProposalsPage />} />
-          <Route path="/projects/:slug/chat" element={<ProjectChatPage />} />
+          <Route
+            path="/projects/:slug/settings"
+            element={<ProjectSettingsPage />}
+          />
           <Route
             path="/project/:slug/card/:cardSlug"
             element={<CardDetailPage />}

@@ -70,7 +70,8 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers })
   if (!session) throw httpError("Unauthorized", 401)
   const projectId = c.var.projectId!
-  const body = createCardSchema.parse(await c.req.json())
+  const raw = (await c.req.json()) as Record<string, unknown>
+  const body = createCardSchema.parse({ ...raw, projectId })
 
   const cardId = generateId()
   const slug = slugify(body.title) || "card"
