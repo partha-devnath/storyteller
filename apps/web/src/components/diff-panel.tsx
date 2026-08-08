@@ -28,24 +28,43 @@ export function DiffPanel({
   return (
     <div
       data-testid="diff-panel"
-      className="overflow-x-auto rounded-lg border bg-background"
+      className="overflow-hidden rounded-xl border border-border bg-card"
     >
-      <pre className="p-2 text-xs leading-relaxed">
-        {parts.map((part) => (
+      {parts.map((part) => (
+        <div
+          key={part.id}
+          className={`flex items-baseline gap-2 px-3 py-1 text-[13px] leading-relaxed ${
+            part.added
+              ? "bg-success/10"
+              : part.removed
+                ? "bg-destructive/10"
+                : ""
+          }`}
+        >
           <span
-            key={part.id}
+            className={`w-5 shrink-0 text-right font-mono text-[10px] ${
+              part.added
+                ? "text-success"
+                : part.removed
+                  ? "text-destructive"
+                  : "text-muted-foreground"
+            }`}
+          >
+            {part.added ? "+" : part.removed ? "−" : " "}
+          </span>
+          <span
             className={
               part.added
-                ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                ? "text-foreground"
                 : part.removed
-                  ? "bg-red-500/10 text-red-700 dark:text-red-400"
+                  ? "text-muted line-through decoration-destructive/50"
                   : "text-muted-foreground"
             }
           >
             {part.value}
           </span>
-        ))}
-      </pre>
+        </div>
+      ))}
     </div>
   )
 }
