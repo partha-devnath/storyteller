@@ -58,7 +58,7 @@ export function OrgSwitcher() {
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold">{active.name}</span>
           <span className="block text-[11px] text-muted-foreground capitalize">
-            {active.role}
+            {active.role.charAt(0).toUpperCase() + active.role.slice(1)}
           </span>
         </span>
         <ChevronDown
