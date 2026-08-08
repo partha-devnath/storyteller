@@ -363,10 +363,14 @@ export function LandingPage() {
                   The same bar that runs your real board — same generation, no
                   data touched.
                 </p>
-                <label className="mt-5 block font-mono text-xs font-medium tracking-[0.1em] text-foreground/80 uppercase">
+                <label
+                  htmlFor="demo-input"
+                  className="mt-5 block font-mono text-xs font-medium tracking-[0.1em] text-foreground/80 uppercase"
+                >
                   Your idea
                 </label>
                 <textarea
+                  id="demo-input"
                   value={demoInput}
                   onChange={(e) => setDemoInput(e.target.value)}
                   onKeyDown={(e) => {

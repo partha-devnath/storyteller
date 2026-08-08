@@ -65,12 +65,12 @@ export function GraphNodeComponent({
           <p className="line-clamp-2 text-sm leading-snug font-semibold">
             {data.title}
           </p>
-          <span
-            className={`absolute top-2 right-2 size-2 rounded-full border-2 border-background ${
-              data.isClosed ? "bg-destructive" : "bg-warn"
-            }`}
-          />
           <div className="flex shrink-0 items-center gap-1">
+            <span
+              className={`size-2 rounded-full border-2 border-background ${
+                data.isClosed ? "bg-destructive" : "bg-warn"
+              }`}
+            />
             {data.isClosed && <Lock className="size-3 text-muted-foreground" />}
             {data.priority && (
               <span
