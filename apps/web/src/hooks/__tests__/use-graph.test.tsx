@@ -48,7 +48,7 @@ describe("useGraph", () => {
       .getQueryCache()
       .findAll()
       .map((query) => query.queryKey)
-    expect(keys).toContainEqual(["project", "demo", "graph"])
+    expect(keys).toContainEqual(["project", "demo", "graph", "base"])
     expect(mockApiClient).toHaveBeenCalledWith("/api/projects/demo/graph")
   })
 
@@ -64,7 +64,7 @@ describe("useGraph", () => {
       .getQueryCache()
       .findAll()
       .map((query) => query.queryKey)
-    expect(keys).toContainEqual(["project", undefined, "graph"])
+    expect(keys).toContainEqual(["project", undefined, "graph", "base"])
     expect(mockApiClient).not.toHaveBeenCalled()
   })
 })

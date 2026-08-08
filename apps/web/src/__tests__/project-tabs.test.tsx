@@ -14,11 +14,11 @@ function renderAt(path: string) {
 }
 
 describe("ProjectTabs", () => {
-  it("renders Board, Graph, Chat", () => {
+  it("renders AI, Board, Graph", () => {
     renderAt("/projects/acme")
+    expect(screen.getByRole("tab", { name: "AI" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Board" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Graph" })).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Chat" })).toBeInTheDocument()
   })
 
   it("Board active on board view", () => {
@@ -49,9 +49,9 @@ describe("ProjectTabs", () => {
     )
   })
 
-  it("Chat active on chat route", () => {
-    renderAt("/projects/acme/chat")
-    expect(screen.getByRole("tab", { name: "Chat" })).toHaveAttribute(
+  it("AI active on proposals route", () => {
+    renderAt("/projects/acme/proposals")
+    expect(screen.getByRole("tab", { name: "AI" })).toHaveAttribute(
       "aria-current",
       "page"
     )

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import type { ReactNode } from "react"
 
@@ -86,5 +87,47 @@ describe("ChatThread", () => {
     expect(await screen.findByText(/Loyalty card/)).toBeInTheDocument()
     expect(screen.getByTestId("approve-proposal")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument()
+  })
+
+  it("answers clarifying questions inline as a reply", async () => {
+    const { ChatThread } = await import("../chat-thread")
+    const onClarifyAnswer = vi.fn()
+    const clarifyMessages = [
+      ...messages,
+      {
+        id: "m3",
+        projectId: "p1",
+        role: "ai" as const,
+        kind: "clarifying" as const,
+        content: "",
+        questions: [
+          { question: "Which base?", options: ["All", "New"] },
+          { question: "Expiry?" },
+        ],
+        proposalId: null,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ]
+    render(
+      <ChatThread
+        messages={clarifyMessages}
+        projectSlug="acme"
+        onClarifyAnswer={onClarifyAnswer}
+      />,
+      { wrapper }
+    )
+    expect(
+      screen.getByText("A few questions to clarify the board:")
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Which base\?/)).toBeInTheDocument()
+
+    await screen.getByTestId("chat-clarify-answer").click()
+    const inputs = screen.getAllByTestId("clarify-answer")
+    expect(inputs).toHaveLength(2)
+
+    await userEvent.type(inputs[0], "All users")
+    await screen.getByTestId("chat-clarify-submit").click()
+    expect(onClarifyAnswer).toHaveBeenCalledWith(2, ["All users", ""])
   })
 })

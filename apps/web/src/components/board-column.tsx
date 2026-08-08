@@ -65,7 +65,7 @@ export function BoardColumn({
           {cards.length}
         </span>
       </div>
-      <div className="flex flex-col gap-3 overflow-y-auto pr-1">
+      <div className="flex min-h-[80px] flex-col gap-3 overflow-y-auto pr-1">
         {cards.length === 0 ? (
           <p className="p-3 text-center text-xs text-muted-foreground">
             No cards

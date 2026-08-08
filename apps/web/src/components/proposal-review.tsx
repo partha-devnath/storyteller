@@ -6,12 +6,14 @@ import {
   useRejectProposal,
 } from "@/hooks/use-proposals"
 import { Button } from "@workspace/ui/components/button"
+import { GraphView } from "./graph-view"
 
 export function ProposalReview({ projectSlug }: { projectSlug: string }) {
   const { data: proposals } = useProposals(projectSlug)
   const approve = useApproveProposal(projectSlug)
   const reject = useRejectProposal(projectSlug)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [graphId, setGraphId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState("")
 
@@ -38,7 +40,10 @@ export function ProposalReview({ projectSlug }: { projectSlug: string }) {
           >
             <button
               className="flex w-full items-center justify-between text-left text-sm"
-              onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+              onClick={() => {
+                setExpandedId(expandedId === p.id ? null : p.id)
+                setGraphId(null)
+              }}
             >
               <span className="line-clamp-1">{p.instruction}</span>
               <span className="ml-2 shrink-0 rounded-full bg-yellow-500/10 px-1.5 py-0.5 text-[10px] text-yellow-700">
@@ -75,7 +80,15 @@ export function ProposalReview({ projectSlug }: { projectSlug: string }) {
                   </div>
                 ))}
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    data-testid="proposal-graph-toggle"
+                    onClick={() => setGraphId(graphId === p.id ? null : p.id)}
+                  >
+                    {graphId === p.id ? "Hide graph" : "View graph"}
+                  </Button>
                   <Button
                     size="sm"
                     data-testid="approve-proposal"
@@ -101,6 +114,17 @@ export function ProposalReview({ projectSlug }: { projectSlug: string }) {
                     Reject
                   </Button>
                 </div>
+
+                {graphId === p.id && (
+                  <div data-testid="proposal-graph">
+                    <GraphView
+                      projectSlug={projectSlug}
+                      proposalId={p.id}
+                      compact
+                      onSelectCard={() => {}}
+                    />
+                  </div>
+                )}
 
                 {rejectingId === p.id && (
                   <div className="flex gap-2">

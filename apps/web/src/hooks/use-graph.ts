@@ -8,6 +8,7 @@ export type GraphNode = {
   title: string
   subtitle: string | null
   isClosed: boolean
+  isProposed: boolean
   priority: "low" | "medium" | "high" | "critical" | null
   epicId: string | null
   childCount: number
@@ -22,13 +23,14 @@ export type GraphEdge = {
 
 type Envelope<T> = { success: boolean; data: T }
 
-export function useGraph(projectSlug: string | undefined) {
+export function useGraph(projectSlug: string | undefined, proposalId?: string) {
   return useQuery({
-    queryKey: ["project", projectSlug, "graph"],
+    queryKey: ["project", projectSlug, "graph", proposalId ?? "base"],
     queryFn: async () => {
+      const q = proposalId ? `?proposal=${encodeURIComponent(proposalId)}` : ""
       const res = await apiClient<
         Envelope<{ nodes: GraphNode[]; edges: GraphEdge[] }>
-      >(`/api/projects/${projectSlug}/graph`)
+      >(`/api/projects/${projectSlug}/graph${q}`)
       return res.data
     },
     enabled: Boolean(projectSlug),

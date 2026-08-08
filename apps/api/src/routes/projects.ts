@@ -2,7 +2,13 @@ import { Hono } from "hono"
 import { eq, sql, and, desc } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
-import { project, epic, card, organizationMember } from "@workspace/schemas"
+import {
+  project,
+  epic,
+  card,
+  organizationMember,
+  proposal,
+} from "@workspace/schemas"
 import { createProjectSchema } from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
 import { resolveOrgFromProject } from "../middleware/org-scope"
@@ -90,6 +96,8 @@ projectsRoutes.get("/", requireOrg, async (c) => {
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       cardCount: sql<number>`(SELECT COUNT(*)::int FROM ${card} WHERE ${card.projectId} = ${project.id})`,
+      frozenCount: sql<number>`(SELECT COUNT(*)::int FROM ${card} WHERE ${card.projectId} = ${project.id} AND ${card.isClosed})`,
+      pendingProposals: sql<number>`(SELECT COUNT(*)::int FROM ${proposal} WHERE ${proposal.projectId} = ${project.id} AND ${proposal.status} = 'pending')`,
       lastActivity: sql<Date>`(SELECT MAX(${card.updatedAt}) FROM ${card} WHERE ${card.projectId} = ${project.id})`,
     })
     .from(project)

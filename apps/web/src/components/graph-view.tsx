@@ -66,13 +66,20 @@ function buildLayout(
 
 export function GraphView({
   projectSlug,
+  proposalId,
+  compact = false,
   onSelectCard,
 }: {
   projectSlug: string
+  proposalId?: string
+  compact?: boolean
   onSelectCard: (cardId: string) => void
 }) {
   const navigate = useNavigate()
-  const { data, isLoading, isError, refetch } = useGraph(projectSlug)
+  const { data, isLoading, isError, refetch } = useGraph(
+    projectSlug,
+    proposalId
+  )
 
   const [filters, setFilters] = useState<EdgeFilterState>({
     dependency: true,
@@ -231,6 +238,7 @@ export function GraphView({
         nodes={renderedNodes}
         edges={renderedEdges}
         onNodeClick={handleNodeClick}
+        className={compact ? "h-[340px]" : "h-[560px]"}
       />
     </div>
   )

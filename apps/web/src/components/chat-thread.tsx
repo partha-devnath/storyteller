@@ -137,6 +137,16 @@ export function ChatThread({
     return last
   }, [messages])
 
+  const [draftAnswers, setDraftAnswers] = useState<string[] | null>(null)
+  const activeClarifying =
+    clarifyingIndex >= 0 ? messages[clarifyingIndex] : null
+  const answering = draftAnswers !== null
+
+  function startAnswering() {
+    if (!activeClarifying?.questions) return
+    setDraftAnswers(activeClarifying.questions.map(() => ""))
+  }
+
   return (
     <div className="flex flex-col gap-3">
       {messages.map((message, i) => {
@@ -180,22 +190,56 @@ export function ChatThread({
                     )}
                   </p>
                 ))}
-                {i === clarifyingIndex && (
+                {i === clarifyingIndex && !answering && (
                   <Button
                     size="sm"
                     className="mt-3"
                     data-testid="chat-clarify-answer"
-                    onClick={() =>
-                      onClarifyAnswer(
-                        i,
-                        message.questions!.map(() => "")
-                      )
-                    }
+                    onClick={startAnswering}
                   >
                     Answer
                   </Button>
                 )}
               </div>
+
+              {i === clarifyingIndex && answering && draftAnswers && (
+                <div
+                  className="mt-2 space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3"
+                  data-testid="chat-clarify-form"
+                >
+                  {message.questions.map((q, qi) => (
+                    <div key={qi} className="space-y-1">
+                      <label className="text-sm font-medium">
+                        {q.question}
+                      </label>
+                      <input
+                        data-testid="clarify-answer"
+                        className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                        value={draftAnswers[qi] ?? ""}
+                        onChange={(e) =>
+                          setDraftAnswers((prev) =>
+                            prev
+                              ? prev.map((a, idx) =>
+                                  idx === qi ? e.target.value : a
+                                )
+                              : prev
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                  <Button
+                    size="sm"
+                    data-testid="chat-clarify-submit"
+                    onClick={() => {
+                      onClarifyAnswer(i, draftAnswers)
+                      setDraftAnswers(null)
+                    }}
+                  >
+                    Submit answers
+                  </Button>
+                </div>
+              )}
             </div>
           )
         }

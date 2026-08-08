@@ -1,14 +1,18 @@
+import { useState } from "react"
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   KeyboardSensor,
   closestCorners,
   useSensor,
   useSensors,
+  type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core"
 import type { BoardCard } from "@/hooks/use-cards"
 import { BoardColumn } from "./board-column"
+import { BoardCard as Card } from "./board-card"
 
 export function KanbanBoard({
   cards,
@@ -22,13 +26,20 @@ export function KanbanBoard({
   onSelectCard: (card: BoardCard) => void
 }) {
   const openCards = cards.filter((c) => !c.isClosed)
+  const [activeCard, setActiveCard] = useState<BoardCard | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor)
   )
 
+  function handleDragStart(event: DragStartEvent) {
+    const card = openCards.find((c) => c.id === String(event.active.id))
+    setActiveCard(card ?? null)
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    setActiveCard(null)
     const sourceId = String(event.active.id)
     const targetKey = String(event.over?.id ?? "")
     const card = openCards.find((c) => c.id === sourceId)
@@ -43,7 +54,9 @@ export function KanbanBoard({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveCard(null)}
     >
       <div className="flex min-w-0 gap-4 overflow-x-auto pb-3 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
         {columns.map((col) => (
@@ -56,6 +69,12 @@ export function KanbanBoard({
           />
         ))}
       </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeCard ? (
+          <Card card={activeCard} isClosed={activeCard.isClosed} />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }

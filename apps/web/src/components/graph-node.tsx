@@ -23,7 +23,9 @@ export function GraphNodeComponent({
 
   const base = isEpic
     ? "relative w-[160px] rounded-lg border-2 border-primary/40 bg-card px-3 py-2"
-    : "relative w-[140px] rounded-lg border bg-card px-3 py-2 shadow-sm"
+    : data.isProposed
+      ? "relative w-[140px] rounded-lg border border-warn/60 bg-warn/5 px-3 py-2 shadow-sm"
+      : "relative w-[140px] rounded-lg border bg-card px-3 py-2 shadow-sm"
 
   const stateClasses = [
     !isEpic && data.isClosed
@@ -67,12 +69,22 @@ export function GraphNodeComponent({
             {data.title}
           </p>
           <div className="flex items-center gap-1.5">
-            <span className="font-mono text-[10px] font-semibold text-muted-foreground">
-              {cardKey(data.keyNo)}
-            </span>
+            {data.isProposed ? (
+              <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
+                proposed
+              </span>
+            ) : (
+              <span className="font-mono text-[10px] font-semibold text-muted-foreground">
+                {cardKey(data.keyNo)}
+              </span>
+            )}
             <span
               className={`size-2 rounded-full border-2 border-background ${
-                data.isClosed ? "bg-destructive" : "bg-warn"
+                data.isClosed
+                  ? "bg-destructive"
+                  : data.isProposed
+                    ? "bg-warn"
+                    : "bg-primary"
               }`}
             />
             {data.isClosed && <Lock className="size-3 text-muted-foreground" />}

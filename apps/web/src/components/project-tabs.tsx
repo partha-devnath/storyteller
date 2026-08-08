@@ -23,7 +23,7 @@ export function ProjectTabs({ slug }: { slug: string }) {
         role="tab"
         className={({ isActive }) => tabClass(isActive)}
       >
-        Proposals
+        AI
       </NavLink>
       <NavLink
         to={boardBase}
@@ -43,13 +43,6 @@ export function ProjectTabs({ slug }: { slug: string }) {
         data-testid="view-switcher-graph"
       >
         Graph
-      </NavLink>
-      <NavLink
-        to={`/projects/${slug}/chat`}
-        role="tab"
-        className={({ isActive }) => tabClass(isActive)}
-      >
-        Chat
       </NavLink>
     </nav>
   )

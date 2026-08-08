@@ -12,6 +12,8 @@ export type ProjectSummary = {
   createdAt: string
   updatedAt: string
   cardCount: number
+  frozenCount: number
+  pendingProposals: number
   lastActivity: string | null
 }
 

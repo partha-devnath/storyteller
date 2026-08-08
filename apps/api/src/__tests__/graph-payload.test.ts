@@ -1,5 +1,8 @@
 import { describe, it, expect } from "bun:test"
-import { buildGraphPayload } from "../services/graph-payload"
+import {
+  buildGraphPayload,
+  buildProposalGraphPayload,
+} from "../services/graph-payload"
 
 const epics: Array<{ id: string; name: string; parentEpicId: string | null }> =
   [
@@ -158,5 +161,73 @@ describe("buildGraphPayload", () => {
     const epicTwo = nodes.find((n) => n.id === "epic-2")
     expect(epicOne?.childCount).toBe(1)
     expect(epicTwo?.childCount).toBe(1)
+  })
+})
+
+describe("buildProposalGraphPayload", () => {
+  const base = buildGraphPayload(epics, cards, relations)
+
+  it("adds proposed nodes for create changes", () => {
+    const { nodes } = buildProposalGraphPayload(base, [
+      {
+        id: "ch_new",
+        changeType: "create",
+        targetCardId: null,
+        newData: { title: "New checkout", priority: "high" },
+        relationSummary: [],
+      },
+    ])
+    const proposed = nodes.find((n) => n.id === "ch_new")
+    expect(proposed).toMatchObject({
+      kind: "card",
+      title: "New checkout",
+      isProposed: true,
+      subtitle: "proposed",
+    })
+  })
+
+  it("connects single-endpoint relations to the proposed node", () => {
+    const { nodes, edges } = buildProposalGraphPayload(base, [
+      {
+        id: "ch_new",
+        changeType: "create",
+        targetCardId: null,
+        newData: { title: "New checkout" },
+        relationSummary: [
+          {
+            type: "evolution",
+            sourceCardId: "card-2",
+            note: "replaces closed card",
+          },
+        ],
+      },
+    ])
+    expect(nodes.some((n) => n.id === "ch_new")).toBe(true)
+    expect(edges).toContainEqual({
+      id: "card-2--ch_new",
+      source: "card-2",
+      target: "ch_new",
+      type: "evolution",
+    })
+  })
+
+  it("marks update targets as proposed", () => {
+    const { nodes } = buildProposalGraphPayload(base, [
+      {
+        id: "ch_upd",
+        changeType: "update",
+        targetCardId: "card-1",
+        newData: { title: "Card One v2" },
+        relationSummary: [],
+      },
+    ])
+    const target = nodes.find((n) => n.id === "card-1")
+    expect(target?.isProposed).toBe(true)
+  })
+
+  it("carries the base graph through unchanged when no changes", () => {
+    const { nodes, edges } = buildProposalGraphPayload(base, [])
+    expect(nodes).toHaveLength(base.nodes.length)
+    expect(edges).toHaveLength(base.edges.length)
   })
 })
