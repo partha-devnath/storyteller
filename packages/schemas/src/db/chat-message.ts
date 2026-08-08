@@ -1,12 +1,16 @@
 import { json, pgTable, text, timestamp } from "drizzle-orm/pg-core"
 import { project } from "./project"
 import { proposal } from "./proposal"
+import { chatSession } from "./chat-session"
 
 export const chatMessage = pgTable("chat_message", {
   id: text("id").primaryKey(),
   projectId: text("project_id")
     .notNull()
     .references(() => project.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").references(() => chatSession.id, {
+    onDelete: "cascade",
+  }),
   role: text("role").$type<"user" | "ai">().notNull(),
   kind: text("kind")
     .$type<"prompt" | "board" | "clarifying" | "error">()
@@ -16,6 +20,9 @@ export const chatMessage = pgTable("chat_message", {
     .$type<{ question: string; options?: string[] }[] | null>()
     .default(null),
   proposalId: text("proposal_id").references(() => proposal.id),
+  mentions: json("mentions")
+    .$type<{ type: "card" | "member"; id: string; label: string }[] | null>()
+    .default(null),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })

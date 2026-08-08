@@ -38,6 +38,16 @@ const generateSchema = z.object({
 const processSchema = z.object({
   projectSlug: z.string().min(1),
   instruction: z.string().min(1).max(4000),
+  mentions: z
+    .array(
+      z.object({
+        type: z.enum(["card", "member"]),
+        id: z.string().min(1),
+        label: z.string().min(1),
+      })
+    )
+    .optional()
+    .default([]),
 })
 
 const clarifySchema = z.object({
@@ -179,9 +189,19 @@ aiRoutes.post("/process", async (c) => {
     provider: aiProvider,
   })
   const snapshot = await buildBoardSnapshot(projectId)
+
+  // Resolve @mentioned cards to their titles so the AI can act on them.
+  const cardRefs = body.mentions.filter((m) => m.type === "card")
+  const instructionWithMentions =
+    cardRefs.length > 0
+      ? `${body.instruction}\n\nReferenced cards:\n${cardRefs
+          .map((m) => `- ${m.label} (${m.id})`)
+          .join("\n")}`
+      : body.instruction
+
   const batch = await processInstruction({
     provider: aiProvider,
-    instruction: body.instruction,
+    instruction: instructionWithMentions,
     snapshot,
     semanticMatches: semantic,
   })

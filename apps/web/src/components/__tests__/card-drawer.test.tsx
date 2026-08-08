@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
+import { MemoryRouter } from "react-router"
 
 const mockDetail = {
   card: {
@@ -72,31 +73,31 @@ beforeEach(() => {
 })
 
 describe("CardDrawer", () => {
-  it("renders details tab content and comments section", async () => {
+  async function renderDrawer() {
     const { CardDrawer } = await import("../card-drawer")
-    render(
-      <CardDrawer cardId="c1" open onClose={vi.fn()} projectSlug="loyalty" />
+    return render(
+      <MemoryRouter>
+        <CardDrawer cardId="c1" open onClose={vi.fn()} projectSlug="loyalty" />
+      </MemoryRouter>
     )
+  }
+
+  it("renders details tab content and comments section", async () => {
+    await renderDrawer()
     expect(screen.getByText("Loyalty enrollment flow")).toBeInTheDocument()
     expect(screen.getByText("Enrolls")).toBeInTheDocument()
     expect(screen.getByText("Acceptance criteria")).toBeInTheDocument()
   })
 
   it("switches to the history tab and shows version entries", async () => {
-    const { CardDrawer } = await import("../card-drawer")
-    render(
-      <CardDrawer cardId="c1" open onClose={vi.fn()} projectSlug="loyalty" />
-    )
+    await renderDrawer()
     fireEvent.click(screen.getByTestId("history-tab"))
     expect(screen.getByText("v2")).toBeInTheDocument()
     expect(screen.getByText("v1")).toBeInTheDocument()
   })
 
   it("copies the deep link URL on click", async () => {
-    const { CardDrawer } = await import("../card-drawer")
-    render(
-      <CardDrawer cardId="c1" open onClose={vi.fn()} projectSlug="loyalty" />
-    )
+    await renderDrawer()
     fireEvent.click(screen.getByTestId("copy-link"))
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("/project/loyalty/card/loyalty-enroll")

@@ -72,6 +72,7 @@ export type CreateChange = {
     priority: string
     epicName?: string
     customFields?: Record<string, string>
+    sections?: Record<string, string>
   }
   relationSummary: RelationSummaryEntry[]
   conflictFlags: ConflictFlag[]
@@ -87,6 +88,7 @@ export type UpdateChange = {
     status: string
     priority: string
     customFields: Record<string, string>
+    sections: Record<string, string>
   }>
   relationSummary: RelationSummaryEntry[]
   conflictFlags: ConflictFlag[]

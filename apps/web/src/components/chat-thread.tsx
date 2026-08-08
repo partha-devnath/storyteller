@@ -8,6 +8,13 @@ import {
 } from "@/hooks/use-proposals"
 import type { ChatMessageRow } from "@/hooks/use-chat"
 
+function formatTime(iso: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+}
+
 function BoardReply({
   proposalId,
   projectSlug,
@@ -154,15 +161,35 @@ export function ChatThread({
           return (
             <div
               key={message.id}
-              className="self-start rounded-lg bg-primary/10 px-3 py-2 text-sm"
+              className="ml-auto flex max-w-[85%] flex-col items-end"
             >
-              {message.content}
+              {message.mentions && message.mentions.length > 0 && (
+                <div className="mb-1 flex flex-wrap justify-end gap-1">
+                  {message.mentions.map((m) => (
+                    <span
+                      key={`${m.type}-${m.id}`}
+                      className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary"
+                    >
+                      @{m.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="rounded-xl rounded-br-sm bg-primary px-3.5 py-2 text-sm text-primary-foreground">
+                {message.content}
+              </div>
+              <span className="mt-1 text-[10px] text-muted-foreground">
+                {formatTime(message.createdAt)}
+              </span>
             </div>
           )
         }
         if (message.kind === "board" && message.proposalId) {
           return (
-            <div key={message.id} className="w-full self-start">
+            <div
+              key={message.id}
+              className="mr-auto flex max-w-[85%] flex-col items-start"
+            >
               {message.content && (
                 <p className="mb-2 text-sm">{message.content}</p>
               )}
@@ -170,13 +197,19 @@ export function ChatThread({
                 proposalId={message.proposalId}
                 projectSlug={projectSlug}
               />
+              <span className="mt-1 text-[10px] text-muted-foreground">
+                {formatTime(message.createdAt)}
+              </span>
             </div>
           )
         }
         if (message.kind === "clarifying" && message.questions) {
           return (
-            <div key={message.id} className="w-full self-start">
-              <div className="rounded-lg border p-3">
+            <div
+              key={message.id}
+              className="mr-auto flex max-w-[85%] flex-col items-start"
+            >
+              <div className="rounded-xl rounded-tl-sm border border-warn/40 bg-warn/5 p-3">
                 <p className="text-sm font-medium">
                   A few questions to clarify the board:
                 </p>
@@ -240,6 +273,9 @@ export function ChatThread({
                   </Button>
                 </div>
               )}
+              <span className="mt-1 text-[10px] text-muted-foreground">
+                {formatTime(message.createdAt)}
+              </span>
             </div>
           )
         }
@@ -247,7 +283,7 @@ export function ChatThread({
           return (
             <div
               key={message.id}
-              className="self-start rounded-lg border px-3 py-2 text-sm text-destructive"
+              className="mr-auto max-w-[85%] self-start rounded-xl rounded-tl-sm border border-destructive/40 bg-destructive/10 px-3.5 py-2 text-sm text-destructive"
             >
               {message.content}
             </div>

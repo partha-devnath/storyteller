@@ -1,8 +1,8 @@
 import { Hono } from "hono"
-import { eq, and, asc, desc, count } from "drizzle-orm"
+import { eq, and, asc, desc, count, inArray } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
-import { proposal, proposalChange } from "@workspace/schemas"
+import { proposal, proposalChange, card } from "@workspace/schemas"
 import { rejectProposalSchema } from "@workspace/schemas/validations/proposal"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
@@ -51,13 +51,25 @@ proposalsRoutes.get("/:id", async (c) => {
     .where(eq(proposalChange.proposalId, id))
     .orderBy(asc(proposalChange.createdAt))
 
+  // Attach the current card state for update/close targets so the UI can
+  // render a before/after diff per change.
+  const targetIds = changes
+    .map((c) => c.targetCardId)
+    .filter((t): t is string => Boolean(t))
+  const targets = new Map<string, typeof card.$inferSelect>()
+  if (targetIds.length > 0) {
+    const rows = await db
+      .select()
+      .from(card)
+      .where(and(eq(card.projectId, projectId!), inArray(card.id, targetIds)))
+    for (const row of rows) targets.set(row.id, row)
+  }
+
   const diffedChanges = changes.map((change) => {
-    const diff: Record<string, { from: unknown; to: unknown }> = {}
-    if (change.targetCardId) {
-      // compute field-level diff against current card state
-      // (kept lightweight; full diff wiring in the frontend)
-    }
-    return { ...change, diff }
+    const before = change.targetCardId
+      ? (targets.get(change.targetCardId) ?? null)
+      : null
+    return { ...change, before }
   })
 
   return c.json({

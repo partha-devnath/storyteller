@@ -16,6 +16,14 @@ export type ProposalChangeRow = {
   changeType: "create" | "update" | "close"
   targetCardId: string | null
   newData: Record<string, unknown>
+  before: {
+    id: string
+    title: string
+    description: string | null
+    acceptanceCriteria: string[]
+    status: string
+    priority: string
+  } | null
   relationSummary: {
     type: "dependency" | "hierarchy" | "evolution"
     sourceCardId?: string

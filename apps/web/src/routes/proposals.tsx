@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useParams } from "react-router"
 import { useQueryClient } from "@tanstack/react-query"
 import { Sparkles } from "lucide-react"
@@ -12,13 +12,25 @@ import { useAiGenerate, useAiClarify } from "@/hooks/use-ai"
 import { useProposals } from "@/hooks/use-proposals"
 import { useProject } from "@/hooks/use-projects"
 import { useCards } from "@/hooks/use-cards"
+import { useOrgMembers } from "@/hooks/use-orgs"
 import { useProjectEvents } from "@/hooks/use-project-events"
 import { useUsage, handleLimitError } from "@/hooks/use-billing"
 import { useChatMessages, useAddChatMessage } from "@/hooks/use-chat"
+import {
+  useChatSessions,
+  useCreateChatSession,
+  useRenameChatSession,
+  useDeleteChatSession,
+} from "@/hooks/use-chat-sessions"
 import { LiveIndicator } from "@/components/live-indicator"
 import { ProjectTabs } from "@/components/project-tabs"
 import { ChatThread } from "@/components/chat-thread"
 import { ProposalReview } from "@/components/proposal-review"
+import { ChatSessionSidebar } from "@/components/chat-session-sidebar"
+import { MentionMenu, type MentionOption } from "@/components/mention-menu"
+import { useMentionPicker } from "@/lib/mention-picker"
+import type { MentionItem } from "@/hooks/use-chat"
+import { toast } from "@/stores/toast-store"
 
 export function ProposalsPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -29,14 +41,32 @@ export function ProposalsPage() {
   const { data: projectDetail } = useProject(slug)
   const { data: cards } = useCards(slug)
   const orgId = projectDetail?.project.orgId
+  const { data: orgMembers } = useOrgMembers(orgId ?? "", {
+    enabled: Boolean(orgId),
+  })
   const events = useProjectEvents(slug, {})
   const usage = useUsage(orgId)
   const aiActionsLimited = usage.isAtLimit("aiActions")
-  const { data: chatMessages = [] } = useChatMessages(slug)
-  const addMessage = useAddChatMessage(slug ?? "")
+
+  const { data: sessions = [] } = useChatSessions(slug)
+  const createSession = useCreateChatSession(slug ?? "")
+  const renameSession = useRenameChatSession(slug ?? "")
+  const deleteSession = useDeleteChatSession(slug ?? "")
+
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const resolvedSessionId = activeSessionId ?? sessions[0]?.id ?? null
+
+  const { data: chatMessages = [] } = useChatMessages(slug, resolvedSessionId)
+  const addMessage = useAddChatMessage(slug ?? "", resolvedSessionId)
+
   const [prompt, setPrompt] = useState("")
+  const [mentions, setMentions] = useState<MentionItem[]>([])
   const [pending, setPending] = useState(false)
   const [priorAnswers, setPriorAnswers] = useState("")
+  const promptRef = useRef<HTMLInputElement | null>(null)
+  const { mentionQuery, mentionPos, handleInput, stopMention } =
+    useMentionPicker()
+
   const restoredPriorAnswers = useMemo(() => {
     const persisted = chatMessages.filter(
       (m) =>
@@ -52,6 +82,46 @@ export function ProposalsPage() {
   const pendingCount =
     proposals?.filter((p) => p.status === "pending").length ?? 0
 
+  const mentionOptions: MentionOption[] = useMemo(() => {
+    const cardOptions: MentionOption[] = (cards ?? []).map((c) => ({
+      type: "card",
+      id: c.id,
+      label: c.title,
+    }))
+    const memberOptions: MentionOption[] = (orgMembers ?? []).map((m) => ({
+      type: "member",
+      id: m.userId,
+      label: m.name,
+    }))
+    return [...cardOptions, ...memberOptions]
+  }, [cards, orgMembers])
+
+  function applyMention(option: MentionOption) {
+    setMentions((prev) => [
+      ...prev.filter((m) => !(m.type === option.type && m.id === option.id)),
+      option,
+    ])
+    const caret = promptRef.current?.selectionStart ?? prompt.length
+    const before = prompt.slice(0, caret)
+    const at = before.lastIndexOf("@")
+    const withoutQuery = before.slice(0, at)
+    const after = prompt.slice(caret)
+    setPrompt(`${withoutQuery}${after}`)
+    requestAnimationFrame(() => promptRef.current?.focus())
+  }
+
+  async function ensureSession(): Promise<string | null> {
+    if (resolvedSessionId) return resolvedSessionId
+    try {
+      const s = await createSession.mutateAsync({ title: "New session" })
+      setActiveSessionId(s.id)
+      return s.id
+    } catch {
+      toast.error("Could not create a session")
+      return null
+    }
+  }
+
   async function persistPair(
     userText: string,
     aiReply: {
@@ -59,13 +129,15 @@ export function ProposalsPage() {
       content?: string
       questions?: { question: string; options?: string[] }[]
       proposalId?: string
-    }
+    },
+    userMentions: MentionItem[]
   ) {
     if (!slug) return
     await addMessage.mutateAsync({
       role: "user",
       kind: "prompt",
       content: userText,
+      mentions: userMentions,
     })
     await addMessage.mutateAsync({
       role: "ai",
@@ -79,28 +151,42 @@ export function ProposalsPage() {
   async function onGenerate() {
     if (!prompt.trim() || pending) return
     const userPrompt = prompt
+    const userMentions = mentions
     setPrompt("")
+    setMentions([])
+    stopMention()
     setPending(true)
+    const sessionId = await ensureSession()
+    if (!sessionId) {
+      setPending(false)
+      return
+    }
     try {
       const result = await generate.mutateAsync({ prompt: userPrompt })
       if (result.kind === "clarifying") {
-        await persistPair(userPrompt, {
-          kind: "clarifying",
-          questions: result.questions,
-        })
+        await persistPair(
+          userPrompt,
+          { kind: "clarifying", questions: result.questions },
+          userMentions
+        )
       } else {
-        await persistPair(userPrompt, {
-          kind: "board",
-          content: `Generated ${result.proposal.changeCount} story cards.`,
-          proposalId: result.proposal.proposalId,
-        })
+        await persistPair(
+          userPrompt,
+          {
+            kind: "board",
+            content: `Generated ${result.proposal.changeCount} story cards.`,
+            proposalId: result.proposal.proposalId,
+          },
+          userMentions
+        )
       }
     } catch (e) {
       if (handleLimitError(e, orgId ?? "", queryClient)) return
-      await persistPair(userPrompt, {
-        kind: "error",
-        content: (e as Error).message,
-      })
+      await persistPair(
+        userPrompt,
+        { kind: "error", content: (e as Error).message },
+        userMentions
+      )
     } finally {
       setPending(false)
     }
@@ -187,22 +273,68 @@ export function ProposalsPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
+      <div className="relative flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
         <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
           <Sparkles className="size-4" />
           AI Instruction
         </span>
-        <input
-          aria-label="AI instruction"
-          placeholder="Ask the engine to draft, split, or evolve a requirement…"
-          className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground focus:border-primary"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onGenerate()
-          }}
-          disabled={generate.isPending || pending || aiActionsLimited}
-        />
+        <div className="min-w-0 flex-1">
+          {mentions.length > 0 && (
+            <div className="mb-1.5 flex flex-wrap gap-1.5">
+              {mentions.map((m) => (
+                <span
+                  key={`${m.type}-${m.id}`}
+                  data-testid={`mention-chip-${m.type}-${m.id}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary"
+                >
+                  @{m.label}
+                  <button
+                    aria-label={`Remove ${m.label}`}
+                    onClick={() =>
+                      setMentions((prev) =>
+                        prev.filter(
+                          (x) => !(x.type === m.type && x.id === m.id)
+                        )
+                      )
+                    }
+                    className="text-primary/70 hover:text-primary"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <input
+            ref={promptRef}
+            aria-label="AI instruction"
+            placeholder="Ask the engine to draft, split, or evolve a requirement… (@ to mention a card or member)"
+            className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
+            value={prompt}
+            onChange={(e) => {
+              setPrompt(e.target.value)
+              handleInput(
+                e.target.value,
+                e.target.selectionStart ?? e.target.value.length,
+                e.target.getBoundingClientRect()
+              )
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onGenerate()
+              if (e.key === "Escape") stopMention()
+            }}
+            disabled={generate.isPending || pending || aiActionsLimited}
+          />
+        </div>
+        {mentionQuery !== null && (
+          <MentionMenu
+            query={mentionQuery}
+            pos={mentionPos}
+            options={mentionOptions}
+            onSelect={applyMention}
+            onClose={stopMention}
+          />
+        )}
         {aiActionsLimited ? (
           <Tooltip>
             <TooltipTrigger
@@ -233,9 +365,25 @@ export function ProposalsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-        <div className="min-w-0">
-          <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4">
+      <div className="flex min-w-0 gap-4">
+        <ChatSessionSidebar
+          sessions={sessions}
+          activeId={resolvedSessionId}
+          onSelect={setActiveSessionId}
+          onCreate={() =>
+            createSession.mutateAsync({ title: "New session" }).then((s) => {
+              setActiveSessionId(s.id)
+            })
+          }
+          onRename={(id, title) => renameSession.mutate({ id, title })}
+          onDelete={(id) => {
+            deleteSession.mutate(id)
+            if (id === resolvedSessionId) setActiveSessionId(null)
+          }}
+        />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="max-h-[calc(100vh-18rem)] flex-1 overflow-y-auto rounded-xl border border-border/60 bg-card p-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
             {chatMessages.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Describe the product you want to build. Storyteller will
@@ -250,9 +398,9 @@ export function ProposalsPage() {
             )}
           </div>
         </div>
-
-        {slug && <ProposalReview projectSlug={slug} />}
       </div>
+
+      {slug && <ProposalReview projectSlug={slug} />}
     </div>
   )
 }

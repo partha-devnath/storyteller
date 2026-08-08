@@ -33,6 +33,7 @@ export const card = pgTable(
       .notNull(),
     assigneeId: text("assignee_id").references(() => user.id),
     customFields: json("custom_fields").$type<Record<string, string>>(),
+    sections: json("sections").$type<Record<string, string>>(),
     isClosed: boolean("is_closed").notNull().default(false),
     closedBy: text("closed_by").references(() => user.id),
     closedAt: timestamp("closed_at"),

@@ -31,12 +31,19 @@ export function useAiGenerate(projectSlug: string) {
 export function useAiProcess(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { instruction: string }) => {
+    mutationFn: async (input: {
+      instruction: string
+      mentions?: { type: "card" | "member"; id: string; label: string }[]
+    }) => {
       const res = await apiClient<
         Envelope<{ proposal: { proposalId: string; changeCount: number } }>
       >(`/api/ai/process?project=${encodeURIComponent(projectSlug)}`, {
         method: "POST",
-        body: { projectSlug, instruction: input.instruction },
+        body: {
+          projectSlug,
+          instruction: input.instruction,
+          mentions: input.mentions ?? [],
+        },
       })
       return res.data
     },

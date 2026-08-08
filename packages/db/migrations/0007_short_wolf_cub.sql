@@ -1,0 +1,2 @@
+ALTER TABLE "card" ADD COLUMN "sections" json;--> statement-breakpoint
+ALTER TABLE "project" ADD COLUMN "card_sections" json DEFAULT '[{"key":"description","label":"Description","description":"What the requirement does and why it matters.","builtIn":true},{"key":"acceptanceCriteria","label":"Acceptance criteria","description":"The concrete checks that must pass for the requirement to be done.","builtIn":true}]'::json NOT NULL;

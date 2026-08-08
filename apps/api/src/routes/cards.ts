@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { eq, and, asc, desc, max } from "drizzle-orm"
+import { eq, and, or, asc, desc, max } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import {
@@ -56,7 +56,12 @@ async function loadCardInProject(cardId: string, projectId: string) {
   const [row] = await db
     .select()
     .from(card)
-    .where(and(eq(card.id, cardId), eq(card.projectId, projectId)))
+    .where(
+      and(
+        eq(card.projectId, projectId),
+        or(eq(card.id, cardId), eq(card.slug, cardId))
+      )
+    )
     .limit(1)
   return row
 }
@@ -345,7 +350,7 @@ cardsRoutes.get("/:id/versions", async (c) => {
   const versions = await db
     .select()
     .from(cardVersion)
-    .where(eq(cardVersion.cardId, cardId))
+    .where(eq(cardVersion.cardId, target.id))
     .orderBy(desc(cardVersion.versionNo))
   return c.json({ success: true, data: versions })
 })

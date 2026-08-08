@@ -15,6 +15,18 @@ export const chatMessageInputSchema = z.object({
     .optional()
     .default(null),
   proposalId: z.string().nullable().optional().default(null),
+  sessionId: z.string().nullable().optional().default(null),
+  mentions: z
+    .array(
+      z.object({
+        type: z.enum(["card", "member"]),
+        id: z.string().min(1),
+        label: z.string().min(1),
+      })
+    )
+    .nullable()
+    .optional()
+    .default(null),
 })
 
 export type ChatMessageInput = z.infer<typeof chatMessageInputSchema>

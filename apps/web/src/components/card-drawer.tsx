@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Link } from "react-router"
 import ReactMarkdown from "react-markdown"
 import {
   useCardDetail,
@@ -12,7 +13,7 @@ import { useOrgMembers } from "@/hooks/use-orgs"
 import { DiffPanel } from "./diff-panel"
 import { CommentList } from "./comment-list"
 import { CommentComposer } from "./comment-composer"
-import { Button } from "@workspace/ui/components/button"
+import { Button, buttonVariants } from "@workspace/ui/components/button"
 import { cardKey } from "@/lib/card-key"
 
 type Tab = "details" | "history" | "relations" | "similar"
@@ -134,6 +135,13 @@ export function CardDrawer({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to={`/project/${projectSlug}/card/${slug}`}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+              data-testid="open-card-page"
+            >
+              Open page
+            </Link>
             {!card.isClosed && (
               <Button
                 size="sm"

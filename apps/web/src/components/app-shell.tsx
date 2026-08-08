@@ -126,8 +126,8 @@ export function AppShell() {
   }, [location.pathname, setSidebarOpen])
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="flex h-13 shrink-0 items-center gap-4 border-b px-6">
+    <div className="flex h-svh flex-col overflow-hidden">
+      <header className="sticky top-0 z-40 flex h-13 shrink-0 items-center gap-4 border-b px-6">
         <button
           onClick={toggleSidebar}
           className="rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted md:hidden"

@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { eq, sql, and, desc } from "drizzle-orm"
+import { eq, sql, and, asc, desc } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import {
@@ -8,6 +8,7 @@ import {
   card,
   organizationMember,
   proposal,
+  proposalChange,
 } from "@workspace/schemas"
 import { createProjectSchema } from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
@@ -144,4 +145,53 @@ projectsRoutes.get("/:slug", resolveOrgFromProject, async (c) => {
     success: true,
     data: { project: projectRow, epics, cards },
   })
+})
+
+// Proposed cards: the create changes of pending proposals. They render in a
+// dedicated "Proposed" lane before Backlog until their proposal is approved.
+projectsRoutes.get("/:slug/proposed", resolveOrgFromProject, async (c) => {
+  const projectId = c.var.projectId
+  const rows = await db
+    .select({
+      proposalId: proposal.id,
+      proposalStatus: proposal.status,
+      changeId: proposalChange.id,
+      changeType: proposalChange.changeType,
+      targetCardId: proposalChange.targetCardId,
+      newData: proposalChange.newData,
+      createdAt: proposalChange.createdAt,
+    })
+    .from(proposal)
+    .innerJoin(proposalChange, eq(proposalChange.proposalId, proposal.id))
+    .where(
+      and(eq(proposal.projectId, projectId!), eq(proposal.status, "pending"))
+    )
+    .orderBy(asc(proposalChange.createdAt))
+
+  const proposed = rows
+    .filter((r) => r.changeType === "create")
+    .map((r) => {
+      const data = (r.newData ?? {}) as Record<string, unknown>
+      const id = `${r.changeId}__proposed`
+      return {
+        id,
+        keyNo: 0,
+        title: String(data.title ?? "Untitled"),
+        slug: id,
+        status: "proposed",
+        priority:
+          (data.priority as "low" | "medium" | "high" | "critical") ?? "medium",
+        isClosed: false,
+        assigneeId: null,
+        epicId: null,
+        acceptanceCriteriaCount: Array.isArray(data.acceptanceCriteria)
+          ? (data.acceptanceCriteria as unknown[]).length
+          : 0,
+        proposalId: r.proposalId,
+        changeId: r.changeId,
+        updatedAt: r.createdAt,
+      }
+    })
+
+  return c.json({ success: true, data: proposed })
 })

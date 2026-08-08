@@ -50,6 +50,20 @@
       "when": 1786213960999,
       "tag": "0006_glossy_nekra",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786219508429,
+      "tag": "0007_short_wolf_cub",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786219843080,
+      "tag": "0008_nice_thunderbolt",
+      "breakpoints": true
     }
   ]
 }
