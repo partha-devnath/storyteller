@@ -93,6 +93,8 @@ const demoBank = [
 
 type DemoCard = { id: string; title: string; sub: string }
 
+let demoSeq = 0
+
 export function LandingPage() {
   const [demoInput, setDemoInput] = useState("")
   const [demoCards, setDemoCards] = useState<DemoCard[]>([
@@ -112,7 +114,7 @@ export function LandingPage() {
     const next: DemoCard[] = []
     if (demoInput.trim()) {
       next.push({
-        id: `REQ-${100 + next.length}`,
+        id: `REQ-${201 + demoSeq++}`,
         title: demoInput.trim(),
         sub: "New AI-proposed requirement card.",
       })
