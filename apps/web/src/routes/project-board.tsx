@@ -11,6 +11,7 @@ import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
 import { ProjectTabs } from "@/components/project-tabs"
 import { LiveIndicator } from "@/components/live-indicator"
+import { ViewSwitcher } from "@/components/view-switcher"
 import { ExportMenu } from "@/components/export-menu"
 
 const GraphView = lazy(() =>
@@ -71,6 +72,7 @@ export function ProjectBoardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ViewSwitcher />
           <LiveIndicator status={events.status} onRetry={events.reconnect} />
         </div>
       </div>
@@ -86,6 +88,7 @@ export function ProjectBoardPage() {
         >
           {slug && (
             <GraphView
+              key={slug}
               projectSlug={slug}
               onSelectCard={(id) => setActiveCardId(id)}
             />

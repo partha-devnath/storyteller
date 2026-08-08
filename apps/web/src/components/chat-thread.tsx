@@ -18,9 +18,11 @@ function formatTime(iso: string): string {
 function BoardReply({
   proposalId,
   projectSlug,
+  highlighted,
 }: {
   proposalId: string
   projectSlug: string
+  highlighted?: boolean
 }) {
   const qc = useQueryClient()
   const { data } = useProposal(proposalId, projectSlug)
@@ -39,7 +41,11 @@ function BoardReply({
 
   return (
     <div
-      className="rounded-lg border bg-muted/20 p-3"
+      className={`rounded-lg border p-3 ${
+        highlighted
+          ? "border-primary/60 bg-primary/10"
+          : "border-border/60 bg-muted/20"
+      }`}
       data-testid="chat-board-reply"
     >
       <p className="text-sm font-medium">{data.proposal.instruction}</p>
@@ -129,11 +135,13 @@ export function ChatThread({
   messages,
   projectSlug,
   pendingPrompt,
+  highlightProposalId,
   onClarifyAnswer,
 }: {
   messages: ChatMessageRow[]
   projectSlug: string
   pendingPrompt?: { text: string; mentions: MentionItem[] } | null
+  highlightProposalId?: string | null
   onClarifyAnswer: (index: number, answers: string[]) => void
 }) {
   const clarifyingIndex = useMemo(() => {
@@ -190,7 +198,11 @@ export function ChatThread({
           return (
             <div
               key={message.id}
-              className="mr-auto flex max-w-[85%] flex-col items-start"
+              className={`mr-auto flex max-w-[85%] flex-col items-start ${
+                highlightProposalId === message.proposalId
+                  ? "rounded-xl ring-2 ring-primary/60"
+                  : ""
+              }`}
             >
               {message.content && (
                 <p className="mb-2 text-sm">{message.content}</p>
@@ -198,6 +210,7 @@ export function ChatThread({
               <BoardReply
                 proposalId={message.proposalId}
                 projectSlug={projectSlug}
+                highlighted={highlightProposalId === message.proposalId}
               />
               <span className="mt-1 text-[10px] text-muted-foreground">
                 {formatTime(message.createdAt)}
@@ -239,16 +252,51 @@ export function ChatThread({
 
               {i === clarifyingIndex && answering && draftAnswers && (
                 <div
-                  className="mt-2 space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3"
+                  className="mt-2 space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3"
                   data-testid="chat-clarify-form"
                 >
                   {message.questions.map((q, qi) => (
-                    <div key={qi} className="space-y-1">
+                    <div key={qi} className="space-y-1.5">
                       <label className="text-sm font-medium">
-                        {q.question}
+                        {qi + 1}. {q.question}
                       </label>
+                      {q.options && q.options.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {q.options.map((opt) => {
+                            const selected = draftAnswers[qi] === opt
+                            return (
+                              <button
+                                key={opt}
+                                type="button"
+                                data-testid={`clarify-option-${qi}-${opt}`}
+                                onClick={() =>
+                                  setDraftAnswers((prev) =>
+                                    prev
+                                      ? prev.map((a, idx) =>
+                                          idx === qi ? opt : a
+                                        )
+                                      : prev
+                                  )
+                                }
+                                className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                                  selected
+                                    ? "border-primary bg-primary/15 text-primary"
+                                    : "border-border bg-background text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                       <input
                         data-testid="clarify-answer"
+                        placeholder={
+                          q.options && q.options.length > 0
+                            ? "Or type a custom answer…"
+                            : "Type your answer…"
+                        }
                         className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                         value={draftAnswers[qi] ?? ""}
                         onChange={(e) =>
@@ -263,16 +311,21 @@ export function ChatThread({
                       />
                     </div>
                   ))}
-                  <Button
-                    size="sm"
-                    data-testid="chat-clarify-submit"
-                    onClick={() => {
-                      onClarifyAnswer(i, draftAnswers)
-                      setDraftAnswers(null)
-                    }}
-                  >
-                    Submit answers
-                  </Button>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      data-testid="chat-clarify-submit"
+                      onClick={() => {
+                        onClarifyAnswer(i, draftAnswers)
+                        setDraftAnswers(null)
+                      }}
+                    >
+                      Review with AI
+                    </Button>
+                    <span className="text-[11px] text-muted-foreground">
+                      Answers go back to the engine to generate the board.
+                    </span>
+                  </div>
                 </div>
               )}
               <span className="mt-1 text-[10px] text-muted-foreground">

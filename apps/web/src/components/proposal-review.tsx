@@ -126,6 +126,7 @@ export function ProposalReview({
                 {graphId === p.id && (
                   <div data-testid="proposal-graph">
                     <GraphView
+                      key={p.id}
                       projectSlug={projectSlug}
                       proposalId={p.id}
                       compact

@@ -25,7 +25,6 @@ import {
 import { LiveIndicator } from "@/components/live-indicator"
 import { ProjectTabs } from "@/components/project-tabs"
 import { ChatThread } from "@/components/chat-thread"
-import { ProposalReview } from "@/components/proposal-review"
 import { ChatSessionSidebar } from "@/components/chat-session-sidebar"
 import { MentionMenu, type MentionOption } from "@/components/mention-menu"
 import { useMentionPicker } from "@/lib/mention-picker"
@@ -35,7 +34,7 @@ import { toast } from "@/stores/toast-store"
 export function ProposalsPage() {
   const { slug } = useParams<{ slug: string }>()
   const [searchParams] = useSearchParams()
-  const deepLinkProposal = searchParams.get("proposal")
+  const highlightProposalId = searchParams.get("proposal")
   const queryClient = useQueryClient()
   const generate = useAiGenerate(slug ?? "")
   const clarify = useAiClarify(slug ?? "")
@@ -323,6 +322,7 @@ export function ProposalsPage() {
                 messages={chatMessages}
                 projectSlug={slug ?? ""}
                 pendingPrompt={pendingPrompt}
+                highlightProposalId={highlightProposalId}
                 onClarifyAnswer={(i, answers) => onClarifyAnswer(i, answers)}
               />
             )}
@@ -415,13 +415,6 @@ export function ProposalsPage() {
           </div>
         </div>
       </div>
-
-      {slug && (
-        <ProposalReview
-          projectSlug={slug}
-          initialProposalId={deepLinkProposal}
-        />
-      )}
     </div>
   )
 }

@@ -14,36 +14,16 @@ function renderAt(path: string) {
 }
 
 describe("ProjectTabs", () => {
-  it("renders Proposals, Board, Graph", () => {
+  it("renders Proposals, Board, Settings", () => {
     renderAt("/projects/acme")
     expect(screen.getByRole("tab", { name: "Proposals" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Board" })).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Graph" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "Settings" })).toBeInTheDocument()
   })
 
-  it("Board active on board view", () => {
+  it("Board active on board route", () => {
     renderAt("/projects/acme")
-    expect(screen.getByTestId("view-switcher-board")).toHaveAttribute(
-      "aria-current",
-      "page"
-    )
-  })
-
-  it("Graph active on ?view=graph", () => {
-    renderAt("/projects/acme?view=graph")
-    expect(screen.getByTestId("view-switcher-graph")).toHaveAttribute(
-      "aria-current",
-      "page"
-    )
-  })
-
-  it("Board is not active on graph view", () => {
-    renderAt("/projects/acme?view=graph")
-    expect(screen.getByTestId("view-switcher-board")).not.toHaveAttribute(
-      "aria-current",
-      "page"
-    )
-    expect(screen.getByTestId("view-switcher-graph")).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "Board" })).toHaveAttribute(
       "aria-current",
       "page"
     )
@@ -52,6 +32,14 @@ describe("ProjectTabs", () => {
   it("Proposals active on proposals route", () => {
     renderAt("/projects/acme/proposals")
     expect(screen.getByRole("tab", { name: "Proposals" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+  })
+
+  it("Settings active on settings route", () => {
+    renderAt("/projects/acme/settings")
+    expect(screen.getByRole("tab", { name: "Settings" })).toHaveAttribute(
       "aria-current",
       "page"
     )

@@ -1,4 +1,4 @@
-import { NavLink, useSearchParams } from "react-router"
+import { NavLink } from "react-router"
 import { cn } from "@workspace/ui/lib/utils"
 
 function tabClass(active: boolean) {
@@ -11,11 +11,6 @@ function tabClass(active: boolean) {
 }
 
 export function ProjectTabs({ slug }: { slug: string }) {
-  const [searchParams] = useSearchParams()
-  const view = searchParams.get("view") ?? "board"
-  const boardBase = `/projects/${slug}`
-  const graphTo = `${boardBase}?view=graph`
-
   return (
     <nav className="flex items-center gap-1 border-b bg-background px-4 py-1.5">
       <NavLink
@@ -26,23 +21,12 @@ export function ProjectTabs({ slug }: { slug: string }) {
         Proposals
       </NavLink>
       <NavLink
-        to={boardBase}
+        to={`/projects/${slug}`}
         end
         role="tab"
-        className={({ isActive }) => tabClass(isActive && view === "board")}
-        aria-current={view === "board" ? "page" : false}
-        data-testid="view-switcher-board"
+        className={({ isActive }) => tabClass(isActive)}
       >
         Board
-      </NavLink>
-      <NavLink
-        to={graphTo}
-        role="tab"
-        className={({ isActive }) => tabClass(isActive && view === "graph")}
-        aria-current={view === "graph" ? "page" : false}
-        data-testid="view-switcher-graph"
-      >
-        Graph
       </NavLink>
       <NavLink
         to={`/projects/${slug}/settings`}
