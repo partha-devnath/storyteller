@@ -203,7 +203,7 @@ async function applyCreate(
     createdBy: approverId,
     sourceProposalChangeId: change.id,
   })
-  await insertRelations(tx, projectId, change.relationSummary)
+  await insertRelations(tx, projectId, change.relationSummary, cardId)
   await insertAttachments(tx, cardId, approverId, change.newData, proj.orgId)
   await reindexSafe(cardId, versionId)
   publish(projectId, {
@@ -369,15 +369,48 @@ async function applyClose(
 async function insertRelations(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   projectId: string,
-  relationSummary: ProposalChangeRelation[]
+  relationSummary: ProposalChangeRelation[],
+  newCardId?: string
 ): Promise<void> {
-  for (const rel of relationSummary ?? []) {
-    if (!rel.sourceCardId || !rel.targetCardId) continue
+  if (!relationSummary || relationSummary.length === 0) return
+
+  // Load the project's real card ids once — validates every endpoint before
+  // insert (a dangling FK would roll back the whole proposal transaction).
+  const existingCards = await tx
+    .select({ id: card.id })
+    .from(card)
+    .where(eq(card.projectId, projectId))
+  const knownIds = new Set(existingCards.map((c) => c.id))
+  if (newCardId) knownIds.add(newCardId)
+
+  const seen = new Set<string>()
+  for (const rel of relationSummary) {
+    let source = rel.sourceCardId
+    let target = rel.targetCardId
+
+    // Single-endpoint relations on a create change point at the new card:
+    // the AI emits e.g. { type:"evolution", source_card_id:"<closed card>",
+    // note:"replaces closed card" } and the other end is this card.
+    if (newCardId && !source && target) {
+      source = newCardId
+    } else if (newCardId && source && !target) {
+      target = newCardId
+    }
+
+    if (!source || !target || !knownIds.has(source) || !knownIds.has(target)) {
+      continue
+    }
+    if (source === target) continue
+
+    const key = `${source}|${target}|${rel.type}`
+    if (seen.has(key)) continue
+    seen.add(key)
+
     await tx.insert(cardRelation).values({
       id: generateId(),
       projectId,
-      sourceCardId: rel.sourceCardId,
-      targetCardId: rel.targetCardId,
+      sourceCardId: source,
+      targetCardId: target,
       type: rel.type,
     })
   }

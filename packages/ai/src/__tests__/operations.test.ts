@@ -171,6 +171,48 @@ describe("processInstruction operation", () => {
     })
     expect(result.changes).toHaveLength(0)
   })
+
+  it("resolves slug-referenced targets and relation endpoints to ids", async () => {
+    const { processInstruction } =
+      await import("../operations/process-instruction")
+    const slugRefProvider = {
+      async chat() {
+        return JSON.stringify({
+          changes: [
+            {
+              change_type: "update",
+              target_card_id: "loyalty-rewards-catalog",
+              fields: { title: "Catalog v2" },
+              relation_summary: [
+                {
+                  type: "dependency",
+                  source_card_id: "loyalty-enroll",
+                  note: "links to enrollment",
+                },
+              ],
+              conflict_flags: [],
+            },
+          ],
+        })
+      },
+      async embed() {
+        return []
+      },
+    }
+    const result = await processInstruction({
+      provider: slugRefProvider,
+      instruction: "process: update catalog",
+      snapshot,
+      semanticMatches: [],
+    })
+    expect(result.changes).toHaveLength(1)
+    const update = result.changes[0]
+    expect(update.changeType).toBe("update")
+    if (update.changeType === "update") {
+      expect(update.targetCardId).toBe("loyalty-rewards-catalog")
+      expect(update.relationSummary[0].sourceCardId).toBe("loyalty-enroll")
+    }
+  })
 })
 
 describe("consistency-review operation", () => {

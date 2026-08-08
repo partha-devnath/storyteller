@@ -1,4 +1,12 @@
-import { DragDropProvider } from "@dnd-kit/react"
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
 import type { BoardCard } from "@/hooks/use-cards"
 import { BoardColumn } from "./board-column"
 
@@ -15,23 +23,28 @@ export function KanbanBoard({
 }) {
   const openCards = cards.filter((c) => !c.isClosed)
 
-  function handleDragEnd(event: {
-    operation: {
-      source: { data: { cardId?: string; status?: string } } | null
-      target: { data: { columnKey?: string } } | null
-    }
-  }) {
-    const sourceId = event.operation.source?.data?.cardId
-    const targetKey = event.operation.target?.data?.columnKey
-    const sourceStatus = event.operation.source?.data?.status
-    if (!sourceId || !targetKey || !sourceStatus) return
-    if (sourceStatus !== targetKey) {
-      onMove(sourceId, targetKey)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor)
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const sourceId = String(event.active.id)
+    const targetKey = String(event.over?.id ?? "")
+    const card = openCards.find((c) => c.id === sourceId)
+    if (!card || !targetKey.startsWith("col-")) return
+    const columnKey = targetKey.replace(/^col-/, "")
+    if (card.status !== columnKey) {
+      onMove(card.id, columnKey)
     }
   }
 
   return (
-    <DragDropProvider onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragEnd={handleDragEnd}
+    >
       <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
         {columns.map((col) => (
           <BoardColumn
@@ -43,6 +56,6 @@ export function KanbanBoard({
           />
         ))}
       </div>
-    </DragDropProvider>
+    </DndContext>
   )
 }

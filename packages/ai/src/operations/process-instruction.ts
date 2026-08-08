@@ -50,6 +50,15 @@ export async function processInstruction({
   const closedCardIds = new Set(
     snapshot.cards.filter((c) => c.isClosed).map((c) => c.id)
   )
+  // Resolve card references by raw id OR slug — models may emit either.
+  const cardIdByRef = new Map<string, string>()
+  for (const card of snapshot.cards) {
+    cardIdByRef.set(card.id, card.id)
+    cardIdByRef.set(card.slug, card.id)
+  }
+  const resolveCardRef = (ref: string | undefined): string | undefined =>
+    ref ? cardIdByRef.get(ref) : undefined
+
   const changes: ProposalBatch["changes"] = []
 
   for (const change of parsed.data.changes) {
@@ -65,12 +74,14 @@ export async function processInstruction({
           epicName: change.card.epic_name,
           customFields: change.card.custom_fields,
         },
-        relationSummary: change.relation_summary.map((r) => ({
-          type: r.type,
-          sourceCardId: r.source_card_id,
-          targetCardId: r.target_card_id,
-          note: r.note,
-        })),
+        relationSummary: change.relation_summary
+          .map((r) => ({
+            type: r.type,
+            sourceCardId: resolveCardRef(r.source_card_id),
+            targetCardId: resolveCardRef(r.target_card_id),
+            note: r.note,
+          }))
+          .filter((r) => Boolean(r.sourceCardId) || Boolean(r.targetCardId)),
         conflictFlags: change.conflict_flags.map((f) => ({
           type: f.type,
           summary: f.summary,
@@ -80,16 +91,26 @@ export async function processInstruction({
     }
 
     if (change.change_type === "close") {
+      const targetId = resolveCardRef(change.target_card_id)
+      if (!targetId) {
+        logger.warn(
+          { targetCardId: change.target_card_id },
+          "processInstruction: dropping close targeting unknown card"
+        )
+        continue
+      }
       changes.push({
         changeType: "close",
-        targetCardId: change.target_card_id,
+        targetCardId: targetId,
         reason: change.reason,
-        relationSummary: change.relation_summary.map((r) => ({
-          type: r.type,
-          sourceCardId: r.source_card_id,
-          targetCardId: r.target_card_id,
-          note: r.note,
-        })),
+        relationSummary: change.relation_summary
+          .map((r) => ({
+            type: r.type,
+            sourceCardId: resolveCardRef(r.source_card_id),
+            targetCardId: resolveCardRef(r.target_card_id),
+            note: r.note,
+          }))
+          .filter((r) => Boolean(r.sourceCardId) || Boolean(r.targetCardId)),
         conflictFlags: change.conflict_flags.map((f) => ({
           type: f.type,
           summary: f.summary,
@@ -98,9 +119,8 @@ export async function processInstruction({
       continue
     }
 
-    const targetCard = snapshot.cards.find(
-      (c) => c.id === change.target_card_id
-    )
+    const targetId = resolveCardRef(change.target_card_id)
+    const targetCard = snapshot.cards.find((c) => c.id === targetId)
 
     if (!targetCard) {
       logger.warn(
@@ -129,12 +149,14 @@ export async function processInstruction({
           customFields: fields.customFields ?? targetCard.customFields,
         },
         relationSummary: [
-          ...change.relation_summary.map((r) => ({
-            type: r.type,
-            sourceCardId: r.source_card_id,
-            targetCardId: r.target_card_id,
-            note: r.note,
-          })),
+          ...change.relation_summary
+            .map((r) => ({
+              type: r.type,
+              sourceCardId: resolveCardRef(r.source_card_id),
+              targetCardId: resolveCardRef(r.target_card_id),
+              note: r.note,
+            }))
+            .filter((r) => Boolean(r.sourceCardId) || Boolean(r.targetCardId)),
           {
             type: "evolution" as const,
             sourceCardId: targetCard.id,
@@ -156,7 +178,7 @@ export async function processInstruction({
 
     const update: UpdateChange = {
       changeType: "update",
-      targetCardId: change.target_card_id,
+      targetCardId: targetId!,
       fields: {
         title: change.fields.title,
         description: change.fields.description,
@@ -165,12 +187,14 @@ export async function processInstruction({
         priority: change.fields.priority,
         customFields: change.fields.customFields,
       },
-      relationSummary: change.relation_summary.map((r) => ({
-        type: r.type,
-        sourceCardId: r.source_card_id,
-        targetCardId: r.target_card_id,
-        note: r.note,
-      })),
+      relationSummary: change.relation_summary
+        .map((r) => ({
+          type: r.type,
+          sourceCardId: resolveCardRef(r.source_card_id),
+          targetCardId: resolveCardRef(r.target_card_id),
+          note: r.note,
+        }))
+        .filter((r) => Boolean(r.sourceCardId) || Boolean(r.targetCardId)),
       conflictFlags: change.conflict_flags.map((f) => ({
         type: f.type,
         summary: f.summary,

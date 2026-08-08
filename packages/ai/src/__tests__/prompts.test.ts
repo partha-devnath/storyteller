@@ -84,6 +84,16 @@ describe("buildProcessInstructionPrompt", () => {
     expect(user.content).toContain("CLOSED")
     expect(user.content).toContain("Add points")
   })
+
+  it("exposes raw card ids so relations can reference them", () => {
+    const [, user] = buildProcessInstructionPrompt({
+      instruction: "Add points",
+      snapshot,
+      semanticMatches: [],
+    })
+    expect(user.content).toContain("card_1")
+    expect(user.content).toMatch(/card_1\|loyalty-enroll\|todo\|CLOSED\|/)
+  })
 })
 
 describe("buildConsistencyReviewPrompt", () => {

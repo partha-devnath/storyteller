@@ -4,7 +4,7 @@ function compactSnapshot(snapshot: BoardSnapshot): string {
   const cards = snapshot.cards
     .map(
       (c) =>
-        `${c.slug}|${c.status}|${c.isClosed ? "CLOSED" : "open"}|${c.title}`
+        `${c.id}|${c.slug}|${c.status}|${c.isClosed ? "CLOSED" : "open"}|${c.title}`
     )
     .join("\n")
   const epics = snapshot.epics.map((e) => `${e.order}:${e.name}`).join("\n")
@@ -26,7 +26,7 @@ function compactMatches(matches: SemanticMatch[]): string {
   return matches
     .map(
       (m) =>
-        `${m.slug}|${m.isClosed ? "CLOSED" : "open"}|${m.similarity.toFixed(2)}|${m.title}`
+        `${m.cardId}|${m.slug}|${m.isClosed ? "CLOSED" : "open"}|${m.similarity.toFixed(2)}|${m.title}`
     )
     .join("\n")
 }
@@ -59,6 +59,9 @@ export function buildProcessInstructionPrompt({
         "A closed card is immutable — if the instruction asks to change a closed card, " +
         "emit a NEW create change (same title/description/fields) with an evolution relation " +
         'of {"type":"evolution","source_card_id":"<closed card id>","note":"replaces closed card"}.\n' +
+        "Card ids in the snapshot are raw ids (e.g. card_1). " +
+        "When a card id is needed (target_card_id, source_card_id, target_card_id), " +
+        "use the FIRST field (the id) of the card's snapshot line — never the slug.\n" +
         "No markdown fences, no prose — only the JSON object.",
     },
     {
