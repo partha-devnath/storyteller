@@ -64,7 +64,8 @@ export function ProposalsPage() {
   const [pending, setPending] = useState(false)
   const [priorAnswers, setPriorAnswers] = useState("")
   const promptRef = useRef<HTMLInputElement | null>(null)
-  const { mentionQuery, handleInput, stopMention } = useMentionPicker()
+  const { mentionQuery, mentionCaret, mentionEnd, handleInput, stopMention } =
+    useMentionPicker()
 
   const restoredPriorAnswers = useMemo(() => {
     const persisted = chatMessages.filter(
@@ -100,12 +101,10 @@ export function ProposalsPage() {
       ...prev.filter((m) => !(m.type === option.type && m.id === option.id)),
       option,
     ])
-    const caret = promptRef.current?.selectionStart ?? prompt.length
-    const before = prompt.slice(0, caret)
-    const at = before.lastIndexOf("@")
-    const withoutQuery = before.slice(0, at)
-    const after = prompt.slice(caret)
-    setPrompt(`${withoutQuery}${after}`)
+    const before = prompt.slice(0, mentionCaret)
+    const after = prompt.slice(mentionEnd)
+    setPrompt(`${before}${after}`)
+    stopMention()
     requestAnimationFrame(() => promptRef.current?.focus())
   }
 
@@ -272,80 +271,84 @@ export function ProposalsPage() {
         </div>
       </div>
 
-      {mentionQuery !== null && (
-        <MentionMenu
-          query={mentionQuery}
-          options={mentionOptions}
-          onSelect={applyMention}
-          onClose={stopMention}
-        />
-      )}
-
-      <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
-        <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
-          <Sparkles className="size-4" />
-          AI Instruction
-        </span>
-        <div className="min-w-0 flex-1">
-          {mentions.length > 0 && (
-            <div className="mb-1.5 flex flex-wrap gap-1.5">
-              {mentions.map((m) => (
-                <span
-                  key={`${m.type}-${m.id}`}
-                  data-testid={`mention-chip-${m.type}-${m.id}`}
-                  className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary"
-                >
-                  @{m.label}
-                  <button
-                    aria-label={`Remove ${m.label}`}
-                    onClick={() =>
-                      setMentions((prev) =>
-                        prev.filter(
-                          (x) => !(x.type === m.type && x.id === m.id)
-                        )
-                      )
-                    }
-                    className="text-primary/70 hover:text-primary"
+      <div className="relative">
+        <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
+          <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
+            <Sparkles className="size-4" />
+            AI Instruction
+          </span>
+          <div className="min-w-0 flex-1">
+            {mentions.length > 0 && (
+              <div className="mb-1.5 flex flex-wrap gap-1.5">
+                {mentions.map((m) => (
+                  <span
+                    key={`${m.type}-${m.id}`}
+                    data-testid={`mention-chip-${m.type}-${m.id}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[10px] text-primary"
                   >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
+                    @{m.label}
+                    <button
+                      aria-label={`Remove ${m.label}`}
+                      onClick={() =>
+                        setMentions((prev) =>
+                          prev.filter(
+                            (x) => !(x.type === m.type && x.id === m.id)
+                          )
+                        )
+                      }
+                      className="text-primary/70 hover:text-primary"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <input
+              ref={promptRef}
+              aria-label="AI instruction"
+              placeholder="Ask the engine to draft, split, or evolve a requirement… (@ to mention a card or member)"
+              className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
+              value={prompt}
+              onChange={(e) => {
+                setPrompt(e.target.value)
+                handleInput(
+                  e.target.value,
+                  e.target.selectionStart ?? e.target.value.length
+                )
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") onGenerate()
+                if (e.key === "Escape") stopMention()
+              }}
+              disabled={generate.isPending || pending || aiActionsLimited}
+            />
+          </div>
+          {aiActionsLimited ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="inline-flex" data-testid="limit-tooltip" />
+                }
+              >
+                {generateButton}
+              </TooltipTrigger>
+              <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
+            </Tooltip>
+          ) : (
+            generateButton
           )}
-          <input
-            ref={promptRef}
-            aria-label="AI instruction"
-            placeholder="Ask the engine to draft, split, or evolve a requirement… (@ to mention a card or member)"
-            className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
-            value={prompt}
-            onChange={(e) => {
-              setPrompt(e.target.value)
-              handleInput(
-                e.target.value,
-                e.target.selectionStart ?? e.target.value.length
-              )
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onGenerate()
-              if (e.key === "Escape") stopMention()
-            }}
-            disabled={generate.isPending || pending || aiActionsLimited}
-          />
         </div>
-        {aiActionsLimited ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <span className="inline-flex" data-testid="limit-tooltip" />
-              }
-            >
-              {generateButton}
-            </TooltipTrigger>
-            <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
-          </Tooltip>
-        ) : (
-          generateButton
+
+        {mentionQuery !== null && (
+          <div className="absolute top-full right-0 left-0 z-50 mt-2">
+            <MentionMenu
+              query={mentionQuery}
+              options={mentionOptions}
+              onSelect={applyMention}
+              onClose={stopMention}
+            />
+          </div>
         )}
       </div>
 

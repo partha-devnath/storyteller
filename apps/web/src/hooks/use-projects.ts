@@ -67,6 +67,35 @@ export function useProject(slug: string | undefined) {
   })
 }
 
+export type ProposedCard = {
+  id: string
+  keyNo: number
+  title: string
+  slug: string
+  status: string
+  priority: "low" | "medium" | "high" | "critical"
+  isClosed: boolean
+  assigneeId: string | null
+  epicId: string | null
+  acceptanceCriteriaCount: number
+  proposalId: string
+  changeId: string
+  updatedAt: string
+}
+
+export function useProposedCards(slug: string | undefined) {
+  return useQuery({
+    queryKey: ["project", slug, "proposed"],
+    queryFn: async () => {
+      const res = await apiClient<Envelope<ProposedCard[]>>(
+        `/api/projects/${slug}/proposed`
+      )
+      return res.data
+    },
+    enabled: Boolean(slug),
+  })
+}
+
 export function useCreateProject() {
   const qc = useQueryClient()
   return useMutation({

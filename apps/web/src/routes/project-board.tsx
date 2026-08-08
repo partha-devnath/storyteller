@@ -1,11 +1,12 @@
 import { lazy, Suspense, useState } from "react"
 import { useParams, useSearchParams } from "react-router"
-import { useProject } from "@/hooks/use-projects"
+import { useProject, useProposedCards } from "@/hooks/use-projects"
 import { useCards, useMoveCard, type CommentItem } from "@/hooks/use-cards"
 import { useProjectEvents } from "@/hooks/use-project-events"
 import { useExport, type ExportFormat } from "@/hooks/use-export"
 import { useBoardStore } from "@/stores/board-store"
-import { KanbanBoard } from "@/components/kanban"
+import { KanbanBoard, type BoardFilters } from "@/components/kanban"
+import { BoardToolbar } from "@/components/board-toolbar"
 import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
 import { ProjectTabs } from "@/components/project-tabs"
@@ -24,6 +25,11 @@ export function ProjectBoardPage() {
   const view = searchParams.get("view") ?? "board"
   const { data: projectDetail, isLoading } = useProject(slug)
   const { data: cards } = useCards(slug)
+  const { data: proposedCards } = useProposedCards(slug)
+  const [filters, setFilters] = useState<BoardFilters>({
+    priority: "",
+    query: "",
+  })
   const moveCard = useMoveCard(slug ?? "")
   const defaultColumns = useBoardStore((s) => s.columns)
   const columns = projectDetail?.project.columns?.length
@@ -86,6 +92,7 @@ export function ProjectBoardPage() {
         </Suspense>
       ) : (
         <>
+          <BoardToolbar filters={filters} onChange={setFilters} />
           <div className="mb-1 flex items-center justify-end gap-2">
             {exportError && (
               <p className="text-xs text-destructive">
@@ -103,6 +110,8 @@ export function ProjectBoardPage() {
             <KanbanBoard
               cards={cards}
               columns={columns}
+              proposedCards={proposedCards}
+              filters={filters}
               onMove={(cardId, status) => moveCard.mutate({ cardId, status })}
               onSelectCard={(card) => setActiveCardId(card.id)}
             />

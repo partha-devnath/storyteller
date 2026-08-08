@@ -2,6 +2,8 @@ import { useState } from "react"
 
 export function useMentionPicker() {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionCaret, setMentionCaret] = useState(0)
+  const [mentionEnd, setMentionEnd] = useState(0)
 
   function handleInput(value: string, caret: number) {
     const before = value.slice(0, caret)
@@ -12,6 +14,8 @@ export function useMentionPicker() {
       !/\s/.test(before.slice(at + 1))
     ) {
       setMentionQuery(before.slice(at + 1))
+      setMentionCaret(at)
+      setMentionEnd(caret)
     } else {
       setMentionQuery(null)
     }
@@ -21,5 +25,5 @@ export function useMentionPicker() {
     setMentionQuery(null)
   }
 
-  return { mentionQuery, handleInput, stopMention }
+  return { mentionQuery, mentionCaret, mentionEnd, handleInput, stopMention }
 }

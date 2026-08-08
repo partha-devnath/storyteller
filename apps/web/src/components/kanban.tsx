@@ -11,17 +11,27 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core"
 import type { BoardCard } from "@/hooks/use-cards"
+import type { ProposedCard } from "@/hooks/use-projects"
 import { BoardColumn } from "./board-column"
 import { BoardCard as Card } from "./board-card"
+
+export type BoardFilters = {
+  priority: string
+  query: string
+}
 
 export function KanbanBoard({
   cards,
   columns,
+  proposedCards,
+  filters,
   onMove,
   onSelectCard,
 }: {
   cards: BoardCard[]
   columns: { key: string; title: string }[]
+  proposedCards?: ProposedCard[]
+  filters: BoardFilters
   onMove: (cardId: string, status: string) => void
   onSelectCard: (card: BoardCard) => void
 }) {
@@ -32,6 +42,24 @@ export function KanbanBoard({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor)
   )
+
+  const matchesFilters = (card: BoardCard) => {
+    if (filters.priority && card.priority !== filters.priority) return false
+    if (filters.query) {
+      const q = filters.query.toLowerCase()
+      return card.title.toLowerCase().includes(q)
+    }
+    return true
+  }
+
+  const proposedMatches = (card: ProposedCard) => {
+    if (filters.priority && card.priority !== filters.priority) return false
+    if (filters.query) {
+      const q = filters.query.toLowerCase()
+      return card.title.toLowerCase().includes(q)
+    }
+    return true
+  }
 
   function handleDragStart(event: DragStartEvent) {
     const card = openCards.find((c) => c.id === String(event.active.id))
@@ -58,16 +86,62 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveCard(null)}
     >
-      <div className="flex min-w-0 gap-4 overflow-x-auto pb-3 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
-        {columns.map((col) => (
-          <BoardColumn
-            key={col.key}
-            columnKey={col.key}
-            title={col.title}
-            cards={openCards.filter((c) => c.status === col.key)}
-            onSelectCard={onSelectCard}
-          />
-        ))}
+      <div className="[transform:rotateX(180deg)] overflow-x-auto [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
+        <div className="flex min-w-0 [transform:rotateX(180deg)] gap-4 pb-3">
+          {proposedCards && proposedCards.length > 0 && (
+            <div
+              data-testid="column-proposed"
+              className="flex max-h-[calc(100vh-16rem)] w-80 min-w-80 flex-col gap-3 rounded-xl border border-dashed border-warn/40 bg-warn/5 p-2.5"
+            >
+              <div className="flex shrink-0 items-center gap-2 px-1.5 py-1">
+                <p className="text-[13px] font-bold tracking-wide text-warn">
+                  Proposed
+                </p>
+                <span className="rounded-full bg-warn/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-warn">
+                  {proposedCards.length}
+                </span>
+              </div>
+              <div className="flex min-h-[80px] flex-col gap-3 overflow-y-auto pr-1">
+                {proposedCards.filter(proposedMatches).map((card) => (
+                  <div
+                    key={card.id}
+                    data-testid="proposed-card"
+                    className="flex cursor-default flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
+                        proposed
+                      </span>
+                      <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                        ›
+                      </span>
+                    </div>
+                    <p className="line-clamp-2 text-[13.5px] leading-snug font-semibold text-foreground">
+                      {card.title}
+                    </p>
+                    <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2.5">
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {card.acceptanceCriteriaCount} criteria
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {columns.map((col) => (
+            <BoardColumn
+              key={col.key}
+              columnKey={col.key}
+              title={col.title}
+              cards={openCards.filter(
+                (c) => c.status === col.key && matchesFilters(c)
+              )}
+              onSelectCard={onSelectCard}
+            />
+          ))}
+        </div>
       </div>
 
       <DragOverlay dropAnimation={null}>
