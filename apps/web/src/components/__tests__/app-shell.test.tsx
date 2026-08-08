@@ -70,9 +70,9 @@ async function openUserMenu() {
 }
 
 describe("AppShell", () => {
-  it("renders the brand, org switcher, and a reachable sign-out control", async () => {
+  it("renders the breadcrumb, org switcher, and a reachable sign-out control", async () => {
     renderWithRouter(<AppShell />)
-    expect(screen.getAllByText("Storyteller")).toHaveLength(2)
+    expect(screen.getAllByText("Storyteller")).toHaveLength(1)
     expect(screen.getAllByText(/Acme/).length).toBeGreaterThan(0)
     await openUserMenu()
     expect(await screen.findByText("Sign out")).toBeInTheDocument()
@@ -91,9 +91,11 @@ describe("AppShell", () => {
     expect(screen.getByText("Boards")).toBeInTheDocument()
   })
 
-  it("keeps the New board action", () => {
+  it("renders the notifications action", () => {
     renderWithRouter(<AppShell />)
-    expect(screen.getByTestId("new-board")).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Notifications" })
+    ).toBeInTheDocument()
   })
 })
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, fireEvent } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import type { BillingState } from "@workspace/schemas"
 
@@ -63,6 +63,14 @@ describe("LimitBanner", () => {
   it("renders nothing while billing data is loading", () => {
     mockUseBilling.mockReturnValue({ data: undefined })
     renderBanner("org1")
+    expect(screen.queryByTestId("limit-banner")).not.toBeInTheDocument()
+  })
+
+  it("disappears after dismissal and stays hidden", () => {
+    mockUseBilling.mockReturnValue({ data: overLimitBilling() })
+    renderBanner("org1")
+    expect(screen.getByTestId("limit-banner")).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId("limit-banner-dismiss"))
     expect(screen.queryByTestId("limit-banner")).not.toBeInTheDocument()
   })
 })

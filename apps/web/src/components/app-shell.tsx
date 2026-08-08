@@ -1,28 +1,15 @@
 import { useEffect } from "react"
-import {
-  NavLink,
-  Outlet,
-  useLocation,
-  useNavigate,
-  useParams,
-} from "react-router"
+import { NavLink, Outlet, useLocation, useParams } from "react-router"
 import { useAppStore } from "@/stores/app-store"
 import { useBoardStore } from "@/stores/board-store"
 import { useAuth } from "@/hooks/use-auth"
 import { useOrgs } from "@/hooks/use-orgs"
-import { useUsage } from "@/hooks/use-billing"
 import { OrgSwitcher } from "./org-switcher"
 import { UserMenu } from "./user-menu"
 import { EnvIndicator } from "./env-indicator"
 import { LimitBanner } from "./limit-banner"
 import { getWorkspaceNavItems, getOrgNavItems } from "@/lib/nav-items"
 import { cn } from "@workspace/ui/lib/utils"
-import { Button } from "@workspace/ui/components/button"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
 import { Bell, Search } from "lucide-react"
 
 const groupClass =
@@ -52,23 +39,6 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2.5 px-2 pb-4">
-        <span className="grid size-7.5 place-items-center rounded-lg bg-gradient-to-br from-primary to-blue-500 text-primary-foreground">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.4"
-            className="size-4"
-          >
-            <path d="M13 2 3 14h6l-2 8 10-12h-6l2-8z" />
-          </svg>
-        </span>
-        <span className="text-[15px] font-bold tracking-tight">
-          Storyteller
-        </span>
-      </div>
-
       <OrgSwitcher />
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3">
@@ -129,14 +99,11 @@ export function AppShell() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const selectedOrgId = useBoardStore((s) => s.selectedOrgId)
   const { logout, user } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
   const { slug } = useParams<{ slug: string }>()
   const { data: orgs } = useOrgs()
   const activeOrg = orgs?.find((o) => o.id === selectedOrgId) ?? orgs?.[0]
   const role = activeOrg?.role
-  const { isAtLimit } = useUsage(activeOrg?.id)
-  const projectsLimited = isAtLimit("projects")
 
   const inProject = Boolean(slug)
   const pageLabel =
@@ -157,18 +124,6 @@ export function AppShell() {
   useEffect(() => {
     setSidebarOpen(false)
   }, [location.pathname, setSidebarOpen])
-
-  const newBoardButton = (
-    <Button
-      variant="default"
-      size="sm"
-      disabled={projectsLimited}
-      data-testid="new-board"
-      onClick={() => navigate("/projects")}
-    >
-      New board
-    </Button>
-  )
 
   return (
     <div className="flex min-h-svh flex-col">
@@ -212,26 +167,7 @@ export function AppShell() {
             <Bell className="size-4.5" />
             <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-warn" />
           </button>
-          {projectsLimited ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <span className="inline-flex" data-testid="limit-tooltip" />
-                }
-              >
-                {newBoardButton}
-              </TooltipTrigger>
-              <TooltipContent>Limit reached — upgrade to Pro</TooltipContent>
-            </Tooltip>
-          ) : (
-            newBoardButton
-          )}
           <EnvIndicator />
-          {user && (
-            <span className="grid size-8 shrink-0 place-items-center rounded-full border border-input bg-muted font-mono text-[11px] font-semibold text-primary">
-              {user?.name?.charAt(0).toUpperCase() ?? "U"}
-            </span>
-          )}
         </div>
       </header>
 
