@@ -55,3 +55,6 @@ coverage/
 playwright-report/
 test-results/
 apps/e2e/.e2e-state.json
+
+# SDD scratch
+.superpowers/
