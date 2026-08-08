@@ -23,7 +23,7 @@ export function ProjectTabs({ slug }: { slug: string }) {
         role="tab"
         className={({ isActive }) => tabClass(isActive)}
       >
-        AI
+        Proposals
       </NavLink>
       <NavLink
         to={boardBase}

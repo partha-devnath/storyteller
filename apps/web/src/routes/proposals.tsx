@@ -11,8 +11,11 @@ import {
 import { useAiGenerate, useAiClarify } from "@/hooks/use-ai"
 import { useProposals } from "@/hooks/use-proposals"
 import { useProject } from "@/hooks/use-projects"
+import { useCards } from "@/hooks/use-cards"
+import { useProjectEvents } from "@/hooks/use-project-events"
 import { useUsage, handleLimitError } from "@/hooks/use-billing"
 import { useChatMessages, useAddChatMessage } from "@/hooks/use-chat"
+import { LiveIndicator } from "@/components/live-indicator"
 import { ProjectTabs } from "@/components/project-tabs"
 import { ChatThread } from "@/components/chat-thread"
 import { ProposalReview } from "@/components/proposal-review"
@@ -24,7 +27,9 @@ export function ProposalsPage() {
   const clarify = useAiClarify(slug ?? "")
   const { data: proposals } = useProposals(slug)
   const { data: projectDetail } = useProject(slug)
+  const { data: cards } = useCards(slug)
   const orgId = projectDetail?.project.orgId
+  const events = useProjectEvents(slug, {})
   const usage = useUsage(orgId)
   const aiActionsLimited = usage.isAtLimit("aiActions")
   const { data: chatMessages = [] } = useChatMessages(slug)
@@ -167,13 +172,25 @@ export function ProposalsPage() {
     <div className="space-y-4">
       <ProjectTabs slug={slug ?? ""} />
 
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-[22px] leading-tight font-extrabold tracking-tight">
+            {projectDetail?.project.name}
+          </h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            {cards?.length ?? 0} cards ·{" "}
+            {cards?.filter((c) => c.isClosed).length ?? 0} frozen
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <LiveIndicator status={events.status} onRetry={events.reconnect} />
+        </div>
+      </div>
+
       <div className="flex items-center gap-3 rounded-xl border border-input bg-card px-3 py-2.5">
         <span className="flex shrink-0 items-center gap-2 text-[12px] font-semibold tracking-wide text-primary">
           <Sparkles className="size-4" />
           AI Instruction
-        </span>
-        <span className="hidden shrink-0 rounded-full border border-border bg-muted px-2.5 py-1 font-mono text-[11px] text-foreground/80 md:inline">
-          forks a new branch off the active board
         </span>
         <input
           aria-label="AI instruction"
