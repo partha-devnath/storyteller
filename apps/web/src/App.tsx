@@ -9,6 +9,7 @@ import { ProjectsPage } from "@/routes/projects"
 import { ProjectChatPage } from "@/routes/project-chat"
 import { OrgMembersPage } from "@/routes/org-members"
 import { ProjectBoardPage } from "@/routes/project-board"
+import { ProposalsPage } from "@/routes/proposals"
 import { CardDetailPage } from "@/routes/card-detail"
 import { OnboardingPage } from "@/routes/onboarding"
 import { BillingPage } from "@/routes/billing"
@@ -37,6 +38,7 @@ export function App() {
           />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:slug" element={<ProjectBoardPage />} />
+          <Route path="/projects/:slug/proposals" element={<ProposalsPage />} />
           <Route path="/projects/:slug/chat" element={<ProjectChatPage />} />
           <Route
             path="/project/:slug/card/:cardSlug"

@@ -19,6 +19,13 @@ export function ProjectTabs({ slug }: { slug: string }) {
   return (
     <nav className="flex items-center gap-1 border-b bg-background px-4 py-1.5">
       <NavLink
+        to={`/projects/${slug}/proposals`}
+        role="tab"
+        className={({ isActive }) => tabClass(isActive)}
+      >
+        Proposals
+      </NavLink>
+      <NavLink
         to={boardBase}
         end
         role="tab"

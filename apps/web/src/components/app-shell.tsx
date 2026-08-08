@@ -137,11 +137,9 @@ export function AppShell() {
         </button>
         <div className="flex min-w-0 items-center gap-1.5 text-[13px]">
           <span className="font-bold whitespace-nowrap">Storyteller</span>
-          {(activeOrg || inProject) && (
+          {inProject && (
             <span className="truncate text-muted-foreground">
-              {activeOrg?.name}
-              {inProject && (activeOrg ? " / " : "")}
-              {inProject ? slug : ""}
+              {slug}
               {pageLabel && <> · {pageLabel}</>}
             </span>
           )}
