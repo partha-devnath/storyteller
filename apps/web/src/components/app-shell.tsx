@@ -15,7 +15,6 @@ import { OrgSwitcher } from "./org-switcher"
 import { UserMenu } from "./user-menu"
 import { EnvIndicator } from "./env-indicator"
 import { LimitBanner } from "./limit-banner"
-import { ThemeToggle } from "./theme-toggle"
 import { getWorkspaceNavItems, getOrgNavItems } from "@/lib/nav-items"
 import { cn } from "@workspace/ui/lib/utils"
 import { Button } from "@workspace/ui/components/button"
@@ -161,7 +160,6 @@ export function AppShell() {
             newBoardButton
           )}
           <EnvIndicator />
-          <ThemeToggle />
           {user && <UserMenu name={user.name} role={role} onLogout={logout} />}
         </div>
       </header>
