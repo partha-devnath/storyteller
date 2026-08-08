@@ -63,6 +63,7 @@ export const generateBoardOutputSchema = z.discriminatedUnion("kind", [
                       acceptanceCriteria: z.array(z.string()),
                       priority: PRIORITY_ENUM,
                       suggestedStatus: STATUS_ENUM,
+                      sections: z.record(z.string(), z.string()).optional(),
                     })
                     .strict()
                 )
@@ -103,6 +104,7 @@ const processChangeSchema = z.discriminatedUnion("change_type", [
           priority: PRIORITY_ENUM,
           epic_name: z.string().optional(),
           custom_fields: z.record(z.string(), z.string()).optional(),
+          sections: z.record(z.string(), z.string()).optional(),
         })
         .strict(),
       relation_summary: relationSummarySchema,
@@ -121,6 +123,7 @@ const processChangeSchema = z.discriminatedUnion("change_type", [
           status: STATUS_ENUM.optional(),
           priority: PRIORITY_ENUM.optional(),
           customFields: z.record(z.string(), z.string()).optional(),
+          sections: z.record(z.string(), z.string()).optional(),
         })
         .strict(),
       relation_summary: relationSummarySchema,

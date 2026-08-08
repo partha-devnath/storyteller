@@ -9,7 +9,9 @@ export const cardEmbedding = pgTable(
     cardId: text("card_id")
       .notNull()
       .references(() => card.id, { onDelete: "cascade" }),
-    versionId: text("version_id").references(() => cardVersion.id),
+    versionId: text("version_id").references(() => cardVersion.id, {
+      onDelete: "cascade",
+    }),
     embedding: vector("embedding", { dimensions: 4096 }).notNull(),
     model: text("model").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),

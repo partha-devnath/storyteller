@@ -22,10 +22,10 @@ export function GraphNodeComponent({
   const highlighted = isImpacted || selected
 
   const base = isEpic
-    ? "relative w-[160px] rounded-lg border-2 border-primary/40 bg-card px-3 py-2"
+    ? "relative w-[210px] rounded-xl border-2 border-primary/40 bg-card px-3.5 py-3"
     : data.isProposed
-      ? "relative w-[140px] rounded-lg border border-warn/60 bg-warn/5 px-3 py-2 shadow-sm"
-      : "relative w-[140px] rounded-lg border bg-card px-3 py-2 shadow-sm"
+      ? "relative w-[180px] rounded-xl border border-warn/60 bg-warn/5 px-3.5 py-3 shadow-sm"
+      : "relative w-[180px] rounded-xl border border-border/70 bg-card px-3.5 py-3 shadow-sm"
 
   const stateClasses = [
     !isEpic && data.isClosed
@@ -52,23 +52,23 @@ export function GraphNodeComponent({
         className="!h-2 !min-h-0 !w-2 !min-w-0 !border-none !bg-transparent !opacity-0"
       />
       {isEpic ? (
-        <div className="flex items-start gap-1.5">
-          <Layers className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+        <div className="flex items-start gap-2">
+          <Layers className="mt-0.5 size-4 shrink-0 text-primary" />
           <div className="min-w-0">
-            <p className="line-clamp-2 text-sm leading-snug font-semibold">
+            <p className="line-clamp-2 text-[13.5px] leading-snug font-bold">
               {data.title}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
               {data.childCount} stories
             </p>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-1">
-          <p className="line-clamp-2 text-sm leading-snug font-semibold">
+        <div className="flex flex-col gap-1.5">
+          <p className="line-clamp-2 text-[13.5px] leading-snug font-semibold">
             {data.title}
           </p>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {data.isProposed ? (
               <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
                 proposed
@@ -79,14 +79,29 @@ export function GraphNodeComponent({
               </span>
             )}
             <span
-              className={`size-2 rounded-full border-2 border-background ${
+              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase ${
                 data.isClosed
-                  ? "bg-destructive"
+                  ? "border border-destructive/40 bg-destructive/10 text-destructive"
                   : data.isProposed
-                    ? "bg-warn"
-                    : "bg-primary"
+                    ? "border border-warn/40 bg-warn/10 text-warn"
+                    : "border border-primary/40 bg-primary/10 text-primary"
               }`}
-            />
+            >
+              <span
+                className={`size-1.5 rounded-full ${
+                  data.isClosed
+                    ? "bg-destructive"
+                    : data.isProposed
+                      ? "bg-warn"
+                      : "bg-primary"
+                }`}
+              />
+              {data.isClosed
+                ? "frozen"
+                : data.isProposed
+                  ? "pending"
+                  : "active"}
+            </span>
             {data.isClosed && <Lock className="size-3 text-muted-foreground" />}
             {data.priority && (
               <span

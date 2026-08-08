@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react"
 import { useParams, useSearchParams } from "react-router"
 import { useQueryClient } from "@tanstack/react-query"
-import { Sparkles } from "lucide-react"
+import { ArrowDown, Sparkles } from "lucide-react"
 import { Button } from "@workspace/ui/components/button"
 import {
   Tooltip,
@@ -16,6 +16,7 @@ import { useOrgMembers } from "@/hooks/use-orgs"
 import { useProjectEvents } from "@/hooks/use-project-events"
 import { useUsage, handleLimitError } from "@/hooks/use-billing"
 import { useChatMessages, useAddChatMessage } from "@/hooks/use-chat"
+import { useChatScroll } from "@/lib/use-chat-scroll"
 import {
   useChatSessions,
   useCreateChatSession,
@@ -59,6 +60,11 @@ export function ProposalsPage() {
 
   const { data: chatMessages = [] } = useChatMessages(slug, resolvedSessionId)
   const addMessage = useAddChatMessage(slug ?? "", resolvedSessionId)
+  const { containerRef, showJump, handleScroll, jumpToBottom } = useChatScroll([
+    chatMessages,
+    pendingPrompt,
+    resolvedSessionId,
+  ])
 
   const [prompt, setPrompt] = useState("")
   const [mentions, setMentions] = useState<MentionItem[]>([])
@@ -311,20 +317,38 @@ export function ProposalsPage() {
         />
 
         <div className="flex min-w-0 flex-1 flex-col gap-3">
-          <div className="max-h-[calc(100vh-24rem)] flex-1 overflow-y-auto rounded-xl border border-border/60 bg-card p-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
-            {chatMessages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Describe the product you want to build. Storyteller will
-                generate a board of stories you can review and approve.
-              </p>
-            ) : (
-              <ChatThread
-                messages={chatMessages}
-                projectSlug={slug ?? ""}
-                pendingPrompt={pendingPrompt}
-                highlightProposalId={highlightProposalId}
-                onClarifyAnswer={(i, answers) => onClarifyAnswer(i, answers)}
-              />
+          <div className="relative">
+            <div
+              ref={containerRef}
+              onScroll={handleScroll}
+              data-testid="chat-scroll"
+              className="max-h-[calc(100vh-24rem)] flex-1 overflow-y-auto rounded-xl border border-border/60 bg-card p-4 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]"
+            >
+              {chatMessages.length === 0 && !pendingPrompt ? (
+                <p className="text-sm text-muted-foreground">
+                  Describe the product you want to build. Storyteller will
+                  generate a board of stories you can review and approve.
+                </p>
+              ) : (
+                <ChatThread
+                  messages={chatMessages}
+                  projectSlug={slug ?? ""}
+                  pendingPrompt={pendingPrompt}
+                  highlightProposalId={highlightProposalId}
+                  onClarifyAnswer={(i, answers) => onClarifyAnswer(i, answers)}
+                />
+              )}
+            </div>
+
+            {showJump && (
+              <button
+                data-testid="chat-jump-bottom"
+                onClick={jumpToBottom}
+                aria-label="Scroll to bottom"
+                className="absolute right-3 bottom-3 grid size-9 place-items-center rounded-full border border-input bg-card text-muted-foreground shadow-lg transition-colors hover:text-foreground"
+              >
+                <ArrowDown className="size-4" />
+              </button>
             )}
           </div>
 

@@ -18,8 +18,8 @@ import type { GraphNodeData } from "./graph-node"
 import type { GraphEdgeData } from "./graph-edge"
 
 const NODE_SIZE = {
-  epic: { width: 160, height: 64 },
-  card: { width: 140, height: 60 },
+  epic: { width: 210, height: 72 },
+  card: { width: 180, height: 76 },
 } as const
 
 function buildLayout(
@@ -238,7 +238,7 @@ export function GraphView({
         nodes={renderedNodes}
         edges={renderedEdges}
         onNodeClick={handleNodeClick}
-        className={compact ? "h-[340px]" : "h-[560px]"}
+        className={compact ? "h-[360px]" : "h-[640px]"}
       />
     </div>
   )

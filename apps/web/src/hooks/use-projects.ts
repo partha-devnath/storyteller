@@ -25,6 +25,12 @@ export type ProjectDetail = {
     description: string | null
     orgId: string
     columns: { key: string; title: string }[]
+    cardSections?: {
+      key: string
+      label: string
+      description: string
+      builtIn: boolean
+    }[]
   }
   epics: { id: string; name: string; order: number }[]
   cards: {
@@ -112,5 +118,22 @@ export function useCreateProject() {
     },
     onSuccess: (_data, vars) =>
       qc.invalidateQueries({ queryKey: ["projects", vars.orgId] }),
+  })
+}
+
+export function useDeleteProject() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (slug: string) => {
+      const res = await apiClient<Envelope<{ deleted: string }>>(
+        `/api/projects/${slug}`,
+        { method: "DELETE" }
+      )
+      return res.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["projects"] })
+      qc.invalidateQueries({ queryKey: ["project"] })
+    },
   })
 }

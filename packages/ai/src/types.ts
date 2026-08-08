@@ -33,6 +33,13 @@ export type RelationSnapshot = {
   type: "dependency" | "hierarchy" | "evolution"
 }
 
+export type CardSectionDef = {
+  key: string
+  label: string
+  description: string
+  builtIn: boolean
+}
+
 export type BoardSnapshot = {
   projectId: string
   projectSlug: string
@@ -116,6 +123,7 @@ export type EpicDraft = {
     acceptanceCriteria: string[]
     priority: "low" | "medium" | "high" | "critical"
     suggestedStatus: "backlog" | "todo" | "in_progress" | "review" | "done"
+    sections?: Record<string, string>
   }[]
 }
 

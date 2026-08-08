@@ -1,5 +1,5 @@
 import { GitBranch, GitFork, Link2, Network } from "lucide-react"
-import { Toggle } from "@workspace/ui/components/toggle"
+import { cn } from "@workspace/ui/lib/utils"
 
 export type EdgeFilterState = {
   dependency: boolean
@@ -9,8 +9,35 @@ export type EdgeFilterState = {
 
 export type EdgeFilterType = keyof EdgeFilterState
 
-const activeClass =
-  "bg-primary text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground"
+const FILTERS: {
+  key: EdgeFilterType
+  label: string
+  hint: string
+  icon: typeof Link2
+  color: string
+}[] = [
+  {
+    key: "dependency",
+    label: "Depends on",
+    hint: "A requires B",
+    icon: Link2,
+    color: "bg-edge-dependency",
+  },
+  {
+    key: "hierarchy",
+    label: "Contains",
+    hint: "epic → card",
+    icon: GitBranch,
+    color: "bg-edge-hierarchy",
+  },
+  {
+    key: "evolution",
+    label: "Replaces",
+    hint: "frozen → new",
+    icon: GitFork,
+    color: "bg-edge-evolution",
+  },
+]
 
 export function GraphToolbar({
   filters,
@@ -24,82 +51,70 @@ export function GraphToolbar({
   onToggleImpact: () => void
 }) {
   return (
-    <div className="rounded-md bg-muted/30 px-3 py-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <Toggle
-          data-testid="edge-filter-dependency"
-          pressed={filters.dependency}
-          onPressedChange={() => onToggleFilter("dependency")}
-          className={filters.dependency ? activeClass : undefined}
-          aria-label="Toggle dependency edges"
-        >
-          <Link2 />
-          Dependency
-        </Toggle>
-        <Toggle
-          data-testid="edge-filter-hierarchy"
-          pressed={filters.hierarchy}
-          onPressedChange={() => onToggleFilter("hierarchy")}
-          className={filters.hierarchy ? activeClass : undefined}
-          aria-label="Toggle hierarchy edges"
-        >
-          <GitBranch />
-          Hierarchy
-        </Toggle>
-        <Toggle
-          data-testid="edge-filter-evolution"
-          pressed={filters.evolution}
-          onPressedChange={() => onToggleFilter("evolution")}
-          className={filters.evolution ? activeClass : undefined}
-          aria-label="Toggle evolution edges"
-        >
-          <GitFork />
-          Evolution
-        </Toggle>
-
-        <div className="mx-1 h-4 w-px bg-border" aria-hidden="true" />
-
-        <Toggle
-          data-testid="impact-toggle"
-          pressed={impactArmed}
-          onPressedChange={onToggleImpact}
-          variant="outline"
-          className={impactArmed ? activeClass : undefined}
-          aria-label="Arm impact mode"
-        >
-          <Network />
-          Impact
-        </Toggle>
-
-        <div className="mx-1 h-4 w-px bg-border" aria-hidden="true" />
-
-        <div className="flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card px-3 py-2.5">
+      <div className="flex items-center gap-1">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            data-testid={`edge-filter-${f.key}`}
+            onClick={() => onToggleFilter(f.key)}
+            title={f.hint}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+              filters[f.key]
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <f.icon className="size-3.5" />
+            {f.label}
             <span
-              className="size-2 rounded-full bg-edge-dependency"
+              className={cn(
+                "size-1.5 rounded-full",
+                f.color,
+                filters[f.key] ? "" : "opacity-30"
+              )}
+            />
+          </button>
+        ))}
+      </div>
+
+      <div className="mx-1 h-4 w-px bg-border" aria-hidden="true" />
+
+      <button
+        data-testid="impact-toggle"
+        onClick={onToggleImpact}
+        className={cn(
+          "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+          impactArmed
+            ? "bg-primary text-primary-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+      >
+        <Network className="size-3.5" />
+        Impact
+      </button>
+
+      <div className="mx-1 h-4 w-px bg-border" aria-hidden="true" />
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
+        {FILTERS.map((f) => (
+          <span key={f.key} className="flex items-center gap-1.5">
+            <span
+              className={cn("size-2 rounded-full", f.color)}
               aria-hidden="true"
             />
-            Dependency
+            {f.hint}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="size-2 rounded-full bg-edge-hierarchy"
-              aria-hidden="true"
-            />
-            Hierarchy
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="size-2 rounded-full bg-edge-evolution"
-              aria-hidden="true"
-            />
-            Evolution
-          </span>
-        </div>
+        ))}
+        <span className="flex items-center gap-1.5">
+          <span className="size-2 rounded-full border border-destructive bg-destructive/20" />
+          frozen
+        </span>
       </div>
 
       {impactArmed && (
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="w-full text-xs text-muted-foreground">
           Select a card to see its downstream impact.
         </p>
       )}

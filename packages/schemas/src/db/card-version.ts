@@ -35,7 +35,8 @@ export const cardVersion = pgTable(
       .notNull()
       .references(() => user.id),
     sourceProposalChangeId: text("source_proposal_change_id").references(
-      () => proposalChange.id
+      () => proposalChange.id,
+      { onDelete: "cascade" }
     ),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

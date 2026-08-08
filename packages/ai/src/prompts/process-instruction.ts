@@ -1,4 +1,9 @@
-import type { ChatMessage, BoardSnapshot, SemanticMatch } from "../types"
+import type {
+  ChatMessage,
+  BoardSnapshot,
+  SemanticMatch,
+  CardSectionDef,
+} from "../types"
 
 function compactSnapshot(snapshot: BoardSnapshot): string {
   const cards = snapshot.cards
@@ -35,11 +40,20 @@ export function buildProcessInstructionPrompt({
   instruction,
   snapshot,
   semanticMatches,
+  cardSections = [],
 }: {
   instruction: string
   snapshot: BoardSnapshot
   semanticMatches: SemanticMatch[]
+  cardSections?: CardSectionDef[]
 }): ChatMessage[] {
+  const sectionsHint =
+    cardSections.length > 0
+      ? `\nNew cards may include these optional sections (as a "sections" object keyed by section name):\n${cardSections
+          .map((s) => `- ${s.label}: ${s.description}`)
+          .join("\n")}`
+      : ""
+
   return [
     {
       role: "system",
@@ -48,7 +62,8 @@ export function buildProcessInstructionPrompt({
         "You MUST respond with JSON matching exactly this schema:\n" +
         '{"changes":[{"change_type":"create","card":{"title":string,"description":string,' +
         '"acceptanceCriteria":string[],"status":"backlog|todo|in_progress|review|done",' +
-        '"priority":"low|medium|high|critical","epic_name"?:string,"custom_fields"?:Record<string,string>},' +
+        '"priority":"low|medium|high|critical","epic_name"?:string,"custom_fields"?:Record<string,string>,' +
+        '"sections"?:{string:string}},' +
         '"relation_summary":[{"type":"dependency|hierarchy|evolution","source_card_id"?:string,' +
         '"target_card_id"?:string,"note":string}],"conflict_flags":[{"type":"contradiction|duplicate|conflict","summary":string}]}' +
         '|{"change_type":"update","target_card_id":string,"fields":{...},' +
@@ -62,7 +77,8 @@ export function buildProcessInstructionPrompt({
         "Card ids in the snapshot are raw ids (e.g. card_1). " +
         "When a card id is needed (target_card_id, source_card_id, target_card_id), " +
         "use the FIRST field (the id) of the card's snapshot line — never the slug.\n" +
-        "No markdown fences, no prose — only the JSON object.",
+        "No markdown fences, no prose — only the JSON object." +
+        sectionsHint,
     },
     {
       role: "user",

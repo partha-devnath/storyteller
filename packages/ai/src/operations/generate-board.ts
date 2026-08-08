@@ -1,4 +1,9 @@
-import type { LLMProvider, BoardSnapshot, GenerateBoardResult } from "../types"
+import type {
+  LLMProvider,
+  BoardSnapshot,
+  GenerateBoardResult,
+  CardSectionDef,
+} from "../types"
 import { generateBoardOutputSchema } from "../schemas"
 import { buildGenerateBoardPrompt } from "../prompts/generate-board"
 import { AiOutputError } from "../errors"
@@ -7,14 +12,17 @@ export async function generateBoard({
   provider,
   prompt,
   snapshot,
+  cardSections = [],
 }: {
   provider: LLMProvider
   prompt: string
   snapshot?: BoardSnapshot
+  cardSections?: CardSectionDef[]
 }): Promise<GenerateBoardResult> {
   const messages = buildGenerateBoardPrompt({
     prompt,
     existingContext: snapshot ? JSON.stringify(snapshot) : undefined,
+    cardSections,
   })
   const raw = await provider.chat(messages)
   let parsedJson: unknown
@@ -53,6 +61,7 @@ export async function generateBoard({
         acceptanceCriteria: story.acceptanceCriteria,
         priority: story.priority,
         suggestedStatus: story.suggestedStatus,
+        sections: story.sections,
       })),
     })),
   }

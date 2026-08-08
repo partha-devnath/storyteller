@@ -13,6 +13,7 @@ import {
 import { createProjectSchema } from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
 import { resolveOrgFromProject } from "../middleware/org-scope"
+import { requireRole } from "../middleware/role-guard"
 import { validateBody } from "../middleware/validate"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
@@ -195,3 +196,21 @@ projectsRoutes.get("/:slug/proposed", resolveOrgFromProject, async (c) => {
 
   return c.json({ success: true, data: proposed })
 })
+
+// Delete a board. Deletes proposals first (their changes reference cards via
+// an FK without cascade), then epics, then the project (cascades cards,
+// relations, chat, sessions, embeddings).
+projectsRoutes.delete(
+  "/:slug",
+  resolveOrgFromProject,
+  requireRole("owner", "admin"),
+  async (c) => {
+    const projectId = c.var.projectId!
+    await db.transaction(async (tx) => {
+      await tx.delete(proposal).where(eq(proposal.projectId, projectId))
+      await tx.delete(epic).where(eq(epic.projectId, projectId))
+      await tx.delete(project).where(eq(project.id, projectId))
+    })
+    return c.json({ success: true, data: { deleted: projectId } })
+  }
+)

@@ -23,7 +23,9 @@ export const proposalChange = pgTable("proposal_change", {
   changeType: text("change_type")
     .$type<"create" | "update" | "close">()
     .notNull(),
-  targetCardId: text("target_card_id").references(() => card.id),
+  targetCardId: text("target_card_id").references(() => card.id, {
+    onDelete: "cascade",
+  }),
   newData: json("new_data").$type<Record<string, unknown>>().notNull(),
   relationSummary: json("relation_summary")
     .$type<ProposalChangeRelation[]>()

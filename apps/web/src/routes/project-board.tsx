@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router"
+import { Plus } from "lucide-react"
 import { useProject, useProposedCards } from "@/hooks/use-projects"
 import { useCards, useMoveCard, type CommentItem } from "@/hooks/use-cards"
 import { useProjectEvents } from "@/hooks/use-project-events"
@@ -13,6 +14,14 @@ import { ProjectTabs } from "@/components/project-tabs"
 import { LiveIndicator } from "@/components/live-indicator"
 import { ViewSwitcher } from "@/components/view-switcher"
 import { ExportMenu } from "@/components/export-menu"
+import { CreateCardForm } from "@/components/create-card-form"
+import { Button } from "@workspace/ui/components/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
 
 const GraphView = lazy(() =>
   import("@/components/graph-view").then((mod) => ({
@@ -32,6 +41,7 @@ export function ProjectBoardPage() {
     priority: "",
     query: "",
   })
+  const [createOpen, setCreateOpen] = useState(false)
   const moveCard = useMoveCard(slug ?? "")
   const defaultColumns = useBoardStore((s) => s.columns)
   const columns = projectDetail?.project.columns?.length
@@ -103,6 +113,14 @@ export function ProjectBoardPage() {
                 Export failed. Please try again.
               </p>
             )}
+            <Button
+              size="sm"
+              data-testid="board-create-card"
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="size-3.5" />
+              Create card
+            </Button>
             <ExportMenu
               disabled={!cards || cards.length === 0}
               onExport={handleExport}
@@ -144,6 +162,15 @@ export function ProjectBoardPage() {
           liveComment={liveComment}
         />
       )}
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent data-testid="create-card-dialog">
+          <DialogHeader>
+            <DialogTitle>Create a card</DialogTitle>
+          </DialogHeader>
+          {slug && <CreateCardForm projectSlug={slug} />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
