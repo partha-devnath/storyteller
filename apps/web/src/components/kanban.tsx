@@ -32,7 +32,7 @@ export function KanbanBoard({
 
   return (
     <DragDropProvider onDragEnd={handleDragEnd}>
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-5">
         {columns.map((col) => (
           <BoardColumn
             key={col.key}

@@ -1,5 +1,6 @@
 import { useDroppable, useDraggable } from "@dnd-kit/react"
 import type { BoardCard } from "@/hooks/use-cards"
+import { BoardCard as Card } from "./board-card"
 
 function DraggableBoardCard({
   card,
@@ -13,21 +14,12 @@ function DraggableBoardCard({
     data: { cardId: card.id, status: card.status },
   })
   return (
-    <div
-      ref={ref}
-      data-testid="board-card"
+    <Card
+      card={card}
+      isClosed={card.isClosed}
+      dragProps={{ ref: ref as (el: Element | null) => void, isDragging }}
       onClick={() => onSelectCard(card)}
-      className={`rounded-lg border bg-background p-3 text-left text-sm shadow-sm ${
-        isDragging ? "opacity-40" : ""
-      } cursor-pointer transition-shadow hover:shadow-md`}
-    >
-      <p className="font-medium">{card.title}</p>
-      {card.acceptanceCriteriaCount > 0 && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          {card.acceptanceCriteriaCount} criteria
-        </p>
-      )}
-    </div>
+    />
   )
 }
 
@@ -51,15 +43,18 @@ export function BoardColumn({
     <div
       ref={ref}
       data-testid={`column-${columnKey}`}
-      className={`flex min-h-[120px] flex-col gap-2 rounded-lg border bg-muted/20 p-2 ${
-        isDropTarget ? "ring-2 ring-ring" : ""
-      }`}
+      className={`flex min-h-[120px] flex-col gap-3 rounded-xl border border-border/60 bg-background/60 p-2 ${isDropTarget ? "ring-2 ring-ring" : ""}`}
     >
-      <div className="flex items-center justify-between px-1">
-        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+      <div className="flex items-center gap-2 px-1.5 py-1">
+        <p className="text-[13px] font-bold tracking-wide text-foreground">
           {title}
         </p>
-        <span className="text-xs text-muted-foreground">{cards.length}</span>
+        <span className="font-mono text-[11px] font-semibold text-muted-foreground">
+          {cards.length}
+        </span>
+        <span className="ml-auto text-[11px] text-muted-foreground">
+          {cards.length === 0 ? "no cards" : ""}
+        </span>
       </div>
       {cards.length === 0 ? (
         <p className="p-3 text-center text-xs text-muted-foreground">
