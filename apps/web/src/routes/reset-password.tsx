@@ -69,12 +69,18 @@ export function ResetPasswordPage() {
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="password">New password</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="password"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            New password
+          </Label>
           <Input
             id="password"
             type="password"
             placeholder="••••••••"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("password")}
           />
           {form.formState.errors.password && (
@@ -84,12 +90,18 @@ export function ResetPasswordPage() {
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm new password</Label>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="confirmPassword"
+            className="font-mono text-[11.5px] font-medium tracking-[0.1em] text-foreground/80 uppercase"
+          >
+            Confirm new password
+          </Label>
           <Input
             id="confirmPassword"
             type="password"
             placeholder="••••••••"
+            className="h-10.5 rounded-[10px] border-input bg-background"
             {...form.register("confirmPassword")}
           />
           {form.formState.errors.confirmPassword && (
