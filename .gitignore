@@ -25,6 +25,9 @@ graphify-out/
 # turbo
 .turbo
 
+# worktrees
+.worktrees/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
