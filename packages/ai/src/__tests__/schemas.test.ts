@@ -120,3 +120,80 @@ describe("clarifyingAnswersInputSchema", () => {
     expect(result.success).toBe(false)
   })
 })
+
+describe("generateBoardOutputSchema story actions", () => {
+  const baseStory = {
+    title: "Enroll",
+    description: "d",
+    acceptanceCriteria: [],
+    priority: "medium",
+    suggestedStatus: "backlog",
+  }
+
+  function boardWith(story: Record<string, unknown>) {
+    return {
+      kind: "board",
+      epics: [
+        {
+          name: "E",
+          description: "d",
+          order: 0,
+          stories: [story],
+        },
+      ],
+    }
+  }
+
+  it("accepts a create story without action fields", () => {
+    const result = generateBoardOutputSchema.safeParse(boardWith(baseStory))
+    expect(result.success).toBe(true)
+  })
+
+  it("accepts an update story with targetCardId", () => {
+    const result = generateBoardOutputSchema.safeParse(
+      boardWith({
+        ...baseStory,
+        action: "update",
+        targetCardId: "card_1",
+        conflictFlags: [{ type: "duplicate", summary: "overlaps" }],
+        relationSummary: [
+          {
+            type: "evolution",
+            targetCardId: "card_9",
+            note: "replaces closed card",
+          },
+        ],
+      })
+    )
+    expect(result.success).toBe(true)
+  })
+
+  it("accepts a skip story with duplicate flag", () => {
+    const result = generateBoardOutputSchema.safeParse(
+      boardWith({
+        ...baseStory,
+        action: "skip",
+        conflictFlags: [{ type: "duplicate", summary: "already exists" }],
+      })
+    )
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects an invalid action value", () => {
+    const result = generateBoardOutputSchema.safeParse(
+      boardWith({ ...baseStory, action: "delete" })
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects an invalid conflict flag type", () => {
+    const result = generateBoardOutputSchema.safeParse(
+      boardWith({
+        ...baseStory,
+        action: "skip",
+        conflictFlags: [{ type: "weird", summary: "x" }],
+      })
+    )
+    expect(result.success).toBe(false)
+  })
+})

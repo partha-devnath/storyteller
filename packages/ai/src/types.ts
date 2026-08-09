@@ -124,6 +124,18 @@ export type EpicDraft = {
     priority: "low" | "medium" | "high" | "critical"
     suggestedStatus: "backlog" | "todo" | "in_progress" | "review" | "done"
     sections?: Record<string, string>
+    action?: "create" | "update" | "skip"
+    targetCardId?: string
+    conflictFlags?: {
+      type: "contradiction" | "duplicate" | "conflict"
+      summary: string
+    }[]
+    relationSummary?: {
+      type: "dependency" | "hierarchy" | "evolution"
+      sourceCardId?: string
+      targetCardId?: string
+      note: string
+    }[]
   }[]
 }
 

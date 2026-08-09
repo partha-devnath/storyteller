@@ -64,6 +64,38 @@ export const generateBoardOutputSchema = z.discriminatedUnion("kind", [
                       priority: PRIORITY_ENUM,
                       suggestedStatus: STATUS_ENUM,
                       sections: z.record(z.string(), z.string()).optional(),
+                      action: z.enum(["create", "update", "skip"]).optional(),
+                      targetCardId: z.string().optional(),
+                      conflictFlags: z
+                        .array(
+                          z
+                            .object({
+                              type: z.enum([
+                                "contradiction",
+                                "duplicate",
+                                "conflict",
+                              ]),
+                              summary: z.string(),
+                            })
+                            .strict()
+                        )
+                        .optional(),
+                      relationSummary: z
+                        .array(
+                          z
+                            .object({
+                              type: z.enum([
+                                "dependency",
+                                "hierarchy",
+                                "evolution",
+                              ]),
+                              sourceCardId: z.string().optional(),
+                              targetCardId: z.string().optional(),
+                              note: z.string(),
+                            })
+                            .strict()
+                        )
+                        .optional(),
                     })
                     .strict()
                 )
