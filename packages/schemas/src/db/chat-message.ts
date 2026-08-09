@@ -19,7 +19,9 @@ export const chatMessage = pgTable("chat_message", {
   questions: json("questions")
     .$type<{ question: string; options?: string[] }[] | null>()
     .default(null),
-  proposalId: text("proposal_id").references(() => proposal.id),
+  proposalId: text("proposal_id").references(() => proposal.id, {
+    onDelete: "set null",
+  }),
   mentions: json("mentions")
     .$type<{ type: "card" | "member"; id: string; label: string }[] | null>()
     .default(null),
