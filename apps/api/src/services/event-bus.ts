@@ -36,16 +36,40 @@ type Handler = (event: ProjectEvent) => void
 
 const subscribers = new Map<string, Set<Handler>>()
 
+const globalSubscribers = new Set<
+  (projectId: string, event: ProjectEvent) => void
+>()
+
+export function subscribeAll(
+  handler: (projectId: string, event: ProjectEvent) => void
+): () => void {
+  globalSubscribers.add(handler)
+  return () => {
+    globalSubscribers.delete(handler)
+  }
+}
+
 export function publish(projectId: string, event: ProjectEvent): void {
   const handlers = subscribers.get(projectId)
-  if (!handlers || handlers.size === 0) return
-  for (const handler of handlers) {
+  if (handlers && handlers.size > 0) {
+    for (const handler of handlers) {
+      try {
+        handler(event)
+      } catch (error) {
+        logger.error(
+          { projectId, eventType: event.type, error },
+          "event-bus: subscriber handler failed"
+        )
+      }
+    }
+  }
+  for (const handler of globalSubscribers) {
     try {
-      handler(event)
+      handler(projectId, event)
     } catch (error) {
       logger.error(
         { projectId, eventType: event.type, error },
-        "event-bus: subscriber handler failed"
+        "event-bus: global subscriber failed"
       )
     }
   }

@@ -20,6 +20,7 @@ import { eventsRoutes } from "./routes/events"
 import { exportRoutes } from "./routes/export"
 import { chatRoutes } from "./routes/chat"
 import { rateLimiter } from "./middleware/rate-limit"
+import { registerColumnIntegrationSubscriber } from "./services/column-integration"
 
 type Env = {
   Variables: {
@@ -143,6 +144,8 @@ app.use(
   rateLimiter(Number(process.env.STRIPE_RATE_LIMIT_MAX) || 60, 60_000)
 )
 app.route("/api/stripe", stripeWebhookRoutes)
+
+registerColumnIntegrationSubscriber()
 
 app.get("/api/health", async (c) => {
   try {
