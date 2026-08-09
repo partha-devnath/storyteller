@@ -5,8 +5,12 @@ import {
   acceptInviteSchema,
   updateMemberRoleSchema,
 } from "../validations/org"
-import { createProjectSchema } from "../validations/project"
+import {
+  createProjectSchema,
+  updateCardSectionsSchema,
+} from "../validations/project"
 import { createCardSchema, updateCardSchema } from "../validations/card"
+import { DEFAULT_CARD_SECTIONS } from "../db/project"
 
 describe("org validations", () => {
   it("accepts a valid org", () => {
@@ -137,5 +141,87 @@ describe("card validations", () => {
   it("accepts a valid partial update", () => {
     const result = updateCardSchema.safeParse({ title: "Updated" })
     expect(result.success).toBe(true)
+  })
+})
+
+describe("card section validations", () => {
+  const custom = {
+    key: "teamSize",
+    label: "Team size",
+    description: "How many people this requirement affects.",
+    builtIn: false,
+  }
+
+  function base(sections: unknown[]) {
+    return { cardSections: sections }
+  }
+
+  it("accepts built-ins plus custom sections", () => {
+    const result = updateCardSectionsSchema.safeParse(
+      base([...DEFAULT_CARD_SECTIONS, custom])
+    )
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects missing built-ins", () => {
+    const result = updateCardSectionsSchema.safeParse(base([custom]))
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects built-ins that are not first", () => {
+    const result = updateCardSectionsSchema.safeParse(
+      base([custom, ...DEFAULT_CARD_SECTIONS])
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a changed built-in entry", () => {
+    const tampered = { ...DEFAULT_CARD_SECTIONS[0], label: "Summary" }
+    const result = updateCardSectionsSchema.safeParse(
+      base([tampered, DEFAULT_CARD_SECTIONS[1]])
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a custom section flagged built-in", () => {
+    const result = updateCardSectionsSchema.safeParse(
+      base([...DEFAULT_CARD_SECTIONS, { ...custom, builtIn: true }])
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects duplicate keys", () => {
+    const dup = { ...custom, label: "Team size again" }
+    const result = updateCardSectionsSchema.safeParse(
+      base([...DEFAULT_CARD_SECTIONS, custom, dup])
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects non-camelCase keys", () => {
+    const result = updateCardSectionsSchema.safeParse(
+      base([...DEFAULT_CARD_SECTIONS, { ...custom, key: "TeamSize" }])
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a label longer than 60 characters", () => {
+    const result = updateCardSectionsSchema.safeParse(
+      base([...DEFAULT_CARD_SECTIONS, { ...custom, label: "x".repeat(61) }])
+    )
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects more than 20 sections", () => {
+    const many = Array.from({ length: 19 }, (_, i) => ({
+      key: `custom${i + 1}`,
+      label: `Custom ${i + 1}`,
+      description: "d",
+      builtIn: false,
+    }))
+    const result = updateCardSectionsSchema.safeParse(
+      base([...DEFAULT_CARD_SECTIONS, ...many])
+    )
+    expect(result.success).toBe(false)
   })
 })
