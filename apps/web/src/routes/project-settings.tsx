@@ -4,8 +4,17 @@ import {
   useProject,
   useDeleteProject,
   useUpdateProject,
+  type ProjectColumn,
   type CardSectionInput,
 } from "@/hooks/use-projects"
+import {
+  useUpdateColumns,
+  useConnectColumn,
+  useDisconnectColumn,
+  useTrelloBoards,
+  useTrelloLists,
+} from "@/hooks/use-integrations"
+import { camelCaseKey } from "@/lib/camel-case"
 import { ProjectTabs } from "@/components/project-tabs"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -38,22 +47,6 @@ export function ProjectSettingsPage() {
 
   const columns = projectDetail?.project.columns ?? []
   const projectName = projectDetail?.project.name ?? ""
-
-  function camelCaseKey(label: string): string {
-    const words = label
-      .trim()
-      .toLowerCase()
-      .split(/[^a-z0-9]+/)
-      .filter(Boolean)
-    if (words.length === 0) return "section"
-    const key =
-      words[0] +
-      words
-        .slice(1)
-        .map((w) => w[0].toUpperCase() + w.slice(1))
-        .join("")
-    return key.replace(/^[0-9]+/, "") || "section"
-  }
 
   function persistSections(next: CardSectionInput[]) {
     updateProject.mutate(next, {
@@ -167,31 +160,20 @@ export function ProjectSettingsPage() {
         </nav>
 
         <div className="min-w-0 flex-1 space-y-4">
-          {section === "columns" && (
-            <section className="rounded-xl border border-border/60 bg-card p-5">
-              <h2 className="text-[15px] font-semibold">Board columns</h2>
-              <p className="mt-1 text-[12.5px] text-muted-foreground">
-                The swimlane columns on this board.
-              </p>
-              <div className="mt-4 space-y-2">
-                {columns.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No columns.</p>
-                ) : (
-                  columns.map((col, i) => (
-                    <div
-                      key={col.key}
-                      className="flex items-center justify-between rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
-                    >
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        {i + 1}
-                      </span>
-                      <span className="font-medium">{col.title}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-          )}
+          {section === "columns" &&
+            (columns.length > 0 ? (
+              <BoardColumnsSection slug={slug} columns={columns} />
+            ) : (
+              <section className="rounded-xl border border-border/60 bg-card p-5">
+                <h2 className="text-[15px] font-semibold">Board columns</h2>
+                <p className="mt-1 text-[12.5px] text-muted-foreground">
+                  The swimlane columns on this board.
+                </p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  No columns.
+                </p>
+              </section>
+            ))}
 
           {section === "sections" && (
             <section className="rounded-xl border border-border/60 bg-card p-5">
@@ -367,5 +349,420 @@ export function ProjectSettingsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function BoardColumnsSection({
+  slug,
+  columns,
+}: {
+  slug: string | undefined
+  columns: ProjectColumn[]
+}) {
+  const updateColumns = useUpdateColumns(slug)
+  const connectColumn = useConnectColumn(slug)
+  const disconnectColumn = useDisconnectColumn(slug)
+  const [addingColumn, setAddingColumn] = useState(false)
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [confirmingKey, setConfirmingKey] = useState<string | null>(null)
+  const [columnTitle, setColumnTitle] = useState("")
+  const [connectKey, setConnectKey] = useState<string | null>(null)
+  const [connectProvider, setConnectProvider] = useState<"github" | "trello">(
+    "github"
+  )
+  const [connectToken, setConnectToken] = useState("")
+  const [connectApiKey, setConnectApiKey] = useState("")
+  const [connectTarget, setConnectTarget] = useState("")
+  const [connectBoard, setConnectBoard] = useState<string | null>(null)
+  const [connectList, setConnectList] = useState<string | null>(null)
+  const [trelloCreds, setTrelloCreds] = useState<{
+    apiKey: string
+    token: string
+  } | null>(null)
+  const trelloBoards = useTrelloBoards(slug, trelloCreds)
+  const trelloLists = useTrelloLists(slug, trelloCreds, connectBoard)
+
+  const boards = trelloBoards.data ?? []
+  const lists = trelloLists.data ?? []
+
+  function handleAddColumn() {
+    const label = columnTitle.trim()
+    if (!label) return
+    let key = camelCaseKey(label)
+    let n = 2
+    while (columns.some((c) => c.key === key)) {
+      key = `${camelCaseKey(label)}${n}`
+      n += 1
+    }
+    updateColumns.mutate([
+      ...columns,
+      { key, title: label, locked: false, integration: null },
+    ])
+    setAddingColumn(false)
+    setColumnTitle("")
+  }
+
+  function handleSaveColumnEdit(key: string) {
+    const label = columnTitle.trim()
+    if (!label) return
+    updateColumns.mutate(
+      columns.map((c) => (c.key === key ? { ...c, title: label } : c))
+    )
+    setEditingKey(null)
+    setColumnTitle("")
+  }
+
+  function handleDeleteColumn(key: string) {
+    updateColumns.mutate(columns.filter((c) => c.key !== key))
+    setConfirmingKey(null)
+  }
+
+  function openConnect(key: string) {
+    setConnectKey(key)
+    setConnectProvider("github")
+    setConnectToken("")
+    setConnectApiKey("")
+    setConnectTarget("")
+    setConnectBoard(null)
+    setConnectList(null)
+    setTrelloCreds(null)
+  }
+
+  function closeConnect() {
+    setConnectKey(null)
+    setConnectProvider("github")
+    setConnectToken("")
+    setConnectApiKey("")
+    setConnectTarget("")
+    setConnectBoard(null)
+    setConnectList(null)
+    setTrelloCreds(null)
+  }
+
+  function handleConnectSave() {
+    if (!connectKey) return
+    if (connectProvider === "github") {
+      if (!connectToken.trim() || !connectTarget.trim()) return
+      connectColumn.mutate(
+        {
+          columnKey: connectKey,
+          provider: "github",
+          config: { token: connectToken.trim() },
+          target: connectTarget.trim(),
+        },
+        { onError: () => toast.error("Could not connect column") }
+      )
+    } else {
+      if (!connectApiKey.trim() || !connectToken.trim() || !connectList) return
+      const board = boards.find((b) => b.id === connectBoard)
+      const list = lists.find((l) => l.id === connectList)
+      connectColumn.mutate(
+        {
+          columnKey: connectKey,
+          provider: "trello",
+          config: { apiKey: connectApiKey.trim(), token: connectToken.trim() },
+          target: connectList,
+          boardName: board?.name,
+          listName: list?.name,
+        },
+        { onError: () => toast.error("Could not connect column") }
+      )
+    }
+    closeConnect()
+  }
+
+  function handleDisconnect(key: string) {
+    disconnectColumn.mutate(key, {
+      onError: () => toast.error("Could not disconnect column"),
+    })
+  }
+
+  const connectDisabled =
+    connectProvider === "github"
+      ? !connectToken.trim() || !connectTarget.trim()
+      : !connectApiKey.trim() || !connectToken.trim() || !connectList
+
+  return (
+    <section className="rounded-xl border border-border/60 bg-card p-5">
+      <h2 className="text-[15px] font-semibold">Board columns</h2>
+      <p className="mt-1 text-[12.5px] text-muted-foreground">
+        The swimlane columns on this board. Cards in a deleted column move to
+        Backlog.
+      </p>
+      <div className="mt-4 space-y-2">
+        {columns.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No columns.</p>
+        ) : (
+          columns.map((col) => (
+            <div
+              key={col.key}
+              className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
+            >
+              <span className="min-w-0 font-medium">
+                {col.title}
+                {col.locked && (
+                  <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase">
+                    system
+                  </span>
+                )}
+              </span>
+              {!col.locked && (
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    data-testid={`edit-column-${col.key}`}
+                    disabled={updateColumns.isPending}
+                    onClick={() => {
+                      setEditingKey(editingKey === col.key ? null : col.key)
+                      setColumnTitle(col.title)
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  {confirmingKey === col.key ? (
+                    <Button
+                      size="xs"
+                      variant="destructive"
+                      data-testid="confirm-delete-column"
+                      disabled={updateColumns.isPending}
+                      onClick={() => handleDeleteColumn(col.key)}
+                    >
+                      Confirm
+                    </Button>
+                  ) : (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      data-testid={`delete-column-${col.key}`}
+                      disabled={updateColumns.isPending}
+                      onClick={() =>
+                        setConfirmingKey(
+                          confirmingKey === col.key ? null : col.key
+                        )
+                      }
+                    >
+                      Delete
+                    </Button>
+                  )}
+                  {col.integration ? (
+                    <>
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        Connected: {col.integration.type}
+                      </span>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        disabled={disconnectColumn.isPending}
+                        onClick={() => handleDisconnect(col.key)}
+                      >
+                        Disconnect
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      data-testid={`connect-column-${col.key}`}
+                      onClick={() => openConnect(col.key)}
+                    >
+                      Connect
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {(addingColumn || editingKey) && (
+        <div className="mt-4 space-y-3 rounded-lg border border-border/60 bg-background p-4">
+          <div className="space-y-1">
+            <Label htmlFor="column-title">Title</Label>
+            <Input
+              id="column-title"
+              data-testid="column-title"
+              value={columnTitle}
+              onChange={(e) => setColumnTitle(e.target.value)}
+              placeholder="e.g. In progress"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              data-testid="column-save"
+              disabled={updateColumns.isPending || !columnTitle.trim()}
+              onClick={() =>
+                editingKey
+                  ? handleSaveColumnEdit(editingKey)
+                  : handleAddColumn()
+              }
+            >
+              {updateColumns.isPending ? "Saving..." : "Save"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setAddingColumn(false)
+                setEditingKey(null)
+                setColumnTitle("")
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {connectKey && (
+        <div className="mt-4 space-y-3 rounded-lg border border-border/60 bg-background p-4">
+          <div className="space-y-1">
+            <Label htmlFor="connect-provider">Provider</Label>
+            <select
+              id="connect-provider"
+              data-testid="connect-provider"
+              value={connectProvider}
+              onChange={(e) =>
+                setConnectProvider(e.target.value as "github" | "trello")
+              }
+              className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="github">GitHub</option>
+              <option value="trello">Trello</option>
+            </select>
+          </div>
+          {connectProvider === "github" ? (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="connect-token">Token</Label>
+                <Input
+                  id="connect-token"
+                  data-testid="connect-token"
+                  value={connectToken}
+                  onChange={(e) => setConnectToken(e.target.value)}
+                  placeholder="ghp_..."
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="connect-target">Repository</Label>
+                <Input
+                  id="connect-target"
+                  data-testid="connect-target"
+                  value={connectTarget}
+                  onChange={(e) => setConnectTarget(e.target.value)}
+                  placeholder="org/repo"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="connect-api-key">API key</Label>
+                <Input
+                  id="connect-api-key"
+                  data-testid="connect-api-key"
+                  value={connectApiKey}
+                  onChange={(e) => setConnectApiKey(e.target.value)}
+                  placeholder="Trello API key"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="connect-token">Token</Label>
+                <Input
+                  id="connect-token"
+                  data-testid="connect-token"
+                  value={connectToken}
+                  onChange={(e) => setConnectToken(e.target.value)}
+                  placeholder="Trello token"
+                />
+              </div>
+              {!trelloCreds && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!connectApiKey.trim() || !connectToken.trim()}
+                  onClick={() =>
+                    setTrelloCreds({
+                      apiKey: connectApiKey.trim(),
+                      token: connectToken.trim(),
+                    })
+                  }
+                >
+                  Load boards
+                </Button>
+              )}
+              {trelloCreds && (
+                <div className="space-y-1">
+                  <Label htmlFor="connect-board">Board</Label>
+                  <select
+                    id="connect-board"
+                    data-testid="connect-board"
+                    value={connectBoard ?? ""}
+                    onChange={(e) => {
+                      setConnectBoard(e.target.value)
+                      setConnectList(null)
+                    }}
+                    className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <option value="">Pick a board</option>
+                    {boards.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {trelloCreds && connectBoard && (
+                <div className="space-y-1">
+                  <Label htmlFor="connect-list">List</Label>
+                  <select
+                    id="connect-list"
+                    data-testid="connect-list"
+                    value={connectList ?? ""}
+                    onChange={(e) => setConnectList(e.target.value)}
+                    className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <option value="">Pick a list</option>
+                    {lists.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              data-testid="connect-save"
+              disabled={connectDisabled || connectColumn.isPending}
+              onClick={handleConnectSave}
+            >
+              {connectColumn.isPending ? "Saving..." : "Save"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={closeConnect}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!addingColumn && !editingKey && (
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="add-column"
+          className="mt-4"
+          onClick={() => setAddingColumn(true)}
+        >
+          Add column
+        </Button>
+      )}
+    </section>
   )
 }

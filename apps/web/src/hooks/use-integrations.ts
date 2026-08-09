@@ -1,7 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
+import type { ProjectColumn } from "@/hooks/use-projects"
 
 type Envelope<T> = { success: boolean; data: T }
+
+export function useUpdateColumns(slug: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (columns: ProjectColumn[]) => {
+      const res = await apiClient<
+        Envelope<{ project: { columns: ProjectColumn[] } }>
+      >(`/api/projects/${slug}`, { method: "PATCH", body: { columns } })
+      return res.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["project", slug] }),
+  })
+}
 
 export function useConnectColumn(slug: string | undefined) {
   const qc = useQueryClient()

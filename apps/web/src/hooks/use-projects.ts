@@ -24,6 +24,19 @@ export type CardSectionInput = {
   builtIn: boolean
 }
 
+export type ProjectColumn = {
+  key: string
+  title: string
+  locked?: boolean
+  integration?: {
+    type: "github" | "trello"
+    credentialId: string
+    target: string
+    boardName?: string
+    listName?: string
+  } | null
+}
+
 export type ProjectDetail = {
   project: {
     id: string
@@ -31,7 +44,7 @@ export type ProjectDetail = {
     slug: string
     description: string | null
     orgId: string
-    columns: { key: string; title: string }[]
+    columns: ProjectColumn[]
     cardSections?: CardSectionInput[]
   }
   epics: { id: string; name: string; order: number }[]
