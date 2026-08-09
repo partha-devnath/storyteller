@@ -85,6 +85,7 @@ export function useApproveProposal(projectSlug: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["proposal"] })
       qc.invalidateQueries({ queryKey: ["proposals"] })
+      qc.invalidateQueries({ queryKey: ["project", projectSlug, "proposed"] })
     },
   })
 }
@@ -102,6 +103,7 @@ export function useRejectProposal(projectSlug: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["proposal"] })
       qc.invalidateQueries({ queryKey: ["proposals"] })
+      qc.invalidateQueries({ queryKey: ["project", projectSlug, "proposed"] })
     },
   })
 }
