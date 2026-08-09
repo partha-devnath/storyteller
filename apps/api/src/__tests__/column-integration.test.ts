@@ -83,7 +83,12 @@ describe("publishCardToColumn", () => {
       url: "https://github.com/acme/repo/issues/42",
     })
     const fakeProviders = {
-      github: { createIssue, fetchIssue: vi.fn(), fetchRepo: vi.fn() },
+      github: {
+        createIssue,
+        fetchIssue: vi.fn(),
+        fetchRepo: vi.fn(),
+        createComment: vi.fn(),
+      },
       trello: {
         createCard: vi.fn(),
         fetchCard: vi.fn(),
@@ -127,7 +132,12 @@ describe("publishCardToColumn", () => {
       await import("../services/column-integration")
     const createIssue = vi.fn()
     const fakeProviders = {
-      github: { createIssue, fetchIssue: vi.fn(), fetchRepo: vi.fn() },
+      github: {
+        createIssue,
+        fetchIssue: vi.fn(),
+        fetchRepo: vi.fn(),
+        createComment: vi.fn(),
+      },
       trello: {
         createCard: vi.fn(),
         fetchCard: vi.fn(),
@@ -153,5 +163,140 @@ describe("publishCardToColumn", () => {
       { key: "qa", title: "QA", locked: false },
     ]
     expect(() => assertConnectableColumn(columns, "backlog")).toThrow()
+  })
+})
+
+describe("github sync", () => {
+  const SYNC_CARD = "test_sync_card"
+
+  beforeAll(async () => {
+    await db.insert(card).values({
+      id: SYNC_CARD,
+      projectId: PROJ,
+      keyNo: 2,
+      title: "Sync card",
+      slug: "sync-card",
+      description: "d",
+      acceptanceCriteria: [],
+      status: "qa",
+      priority: "medium",
+      isClosed: false,
+      externalLinks: [
+        {
+          id: "link_1",
+          type: "github",
+          externalId: "77",
+          url: "https://github.com/acme/repo/issues/77",
+          columnKey: "qa",
+          credentialId: "test_integ_cred",
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    })
+  })
+
+  afterAll(async () => {
+    await db.delete(card).where(eq(card.id, SYNC_CARD))
+  })
+
+  it("posts a sync comment to every github link", async () => {
+    const { syncCardCommentToGithub } = await import("../services/github-sync")
+    const createComment = vi.fn()
+    const fakeProviders = {
+      github: {
+        createIssue: vi.fn(),
+        fetchIssue: vi.fn(),
+        fetchRepo: vi.fn(),
+        createComment,
+      },
+      trello: {
+        createCard: vi.fn(),
+        fetchCard: vi.fn(),
+        fetchBoards: vi.fn(),
+        fetchLists: vi.fn(),
+        fetchList: vi.fn(),
+      },
+    }
+
+    await syncCardCommentToGithub({
+      projectId: PROJ,
+      cardId: SYNC_CARD,
+      lines: ['**Status**: "todo" → "qa"', "**Priority**: updated"],
+      providers: fakeProviders,
+    })
+
+    expect(createComment).toHaveBeenCalledTimes(1)
+    expect(createComment).toHaveBeenCalledWith({
+      auth: { kind: "pat", token: "ghp_test" },
+      repo: "acme/repo",
+      issueNumber: "77",
+      body:
+        "**Storyteller sync**\n" +
+        '**Status**: "todo" → "qa"\n' +
+        "**Priority**: updated",
+    })
+  })
+
+  it("does nothing when lines are empty", async () => {
+    const { syncCardCommentToGithub } = await import("../services/github-sync")
+    const createComment = vi.fn()
+    const fakeProviders = {
+      github: {
+        createIssue: vi.fn(),
+        fetchIssue: vi.fn(),
+        fetchRepo: vi.fn(),
+        createComment,
+      },
+      trello: {
+        createCard: vi.fn(),
+        fetchCard: vi.fn(),
+        fetchBoards: vi.fn(),
+        fetchLists: vi.fn(),
+        fetchList: vi.fn(),
+      },
+    }
+    await syncCardCommentToGithub({
+      projectId: PROJ,
+      cardId: SYNC_CARD,
+      lines: [],
+      providers: fakeProviders,
+    })
+    expect(createComment).not.toHaveBeenCalled()
+  })
+})
+
+describe("buildCardDiffLines", () => {
+  it("emits lines only for changed fields", async () => {
+    const { buildCardDiffLines } = await import("../services/github-sync")
+    const lines = buildCardDiffLines(
+      {
+        title: "Old title",
+        description: "old",
+        status: "todo",
+        priority: "high",
+        acceptanceCriteria: ["a"],
+      },
+      {
+        title: "New title",
+        description: "old",
+        status: "qa",
+        priority: "high",
+        acceptanceCriteria: ["a", "b"],
+      }
+    )
+    expect(lines).toContain('**Title**: "Old title" → "New title"')
+    expect(lines).toContain('**Status**: "todo" → "qa"')
+    expect(lines).toContain("**Acceptance criteria**: updated")
+    expect(lines).not.toContain("**Description**")
+    expect(lines).not.toContain("**Priority**")
+  })
+
+  it("returns no lines when nothing changed", async () => {
+    const { buildCardDiffLines } = await import("../services/github-sync")
+    const lines = buildCardDiffLines(
+      { title: "T", status: "todo" },
+      { title: "T", status: "todo" }
+    )
+    expect(lines).toEqual([])
   })
 })

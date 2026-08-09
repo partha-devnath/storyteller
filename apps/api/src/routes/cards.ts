@@ -31,6 +31,10 @@ import { assertLimitTx } from "../services/plan-limits"
 import { nextCardKeyNo } from "../services/card-key"
 import { decryptConfig } from "../services/credential-crypto"
 import { realProviders, githubAuthFromConfig } from "../services/providers"
+import {
+  syncCardCommentToGithub,
+  buildCardDiffLines,
+} from "../services/github-sync"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -215,6 +219,34 @@ cardsRoutes.patch(
       },
     })
 
+    const diffLines = buildCardDiffLines(
+      {
+        title: result.card.title,
+        description: result.card.description ?? "",
+        status: result.card.status,
+        priority: result.card.priority,
+        acceptanceCriteria: result.card.acceptanceCriteria ?? [],
+      },
+      {
+        title: (body.title as string) ?? result.card.title,
+        description:
+          (body.description as string) ?? result.card.description ?? "",
+        status: (body.status as string) ?? result.card.status,
+        priority: (body.priority as string) ?? result.card.priority,
+        acceptanceCriteria:
+          (body.acceptanceCriteria as string[]) ??
+          result.card.acceptanceCriteria ??
+          [],
+      }
+    )
+    if (diffLines.length > 0) {
+      await syncCardCommentToGithub({
+        projectId,
+        cardId,
+        lines: diffLines,
+      })
+    }
+
     return c.json({ success: true, data: { id: cardId } })
   }
 )
@@ -281,6 +313,12 @@ cardsRoutes.post(
         status: result.card.status,
         isClosed: true,
       },
+    })
+
+    await syncCardCommentToGithub({
+      projectId,
+      cardId,
+      lines: [`**Card closed**: status "${result.card.status}" → "closed"`],
     })
 
     return c.json({ success: true, data: { id: cardId, closed: true } })

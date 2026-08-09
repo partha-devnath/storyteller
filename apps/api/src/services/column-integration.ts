@@ -17,7 +17,7 @@ export function registerColumnIntegrationSubscriber(
   providers: ProviderClients = realProviders
 ): () => void {
   return subscribeAll(async (projectId, event) => {
-    if (event.type !== "card.updated") return
+    if (event.type !== "card.created" && event.type !== "card.updated") return
     try {
       await publishCardToColumn({
         projectId,

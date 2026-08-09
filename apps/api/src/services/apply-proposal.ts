@@ -20,6 +20,7 @@ import { assertLimitTx } from "./plan-limits"
 import { nextCardKeyNo } from "./card-key"
 import { publish } from "./event-bus"
 import { generateId, slugify } from "../utils"
+import { syncCardCommentToGithub, buildCardDiffLines } from "./github-sync"
 import type { ProposalChangeRelation } from "@workspace/schemas"
 
 const logger = createLogger("api")
@@ -98,16 +99,17 @@ async function applyChange(
   projectId: string,
   change: ChangeRow,
   approverId: string,
-  reindexJobs: { cardId: string; versionId: string }[]
+  reindexJobs: { cardId: string; versionId: string }[],
+  syncJobs: { cardId: string; lines: string[] }[]
 ): Promise<number> {
   if (change.changeType === "create") {
     return applyCreate(tx, projectId, change, approverId, reindexJobs)
   }
   if (change.changeType === "update") {
-    await applyUpdate(tx, projectId, change, approverId, reindexJobs)
+    await applyUpdate(tx, projectId, change, approverId, reindexJobs, syncJobs)
     return 1
   }
-  await applyClose(tx, projectId, change, approverId, reindexJobs)
+  await applyClose(tx, projectId, change, approverId, reindexJobs, syncJobs)
   return 1
 }
 
@@ -127,6 +129,7 @@ export async function applyProposal({
   approverId: string
 }): Promise<{ applied: number }> {
   const reindexJobs: { cardId: string; versionId: string }[] = []
+  const syncJobs: { cardId: string; lines: string[] }[] = []
 
   const result = await db.transaction(async (tx) => {
     const [proposalRow] = await tx
@@ -154,7 +157,8 @@ export async function applyProposal({
         proposalRow.projectId,
         change,
         approverId,
-        reindexJobs
+        reindexJobs,
+        syncJobs
       )
     }
 
@@ -168,7 +172,7 @@ export async function applyProposal({
       })
       .where(eq(proposal.id, proposalId))
 
-    return { applied }
+    return { applied, projectId: proposalRow.projectId }
   })
 
   // Embedding reindex hits the network (NVIDIA). Running it inside the DB
@@ -176,6 +180,14 @@ export async function applyProposal({
   // concurrent approvals — so it runs after the transaction commits.
   for (const job of reindexJobs) {
     await reindexSafe(job.cardId, job.versionId)
+  }
+
+  for (const job of syncJobs) {
+    await syncCardCommentToGithub({
+      projectId: result.projectId,
+      cardId: job.cardId,
+      lines: job.lines,
+    })
   }
 
   return result
@@ -246,7 +258,8 @@ async function applyUpdate(
   projectId: string,
   change: ChangeRow,
   approverId: string,
-  reindexJobs: { cardId: string; versionId: string }[]
+  reindexJobs: { cardId: string; versionId: string }[],
+  syncJobs: { cardId: string; lines: string[] }[]
 ): Promise<void> {
   const targetCardId = change.targetCardId
   if (!targetCardId) {
@@ -323,6 +336,31 @@ async function applyUpdate(
   })
   await insertRelations(tx, projectId, change.relationSummary)
   reindexJobs.push({ cardId: targetCardId, versionId })
+  const diffLines = buildCardDiffLines(
+    {
+      title: target.title,
+      description: target.description ?? "",
+      status: target.status,
+      priority: target.priority,
+      acceptanceCriteria: target.acceptanceCriteria ?? [],
+    },
+    {
+      title: (updates.title as string) ?? target.title,
+      description: (updates.description as string) ?? target.description ?? "",
+      status: (updates.status as string) ?? target.status,
+      priority: (updates.priority as string) ?? target.priority,
+      acceptanceCriteria:
+        (updates.acceptanceCriteria as string[]) ??
+        target.acceptanceCriteria ??
+        [],
+    }
+  )
+  if (diffLines.length > 0) {
+    syncJobs.push({
+      cardId: targetCardId,
+      lines: [...diffLines, "*(via proposal approval)*"],
+    })
+  }
   publish(projectId, {
     type: "card.updated",
     card: {
@@ -340,7 +378,8 @@ async function applyClose(
   projectId: string,
   change: ChangeRow,
   approverId: string,
-  reindexJobs: { cardId: string; versionId: string }[]
+  reindexJobs: { cardId: string; versionId: string }[],
+  syncJobs: { cardId: string; lines: string[] }[]
 ): Promise<void> {
   const targetCardId = change.targetCardId
   if (!targetCardId) return
@@ -387,6 +426,10 @@ async function applyClose(
     sourceProposalChangeId: change.id,
   })
   reindexJobs.push({ cardId: targetCardId, versionId })
+  syncJobs.push({
+    cardId: targetCardId,
+    lines: ["**Card closed** (via proposal approval)"],
+  })
   publish(projectId, {
     type: "card.updated",
     card: {
@@ -498,6 +541,7 @@ export async function applyProposalChange({
   proposalStatus: "pending" | "approved" | "rejected"
 }> {
   const reindexJobs: { cardId: string; versionId: string }[] = []
+  const syncJobs: { cardId: string; lines: string[] }[] = []
 
   const result = await db.transaction(async (tx) => {
     const [proposalRow] = await tx
@@ -535,7 +579,8 @@ export async function applyProposalChange({
         proposalRow.projectId,
         change,
         approverId,
-        reindexJobs
+        reindexJobs,
+        syncJobs
       )
       await tx
         .update(proposalChange)
@@ -598,6 +643,14 @@ export async function applyProposalChange({
 
   for (const job of reindexJobs) {
     await reindexSafe(job.cardId, job.versionId)
+  }
+
+  for (const job of syncJobs) {
+    await syncCardCommentToGithub({
+      projectId,
+      cardId: job.cardId,
+      lines: job.lines,
+    })
   }
   return result
 }

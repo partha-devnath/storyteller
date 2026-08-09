@@ -89,6 +89,12 @@ export type ProviderClients = {
       comments: { author: string; text: string; createdAt: string }[]
     }>
     fetchRepo: (p: { auth: GithubAuth; repo: string }) => Promise<void>
+    createComment: (p: {
+      auth: GithubAuth
+      repo: string
+      issueNumber: string
+      body: string
+    }) => Promise<void>
   }
   trello: {
     createCard: (p: {
@@ -190,6 +196,23 @@ export const realProviders: ProviderClients = {
           "user-agent": "storyteller",
         },
       })
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`)
+    },
+    async createComment({ auth, repo, issueNumber, body }) {
+      const token = await githubToken(auth)
+      const res = await fetch(
+        `https://api.github.com/repos/${repo}/issues/${issueNumber}/comments`,
+        {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${token}`,
+            accept: "application/vnd.github+json",
+            "content-type": "application/json",
+            "user-agent": "storyteller",
+          },
+          body: JSON.stringify({ body }),
+        }
+      )
       if (!res.ok) throw new Error(`GitHub API ${res.status}`)
     },
   },
