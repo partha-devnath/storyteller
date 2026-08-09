@@ -3,6 +3,7 @@ import type {
   BoardSnapshot,
   GenerateBoardResult,
   CardSectionDef,
+  SemanticMatch,
 } from "../types"
 import { generateBoardOutputSchema } from "../schemas"
 import { buildGenerateBoardPrompt } from "../prompts/generate-board"
@@ -14,16 +15,19 @@ export async function generateBoard({
   prompt,
   snapshot,
   cardSections = [],
+  semanticMatches = [],
 }: {
   provider: LLMProvider
   prompt: string
   snapshot?: BoardSnapshot
   cardSections?: CardSectionDef[]
+  semanticMatches?: SemanticMatch[]
 }): Promise<GenerateBoardResult> {
   const messages = buildGenerateBoardPrompt({
     prompt,
     existingContext: snapshot ? JSON.stringify(snapshot) : undefined,
     cardSections,
+    semanticMatches,
   })
   const raw = await provider.chat(messages)
   let parsedJson: unknown
@@ -75,6 +79,10 @@ export async function generateBoard({
         priority: story.priority,
         suggestedStatus: story.suggestedStatus,
         sections: story.sections,
+        action: story.action,
+        targetCardId: story.targetCardId,
+        conflictFlags: story.conflictFlags,
+        relationSummary: story.relationSummary,
       })),
     })),
   }

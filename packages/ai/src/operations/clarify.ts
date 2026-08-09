@@ -1,4 +1,9 @@
-import type { LLMProvider, BoardSnapshot, GenerateBoardResult } from "../types"
+import type {
+  LLMProvider,
+  BoardSnapshot,
+  GenerateBoardResult,
+  SemanticMatch,
+} from "../types"
 import { generateBoardOutputSchema } from "../schemas"
 import { buildClarifyingQuestionsPrompt } from "../prompts/clarifying-questions"
 import { AiOutputError } from "../errors"
@@ -11,6 +16,7 @@ export async function answerClarifyingQuestions({
   answer,
   priorAnswers,
   snapshot,
+  semanticMatches = [],
 }: {
   provider: LLMProvider
   prompt: string
@@ -18,6 +24,7 @@ export async function answerClarifyingQuestions({
   answer: string
   priorAnswers: string
   snapshot?: BoardSnapshot
+  semanticMatches?: SemanticMatch[]
 }): Promise<GenerateBoardResult> {
   const messages = buildClarifyingQuestionsPrompt({
     question,
@@ -25,6 +32,7 @@ export async function answerClarifyingQuestions({
     priorAnswers,
     prompt,
     snapshot,
+    semanticMatches,
   })
   const raw = await provider.chat(messages)
   let parsedJson: unknown
@@ -73,6 +81,11 @@ export async function answerClarifyingQuestions({
         acceptanceCriteria: story.acceptanceCriteria,
         priority: story.priority,
         suggestedStatus: story.suggestedStatus,
+        sections: story.sections,
+        action: story.action,
+        targetCardId: story.targetCardId,
+        conflictFlags: story.conflictFlags,
+        relationSummary: story.relationSummary,
       })),
     })),
   }

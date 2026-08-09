@@ -139,6 +139,66 @@ describe("generateBoard operation", () => {
     ).rejects.toThrow(AiOutputError)
     expect(chat).toHaveBeenCalledTimes(2)
   })
+
+  it("preserves story actions when mapping provider output", async () => {
+    const { generateBoard } = await import("../operations/generate-board")
+    const provider = {
+      async chat() {
+        return JSON.stringify({
+          kind: "board",
+          epics: [
+            {
+              name: "E",
+              description: "d",
+              order: 0,
+              stories: [
+                {
+                  title: "Enroll",
+                  description: "d",
+                  acceptanceCriteria: [],
+                  priority: "medium",
+                  suggestedStatus: "backlog",
+                },
+                {
+                  title: "Referral program",
+                  description: "d",
+                  acceptanceCriteria: [],
+                  priority: "high",
+                  suggestedStatus: "review",
+                  action: "update",
+                  targetCardId: "card_1",
+                  conflictFlags: [{ type: "duplicate", summary: "overlaps" }],
+                },
+              ],
+            },
+          ],
+        })
+      },
+      async embed() {
+        return []
+      },
+    }
+    const result = await generateBoard({
+      provider,
+      prompt: "x",
+      semanticMatches: [
+        {
+          cardId: "card_1",
+          title: "Referral program",
+          slug: "referral-program",
+          isClosed: false,
+          similarity: 0.91,
+        },
+      ],
+    })
+    expect(result.kind).toBe("board")
+    if (result.kind === "board") {
+      const update = result.epics[0].stories[1]
+      expect(update.action).toBe("update")
+      expect(update.targetCardId).toBe("card_1")
+      expect(update.conflictFlags?.[0].type).toBe("duplicate")
+    }
+  })
 })
 
 describe("processInstruction operation", () => {
