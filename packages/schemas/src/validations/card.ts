@@ -22,6 +22,7 @@ export const createCardSchema = z.object({
   priority: z.enum(CARD_PRIORITIES),
   assigneeId: z.string().optional(),
   customFields: z.record(z.string(), z.string()).optional(),
+  sections: z.record(z.string(), z.string()).optional(),
   attachmentFileIds: z.array(z.string()).optional(),
   epicId: z.string().optional(),
 })

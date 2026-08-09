@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-cards"
 import { useOrgMembers } from "@/hooks/use-orgs"
 import { DiffPanel } from "./diff-panel"
+import { CardSections } from "./card-sections"
 import { CommentList } from "./comment-list"
 import { CommentComposer } from "./comment-composer"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
@@ -26,6 +27,7 @@ export function CardDrawer({
   projectSlug,
   orgId,
   liveComment,
+  cardSections,
 }: {
   cardId: string
   open: boolean
@@ -33,6 +35,7 @@ export function CardDrawer({
   projectSlug: string
   orgId?: string
   liveComment?: { cardId: string; comment: CommentItem } | null
+  cardSections?: { key: string; label: string }[]
 }) {
   const { data: detail } = useCardDetail(open ? cardId : undefined, projectSlug)
   const { data: versions } = useCardVersions(
@@ -230,6 +233,10 @@ export function CardDrawer({
                     </div>
                   </div>
                 )}
+              <CardSections
+                sections={card.sections}
+                cardSections={cardSections}
+              />
               {detail.attachments.length > 0 && (
                 <div>
                   <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">

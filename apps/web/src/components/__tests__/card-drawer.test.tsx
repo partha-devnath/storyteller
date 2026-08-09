@@ -21,9 +21,11 @@ const mockDetail = {
         externalId: "42",
         url: "https://github.com/acme/repo/issues/42",
         columnKey: "review",
+        credentialId: "cred1",
         createdAt: "2026-08-01T00:00:00Z",
       },
     ],
+    sections: { valueAddition: "Boosts retention by 15%." },
     closedAt: null,
   },
   latestVersion: null,
@@ -100,7 +102,17 @@ describe("CardDrawer", () => {
     const { CardDrawer } = await import("../card-drawer")
     return render(
       <MemoryRouter>
-        <CardDrawer cardId="c1" open onClose={vi.fn()} projectSlug="loyalty" />
+        <CardDrawer
+          cardId="c1"
+          open
+          onClose={vi.fn()}
+          projectSlug="loyalty"
+          cardSections={[
+            { key: "description", label: "Description" },
+            { key: "acceptanceCriteria", label: "Acceptance criteria" },
+            { key: "valueAddition", label: "Value addition" },
+          ]}
+        />
       </MemoryRouter>
     )
   }
@@ -136,5 +148,11 @@ describe("CardDrawer", () => {
     expect(
       screen.getByRole("link", { name: /github.com\/acme\/repo\/issues\/42/ })
     ).toBeInTheDocument()
+  })
+
+  it("renders custom card sections with their labels", async () => {
+    await renderDrawer()
+    expect(screen.getByText("Value addition")).toBeInTheDocument()
+    expect(screen.getByText("Boosts retention by 15%.")).toBeInTheDocument()
   })
 })

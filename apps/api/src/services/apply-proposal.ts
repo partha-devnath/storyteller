@@ -89,6 +89,7 @@ function readCreateFields(newData: Record<string, unknown>) {
       (newData.priority as typeof card.$inferSelect.priority) ?? "medium",
     epicName: newData.epicName as string | undefined,
     customFields: (newData.customFields as Record<string, string>) ?? null,
+    sections: (newData.sections as Record<string, string> | undefined) ?? null,
   }
 }
 
@@ -211,6 +212,7 @@ async function applyCreate(
     status: f.status,
     priority: f.priority,
     customFields: f.customFields,
+    sections: f.sections,
     keyNo,
     slug,
   })
@@ -287,6 +289,9 @@ async function applyUpdate(
   }
   if (fields.customFields && typeof fields.customFields === "object") {
     updates.customFields = fields.customFields as Record<string, string>
+  }
+  if (fields.sections && typeof fields.sections === "object") {
+    updates.sections = fields.sections as Record<string, string>
   }
   updates.updatedAt = new Date()
 

@@ -12,6 +12,7 @@ import { useProject } from "@/hooks/use-projects"
 import { cardKey } from "@/lib/card-key"
 import { timeAgo } from "@/lib/time-ago"
 import { DiffPanel } from "@/components/diff-panel"
+import { CardSections } from "@/components/card-sections"
 import { CommentList } from "@/components/comment-list"
 import { CommentComposer } from "@/components/comment-composer"
 import { buttonVariants } from "@workspace/ui/components/button"
@@ -181,6 +182,11 @@ export function CardDetailPage() {
                 </div>
               </div>
             )}
+
+            <CardSections
+              sections={card.sections}
+              cardSections={projectDetail?.project.cardSections}
+            />
 
             <div>
               <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">

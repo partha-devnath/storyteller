@@ -33,6 +33,7 @@ export type CardDetail = {
     assigneeId: string | null
     customFields: Record<string, string> | null
     externalLinks: ExternalLink[]
+    sections: Record<string, string> | null
     closedAt: string | null
   }
   latestVersion: {
@@ -180,6 +181,7 @@ export function useCreateCard(projectSlug: string) {
       status: string
       priority: string
       acceptanceCriteria?: string[]
+      sections?: Record<string, string>
     }) => {
       const res = await apiClient<Envelope<{ id: string; slug: string }>>(
         `/api/cards?project=${encodeURIComponent(projectSlug)}`,

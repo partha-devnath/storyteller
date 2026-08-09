@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCreateCard } from "@/hooks/use-cards"
+import { useProject } from "@/hooks/use-projects"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
@@ -26,18 +27,28 @@ const PRIORITIES = ["low", "medium", "high", "critical"]
 export function CreateCardForm({ projectSlug }: { projectSlug: string }) {
   const queryClient = useQueryClient()
   const createCard = useCreateCard(projectSlug)
+  const { data: projectDetail } = useProject(projectSlug)
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState("backlog")
   const [priority, setPriority] = useState("medium")
   const [criteria, setCriteria] = useState("")
+  const [sectionValues, setSectionValues] = useState<Record<string, string>>({})
+
+  const customSections =
+    projectDetail?.project.cardSections?.filter((s) => !s.builtIn) ?? []
 
   async function handleCreate() {
     if (!title.trim()) {
       toast.error("Title is required")
       return
     }
+    const sections = Object.fromEntries(
+      Object.entries(sectionValues)
+        .map(([key, value]) => [key, value.trim()] as const)
+        .filter(([, value]) => value.length > 0)
+    )
     try {
       await createCard.mutateAsync({
         title: title.trim(),
@@ -48,10 +59,12 @@ export function CreateCardForm({ projectSlug }: { projectSlug: string }) {
           .split("\n")
           .map((c) => c.trim())
           .filter(Boolean),
+        sections: Object.keys(sections).length > 0 ? sections : undefined,
       })
       setTitle("")
       setDescription("")
       setCriteria("")
+      setSectionValues({})
       toast.success("Card created")
       queryClient.invalidateQueries({ queryKey: ["project", projectSlug] })
     } catch (e) {
@@ -130,6 +143,24 @@ export function CreateCardForm({ projectSlug }: { projectSlug: string }) {
           className="min-h-[70px] w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
         />
       </div>
+
+      {customSections.map((s) => (
+        <div key={s.key} className="space-y-1">
+          <Label htmlFor={`card-section-${s.key}`}>{s.label}</Label>
+          <textarea
+            id={`card-section-${s.key}`}
+            value={sectionValues[s.key] ?? ""}
+            onChange={(e) =>
+              setSectionValues((prev) => ({
+                ...prev,
+                [s.key]: e.target.value,
+              }))
+            }
+            placeholder={s.description}
+            className="min-h-[60px] w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
+          />
+        </div>
+      ))}
 
       <Button
         onClick={handleCreate}
