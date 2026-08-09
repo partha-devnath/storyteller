@@ -136,12 +136,14 @@ export function ChatThread({
   projectSlug,
   pendingPrompt,
   highlightProposalId,
+  aiPending,
   onClarifyAnswer,
 }: {
   messages: ChatMessageRow[]
   projectSlug: string
   pendingPrompt?: { text: string; mentions: MentionItem[] } | null
   highlightProposalId?: string | null
+  aiPending?: boolean
   onClarifyAnswer: (index: number, answers: string[]) => void
 }) {
   const clarifyingIndex = useMemo(() => {
@@ -369,18 +371,21 @@ export function ChatThread({
               {pendingPrompt.text}
             </div>
           </div>
-          <div
-            data-testid="ai-loading"
-            className="mr-auto flex items-center gap-1.5 self-start rounded-xl rounded-tl-sm border border-border bg-muted/40 px-3.5 py-2.5"
-          >
-            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
-            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
-            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
-            <span className="ml-1 text-[11px] text-muted-foreground">
-              Storyteller is thinking…
-            </span>
-          </div>
         </>
+      )}
+
+      {(pendingPrompt || aiPending) && (
+        <div
+          data-testid="ai-loading"
+          className="mr-auto flex items-center gap-1.5 self-start rounded-xl rounded-tl-sm border border-border bg-muted/40 px-3.5 py-2.5"
+        >
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
+          <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+          <span className="ml-1 text-[11px] text-muted-foreground">
+            Storyteller is thinking…
+          </span>
+        </div>
       )}
     </div>
   )

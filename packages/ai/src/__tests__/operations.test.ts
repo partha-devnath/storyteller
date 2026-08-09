@@ -88,6 +88,57 @@ describe("generateBoard operation", () => {
       generateBoard({ provider: badProvider, prompt: "x" })
     ).rejects.toThrow(AiOutputError)
   })
+
+  it("retries once when clarifying questions come back empty", async () => {
+    const { generateBoard } = await import("../operations/generate-board")
+    const chat = vi
+      .fn()
+      .mockResolvedValueOnce(
+        JSON.stringify({ kind: "clarifying", questions: [] })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          kind: "board",
+          epics: [
+            {
+              name: "Loyalty",
+              description: "d",
+              order: 0,
+              stories: [
+                {
+                  title: "Enroll",
+                  description: "d",
+                  acceptanceCriteria: [],
+                  priority: "medium",
+                  suggestedStatus: "backlog",
+                },
+              ],
+            },
+          ],
+        })
+      )
+    const provider = { chat, embed: async () => [] }
+    const result = await generateBoard({ provider, prompt: "Build loyalty" })
+    expect(chat).toHaveBeenCalledTimes(2)
+    expect(result.kind).toBe("board")
+  })
+
+  it("throws AiOutputError when clarifying stays empty after retry", async () => {
+    const { generateBoard } = await import("../operations/generate-board")
+    const chat = vi
+      .fn()
+      .mockResolvedValueOnce(
+        JSON.stringify({ kind: "clarifying", questions: [] })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({ kind: "clarifying", questions: [] })
+      )
+    const provider = { chat, embed: async () => [] }
+    await expect(
+      generateBoard({ provider, prompt: "Build loyalty" })
+    ).rejects.toThrow(AiOutputError)
+    expect(chat).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe("processInstruction operation", () => {

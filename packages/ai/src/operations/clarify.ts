@@ -2,6 +2,7 @@ import type { LLMProvider, BoardSnapshot, GenerateBoardResult } from "../types"
 import { generateBoardOutputSchema } from "../schemas"
 import { buildClarifyingQuestionsPrompt } from "../prompts/clarifying-questions"
 import { AiOutputError } from "../errors"
+import { isEmptyClarifying } from "./output-guard"
 
 export async function answerClarifyingQuestions({
   provider,
@@ -33,6 +34,16 @@ export async function answerClarifyingQuestions({
     throw new AiOutputError(
       "The AI returned malformed output while clarifying. Please try again."
     )
+  }
+  if (isEmptyClarifying(parsedJson)) {
+    const retryRaw = await provider.chat(messages)
+    try {
+      parsedJson = JSON.parse(retryRaw)
+    } catch {
+      throw new AiOutputError(
+        "The AI returned malformed output while clarifying. Please try again."
+      )
+    }
   }
   const parsed = generateBoardOutputSchema.safeParse(parsedJson)
 

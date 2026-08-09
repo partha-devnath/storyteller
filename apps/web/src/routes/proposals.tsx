@@ -335,6 +335,7 @@ export function ProposalsPage() {
                   projectSlug={slug ?? ""}
                   pendingPrompt={pendingPrompt}
                   highlightProposalId={highlightProposalId}
+                  aiPending={pending}
                   onClarifyAnswer={(i, answers) => onClarifyAnswer(i, answers)}
                 />
               )}

@@ -89,6 +89,20 @@ describe("ChatThread", () => {
     expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument()
   })
 
+  it("shows the AI loading indicator while answers are being processed", async () => {
+    const { ChatThread } = await import("../chat-thread")
+    render(
+      <ChatThread
+        messages={messages}
+        projectSlug="acme"
+        aiPending
+        onClarifyAnswer={vi.fn()}
+      />,
+      { wrapper }
+    )
+    expect(screen.getByTestId("ai-loading")).toBeInTheDocument()
+  })
+
   it("answers clarifying questions inline as a reply", async () => {
     const { ChatThread } = await import("../chat-thread")
     const onClarifyAnswer = vi.fn()

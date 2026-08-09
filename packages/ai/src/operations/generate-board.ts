@@ -7,6 +7,7 @@ import type {
 import { generateBoardOutputSchema } from "../schemas"
 import { buildGenerateBoardPrompt } from "../prompts/generate-board"
 import { AiOutputError } from "../errors"
+import { isEmptyClarifying } from "./output-guard"
 
 export async function generateBoard({
   provider,
@@ -33,6 +34,18 @@ export async function generateBoard({
       "The AI returned malformed board output. Please try again."
     )
   }
+
+  if (isEmptyClarifying(parsedJson)) {
+    const retryRaw = await provider.chat(messages)
+    try {
+      parsedJson = JSON.parse(retryRaw)
+    } catch {
+      throw new AiOutputError(
+        "The AI returned malformed board output. Please try again."
+      )
+    }
+  }
+
   const parsed = generateBoardOutputSchema.safeParse(parsedJson)
 
   if (!parsed.success) {

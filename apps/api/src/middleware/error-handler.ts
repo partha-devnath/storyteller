@@ -1,5 +1,6 @@
 import type { ErrorHandler } from "hono"
 import { createLogger } from "@workspace/logger"
+import { AiOutputError } from "@workspace/ai"
 import { LimitError } from "../services/plan-limits"
 
 const logger = createLogger("api")
@@ -21,6 +22,16 @@ export const errorHandler: ErrorHandler = (error) => {
       }),
       {
         status: 402,
+        headers: { "content-type": "application/json" },
+      }
+    )
+  }
+
+  if (error instanceof AiOutputError) {
+    return new Response(
+      JSON.stringify({ success: false, error: error.message }),
+      {
+        status: 422,
         headers: { "content-type": "application/json" },
       }
     )
