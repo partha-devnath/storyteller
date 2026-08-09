@@ -8,7 +8,16 @@ export type AiResult =
       kind: "clarifying"
       questions: { question: string; options?: string[] }[]
     }
-  | { kind: "board"; proposal: { proposalId: string; changeCount: number } }
+  | {
+      kind: "board"
+      proposal: { proposalId: string; changeCount: number }
+      summary: {
+        created: number
+        updated: number
+        skipped: { title: string; reason: string }[]
+      }
+      summaryText: string
+    }
 
 export function useAiGenerate(projectSlug: string) {
   const qc = useQueryClient()

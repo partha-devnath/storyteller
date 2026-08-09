@@ -185,7 +185,7 @@ export function ProposalsPage() {
           userPrompt,
           {
             kind: "board",
-            content: `Generated ${result.proposal.changeCount} story cards.`,
+            content: result.summaryText,
             proposalId: result.proposal.proposalId,
           },
           userMentions
@@ -241,7 +241,7 @@ export function ProposalsPage() {
         await addMessage.mutateAsync({
           role: "ai",
           kind: "board",
-          content: `Generated ${result.proposal.changeCount} story cards.`,
+          content: result.summaryText,
           proposalId: result.proposal.proposalId,
         })
       }
