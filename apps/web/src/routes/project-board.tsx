@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react"
-import { useNavigate, useParams, useSearchParams } from "react-router"
+import { useParams, useSearchParams } from "react-router"
 import { Plus } from "lucide-react"
 import { useProject, useProposedCards } from "@/hooks/use-projects"
 import { useCards, useMoveCard, type CommentItem } from "@/hooks/use-cards"
@@ -10,6 +10,7 @@ import { KanbanBoard, type BoardFilters } from "@/components/kanban"
 import { BoardToolbar } from "@/components/board-toolbar"
 import { ClosedRail } from "@/components/closed-rail"
 import { CardDrawer } from "@/components/card-drawer"
+import { ProposalDrawer } from "@/components/proposal-drawer"
 import { ProjectTabs } from "@/components/project-tabs"
 import { LiveIndicator } from "@/components/live-indicator"
 import { ViewSwitcher } from "@/components/view-switcher"
@@ -31,7 +32,6 @@ const GraphView = lazy(() =>
 
 export function ProjectBoardPage() {
   const { slug } = useParams<{ slug: string }>()
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const view = searchParams.get("view") ?? "board"
   const { data: projectDetail, isLoading } = useProject(slug)
@@ -48,6 +48,7 @@ export function ProjectBoardPage() {
     ? projectDetail.project.columns
     : defaultColumns
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
+  const [activeProposalId, setActiveProposalId] = useState<string | null>(null)
   const [liveComment, setLiveComment] = useState<{
     cardId: string
     comment: CommentItem
@@ -136,11 +137,7 @@ export function ProjectBoardPage() {
               filters={filters}
               onMove={(cardId, status) => moveCard.mutate({ cardId, status })}
               onSelectCard={(card) => setActiveCardId(card.id)}
-              onOpenProposal={(proposalId) =>
-                navigate(
-                  `/projects/${slug ?? ""}/proposals?proposal=${proposalId}`
-                )
-              }
+              onOpenProposal={(proposalId) => setActiveProposalId(proposalId)}
             />
           )}
           {cards && (
@@ -160,6 +157,15 @@ export function ProjectBoardPage() {
           projectSlug={slug ?? ""}
           orgId={projectDetail?.project.orgId}
           liveComment={liveComment}
+        />
+      )}
+
+      {activeProposalId && (
+        <ProposalDrawer
+          proposalId={activeProposalId}
+          open={Boolean(activeProposalId)}
+          onClose={() => setActiveProposalId(null)}
+          projectSlug={slug ?? ""}
         />
       )}
 
