@@ -1,5 +1,14 @@
 import { Hono } from "hono"
-import { eq, sql, and, asc, desc, isNull, inArray } from "drizzle-orm"
+import {
+  eq,
+  sql,
+  and,
+  asc,
+  desc,
+  isNull,
+  inArray,
+  notInArray,
+} from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import {
@@ -9,10 +18,12 @@ import {
   organizationMember,
   proposal,
   proposalChange,
+  integrationCredential,
 } from "@workspace/schemas"
 import {
   createProjectSchema,
   updateCardSectionsSchema,
+  updateProjectColumnsSchema,
 } from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
 import { resolveOrgFromProject } from "../middleware/org-scope"
@@ -21,6 +32,11 @@ import { validateBody } from "../middleware/validate"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
 import { assertLimitTx } from "../services/plan-limits"
+import {
+  assertConnectableColumn,
+  storeCredential,
+} from "../services/column-integration"
+import { realProviders } from "../services/providers"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -244,21 +260,193 @@ projectsRoutes.patch(
   "/:slug",
   resolveOrgFromProject,
   requireRole("owner", "admin", "member"),
-  validateBody(updateCardSectionsSchema),
   async (c) => {
     const projectId = c.var.projectId!
-    const body = c.var.body as {
-      cardSections: typeof project.$inferSelect.cardSections
+    const body = (await c.req.json()) as {
+      cardSections?: unknown
+      columns?: unknown
+    }
+
+    if (body.columns !== undefined) {
+      const parsed = updateProjectColumnsSchema.safeParse({
+        columns: body.columns,
+      })
+      if (!parsed.success) {
+        throw httpError(
+          parsed.error.issues.map((i) => i.message).join("; "),
+          400
+        )
+      }
+      const nextColumns = parsed.data.columns
+      const kept = new Set(nextColumns.map((col) => col.key))
+      await db
+        .update(card)
+        .set({ status: "backlog", updatedAt: new Date() })
+        .where(
+          and(eq(card.projectId, projectId), notInArray(card.status, [...kept]))
+        )
+      const [updated] = await db
+        .update(project)
+        .set({ columns: nextColumns, updatedAt: new Date() })
+        .where(eq(project.id, projectId))
+        .returning()
+      if (!updated) {
+        throw httpError("Not Found", 404)
+      }
+      return c.json({ success: true, data: { project: updated } })
+    }
+
+    const sections = updateCardSectionsSchema.safeParse(body)
+    if (!sections.success) {
+      throw httpError(
+        sections.error.issues.map((i) => i.message).join("; "),
+        400
+      )
     }
     const [updated] = await db
       .update(project)
-      .set({ cardSections: body.cardSections, updatedAt: new Date() })
+      .set({
+        cardSections: sections.data.cardSections,
+        updatedAt: new Date(),
+      })
       .where(eq(project.id, projectId))
       .returning()
     if (!updated) {
       throw httpError("Not Found", 404)
     }
     return c.json({ success: true, data: { project: updated } })
+  }
+)
+
+projectsRoutes.post(
+  "/:slug/columns/:key/connect",
+  resolveOrgFromProject,
+  requireRole("owner", "admin"),
+  async (c) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers })
+    if (!session) throw httpError("Unauthorized", 401)
+    const projectId = c.var.projectId!
+    const key = c.req.param("key")
+    const body = (await c.req.json()) as {
+      provider: "github" | "trello"
+      config: Record<string, string>
+      target: string
+      boardName?: string
+      listName?: string
+    }
+    const [proj] = await db
+      .select()
+      .from(project)
+      .where(eq(project.id, projectId))
+      .limit(1)
+    if (!proj) throw httpError("Not Found", 404)
+    assertConnectableColumn(proj.columns, key)
+
+    if (body.provider === "github") {
+      await realProviders.github.fetchRepo({
+        token: body.config.token,
+        repo: body.target,
+      })
+    } else {
+      await realProviders.trello.fetchList({
+        apiKey: body.config.apiKey,
+        token: body.config.token,
+        listId: body.target,
+      })
+    }
+
+    const credentialId = await storeCredential({
+      projectId,
+      provider: body.provider,
+      config: body.config,
+    })
+    const nextColumns = proj.columns.map((col) =>
+      col.key === key
+        ? {
+            ...col,
+            integration: {
+              type: body.provider,
+              credentialId,
+              target: body.target,
+              boardName: body.boardName,
+              listName: body.listName,
+            },
+          }
+        : col
+    )
+    await db
+      .update(project)
+      .set({ columns: nextColumns, updatedAt: new Date() })
+      .where(eq(project.id, projectId))
+    return c.json({ success: true, data: { key } })
+  }
+)
+
+projectsRoutes.delete(
+  "/:slug/columns/:key/connect",
+  resolveOrgFromProject,
+  requireRole("owner", "admin"),
+  async (c) => {
+    const session = await auth.api.getSession({ headers: c.req.raw.headers })
+    if (!session) throw httpError("Unauthorized", 401)
+    const projectId = c.var.projectId!
+    const key = c.req.param("key")
+    const [proj] = await db
+      .select()
+      .from(project)
+      .where(eq(project.id, projectId))
+      .limit(1)
+    if (!proj) throw httpError("Not Found", 404)
+    const column = proj.columns.find((col) => col.key === key)
+    const credentialId = column?.integration?.credentialId
+    const nextColumns = proj.columns.map((col) =>
+      col.key === key ? { ...col, integration: null } : col
+    )
+    await db
+      .update(project)
+      .set({ columns: nextColumns, updatedAt: new Date() })
+      .where(eq(project.id, projectId))
+    if (credentialId) {
+      const stillUsed = nextColumns.some(
+        (col) => col.integration?.credentialId === credentialId
+      )
+      if (!stillUsed) {
+        await db
+          .delete(integrationCredential)
+          .where(eq(integrationCredential.id, credentialId))
+      }
+    }
+    return c.json({ success: true, data: { key } })
+  }
+)
+
+projectsRoutes.get(
+  "/:slug/integrations/trello/boards",
+  resolveOrgFromProject,
+  async (c) => {
+    const apiKey = c.req.query("apiKey")
+    const token = c.req.query("token")
+    if (!apiKey || !token) throw httpError("apiKey and token are required", 400)
+    const boards = await realProviders.trello.fetchBoards({ apiKey, token })
+    return c.json({ success: true, data: boards })
+  }
+)
+
+projectsRoutes.get(
+  "/:slug/integrations/trello/lists",
+  resolveOrgFromProject,
+  async (c) => {
+    const apiKey = c.req.query("apiKey")
+    const token = c.req.query("token")
+    const board = c.req.query("board")
+    if (!apiKey || !token || !board)
+      throw httpError("apiKey, token and board are required", 400)
+    const lists = await realProviders.trello.fetchLists({
+      apiKey,
+      token,
+      boardId: board,
+    })
+    return c.json({ success: true, data: lists })
   }
 )
 

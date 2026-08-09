@@ -11,6 +11,8 @@ import {
   file as fileSchema,
   user as userSchema,
   organizationMember,
+  integrationCredential,
+  project,
 } from "@workspace/schemas"
 import {
   createCardSchema,
@@ -27,6 +29,8 @@ import { httpError } from "../middleware/org-scope"
 import { publish } from "../services/event-bus"
 import { assertLimitTx } from "../services/plan-limits"
 import { nextCardKeyNo } from "../services/card-key"
+import { decryptConfig } from "../services/credential-crypto"
+import { realProviders } from "../services/providers"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -431,4 +435,50 @@ cardsRoutes.get("/:id/comments", async (c) => {
     .where(eq(comment.cardId, cardId))
     .orderBy(asc(comment.createdAt))
   return c.json({ success: true, data: comments })
+})
+
+cardsRoutes.get("/:id/external/:linkId", async (c) => {
+  const cardId = c.req.param("id")
+  const linkId = c.req.param("linkId")
+  const projectId = c.var.projectId!
+  const [cardRow] = await db
+    .select()
+    .from(card)
+    .where(and(eq(card.id, cardId), eq(card.projectId, projectId)))
+    .limit(1)
+  if (!cardRow) throw httpError("Not Found", 404)
+  const link = cardRow.externalLinks.find((l) => l.id === linkId)
+  if (!link) throw httpError("External link not found", 404)
+
+  const [cred] = await db
+    .select()
+    .from(integrationCredential)
+    .where(eq(integrationCredential.id, link.credentialId))
+    .limit(1)
+  if (!cred) throw httpError("Credential not found", 404)
+  const config = decryptConfig(cred.config)
+
+  if (cred.provider === "github") {
+    const [proj] = await db
+      .select()
+      .from(project)
+      .where(eq(project.id, projectId))
+      .limit(1)
+    const column = proj?.columns.find((col) => col.key === link.columnKey)
+    const repo = column?.integration?.target
+    if (!repo) throw httpError("Column integration missing", 404)
+    const issue = await realProviders.github.fetchIssue({
+      token: config.token,
+      repo,
+      issueNumber: link.externalId,
+    })
+    return c.json({ success: true, data: issue })
+  }
+
+  const trello = await realProviders.trello.fetchCard({
+    apiKey: config.apiKey,
+    token: config.token,
+    cardId: link.externalId,
+  })
+  return c.json({ success: true, data: trello })
 })
