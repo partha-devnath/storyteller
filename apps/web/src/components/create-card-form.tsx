@@ -85,7 +85,7 @@ export function CreateCardForm({ projectSlug }: { projectSlug: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1">
           <Label>Status</Label>
-          <Select value={status} onValueChange={setStatus}>
+          <Select value={status} onValueChange={(v) => setStatus(v ?? "")}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -100,7 +100,7 @@ export function CreateCardForm({ projectSlug }: { projectSlug: string }) {
         </div>
         <div className="space-y-1">
           <Label>Priority</Label>
-          <Select value={priority} onValueChange={setPriority}>
+          <Select value={priority} onValueChange={(v) => setPriority(v ?? "")}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Priority" />
             </SelectTrigger>

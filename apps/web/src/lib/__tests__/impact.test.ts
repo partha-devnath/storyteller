@@ -5,10 +5,12 @@ import type { GraphNode, GraphEdge } from "@/hooks/use-graph"
 function node(id: string, kind: "epic" | "card"): GraphNode {
   return {
     id,
+    keyNo: 0,
     kind,
     title: id,
     subtitle: null,
     isClosed: false,
+    isProposed: false,
     priority: null,
     epicId: null,
     childCount: 0,

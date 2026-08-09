@@ -18,7 +18,7 @@ function DraggableBoardCard({
       card={card}
       isClosed={card.isClosed}
       dragProps={{
-        ref: setNodeRef,
+        ref: (el: Element | null) => setNodeRef(el as HTMLElement | null),
         isDragging,
         listeners: {
           ...listeners,

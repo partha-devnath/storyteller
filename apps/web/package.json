@@ -9,7 +9,7 @@
     "build:docker": "vite build",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
