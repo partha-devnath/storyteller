@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import type { ExternalLink } from "@workspace/schemas"
 import { apiClient } from "@/lib/api-client"
 
 type Envelope<T> = { success: boolean; data: T }
@@ -14,6 +15,7 @@ export type BoardCard = {
   assigneeId: string | null
   epicId: string | null
   acceptanceCriteriaCount: number
+  externalLinks?: ExternalLink[]
   updatedAt: string
 }
 
@@ -30,6 +32,7 @@ export type CardDetail = {
     isClosed: boolean
     assigneeId: string | null
     customFields: Record<string, string> | null
+    externalLinks: ExternalLink[]
     closedAt: string | null
   }
   latestVersion: {

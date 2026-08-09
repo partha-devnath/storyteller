@@ -6,6 +6,7 @@ import {
   useCardVersions,
   useCardSimilar,
   useCardComments,
+  useCardExternalLink,
   useCloseCard,
   type CommentItem,
 } from "@/hooks/use-cards"
@@ -245,6 +246,23 @@ export function CardDrawer({
                   </ul>
                 </div>
               )}
+              {card.externalLinks && card.externalLinks.length > 0 && (
+                <div>
+                  <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    External ticket
+                  </p>
+                  <div className="space-y-3">
+                    {card.externalLinks.map((link) => (
+                      <ExternalTicketCard
+                        key={link.id}
+                        cardId={cardId}
+                        link={link}
+                        projectSlug={projectSlug}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <div className="mb-1 flex items-center gap-2">
                   <p className="font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
@@ -369,6 +387,55 @@ export function CardDrawer({
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function ExternalTicketCard({
+  cardId,
+  link,
+  projectSlug,
+}: {
+  cardId: string
+  link: { id: string; type: string; url: string }
+  projectSlug: string
+}) {
+  const { data: ticket } = useCardExternalLink(cardId, link.id, projectSlug)
+  return (
+    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-center gap-2">
+        <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase">
+          {link.type}
+        </span>
+        {ticket && (
+          <span
+            className={`rounded-full px-1.5 py-0.5 font-mono text-[10px] ${
+              ticket.state === "open" || ticket.state === "todo"
+                ? "bg-success/10 text-success"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {ticket.state}
+          </span>
+        )}
+        <a
+          href={ticket?.url ?? link.url}
+          target="_blank"
+          rel="noreferrer"
+          className="ml-auto truncate text-xs text-primary underline"
+        >
+          {ticket?.url ?? link.url}
+        </a>
+      </div>
+      {ticket && ticket.comments.length > 0 && (
+        <ul className="mt-2 space-y-1 border-t border-border/60 pt-2">
+          {ticket.comments.map((c, i) => (
+            <li key={i} className="text-xs">
+              <span className="font-medium">{c.author}:</span> {c.text}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

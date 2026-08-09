@@ -60,9 +60,20 @@ export function BoardCard({
         </span>
       </div>
 
-      <p className="line-clamp-2 text-[13.5px] leading-snug font-semibold text-foreground">
-        {card.title}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="line-clamp-2 text-[13.5px] leading-snug font-semibold text-foreground">
+          {card.title}
+        </p>
+        {card.externalLinks && card.externalLinks.length > 0 && (
+          <span
+            data-testid="external-indicator"
+            className="shrink-0 font-mono text-[10px] text-primary"
+            title={`${card.externalLinks[0].type} linked`}
+          >
+            {card.externalLinks[0].type === "github" ? "GH" : "TR"}
+          </span>
+        )}
+      </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2.5">
         {prio && (

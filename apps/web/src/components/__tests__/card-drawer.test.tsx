@@ -14,6 +14,16 @@ const mockDetail = {
     isClosed: false,
     assigneeId: null,
     customFields: { team: "growth" },
+    externalLinks: [
+      {
+        id: "link1",
+        type: "github",
+        externalId: "42",
+        url: "https://github.com/acme/repo/issues/42",
+        columnKey: "review",
+        createdAt: "2026-08-01T00:00:00Z",
+      },
+    ],
     closedAt: null,
   },
   latestVersion: null,
@@ -56,6 +66,19 @@ vi.mock("@/hooks/use-cards", () => ({
   useCardComments: () => ({ data: [] }),
   useAddComment: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useCloseCard: () => ({ mutate: vi.fn(), isPending: false }),
+  useCardExternalLink: () => ({
+    data: {
+      state: "open",
+      url: "https://github.com/acme/repo/issues/42",
+      comments: [
+        {
+          author: "alice",
+          text: "Needs spec",
+          createdAt: "2026-08-01T00:00:00Z",
+        },
+      ],
+    },
+  }),
 }))
 
 vi.mock("@/hooks/use-orgs", () => ({
@@ -102,5 +125,16 @@ describe("CardDrawer", () => {
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("/project/loyalty/card/loyalty-enroll")
     )
+  })
+
+  it("renders the external ticket section with live state and comments", async () => {
+    await renderDrawer()
+    expect(screen.getByText("External ticket")).toBeInTheDocument()
+    expect(screen.getByText("github")).toBeInTheDocument()
+    expect(screen.getByText("open")).toBeInTheDocument()
+    expect(screen.getByText(/Needs spec/)).toBeInTheDocument()
+    expect(
+      screen.getByRole("link", { name: /github.com\/acme\/repo\/issues\/42/ })
+    ).toBeInTheDocument()
   })
 })

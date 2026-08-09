@@ -34,4 +34,28 @@ describe("BoardCard", () => {
     expect(screen.getByText("REQ-001")).toBeInTheDocument()
     expect(screen.getByText("3 criteria")).toBeInTheDocument()
   })
+
+  it("shows a provider indicator when the card has external links", () => {
+    render(
+      <BoardCard
+        card={{
+          ...card,
+          externalLinks: [
+            {
+              id: "link1",
+              type: "github",
+              externalId: "42",
+              url: "https://github.com/acme/repo/issues/42",
+              columnKey: "review",
+              credentialId: "cred1",
+              createdAt: "2026-08-01T00:00:00Z",
+            },
+          ],
+        }}
+        isClosed={false}
+      />
+    )
+    expect(screen.getByTestId("external-indicator")).toBeInTheDocument()
+    expect(screen.getByText("GH")).toBeInTheDocument()
+  })
 })
