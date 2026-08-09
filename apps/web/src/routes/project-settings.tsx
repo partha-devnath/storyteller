@@ -46,17 +46,19 @@ export function ProjectSettingsPage() {
       .split(/[^a-z0-9]+/)
       .filter(Boolean)
     if (words.length === 0) return "section"
-    return (
+    const key =
       words[0] +
       words
         .slice(1)
         .map((w) => w[0].toUpperCase() + w.slice(1))
         .join("")
-    )
+    return key.replace(/^[0-9]+/, "") || "section"
   }
 
   function persistSections(next: CardSectionInput[]) {
-    updateProject.mutate(next)
+    updateProject.mutate(next, {
+      onError: () => toast.error("Could not save card sections"),
+    })
   }
 
   function handleAddSection() {
@@ -88,7 +90,13 @@ export function ProjectSettingsPage() {
     if (!label) return
     persistSections(
       (projectDetail?.project.cardSections ?? []).map((s) =>
-        s.key === key ? { ...s, label, description: sectionDescription } : s
+        s.key === key
+          ? {
+              ...s,
+              label,
+              description: sectionDescription.trim() || s.description,
+            }
+          : s
       )
     )
     setEditingKey(null)
@@ -216,6 +224,7 @@ export function ProjectSettingsPage() {
                           size="xs"
                           variant="outline"
                           data-testid={`edit-section-${s.key}`}
+                          disabled={updateProject.isPending}
                           onClick={() => {
                             setEditingKey(editingKey === s.key ? null : s.key)
                             setSectionLabel(s.label)
@@ -229,6 +238,7 @@ export function ProjectSettingsPage() {
                             size="xs"
                             variant="destructive"
                             data-testid="confirm-delete-section"
+                            disabled={updateProject.isPending}
                             onClick={() => handleDeleteSection(s.key)}
                           >
                             Confirm
@@ -238,6 +248,7 @@ export function ProjectSettingsPage() {
                             size="xs"
                             variant="outline"
                             data-testid={`delete-section-${s.key}`}
+                            disabled={updateProject.isPending}
                             onClick={() =>
                               setConfirmingKey(
                                 confirmingKey === s.key ? null : s.key

@@ -10,8 +10,10 @@ import {
   proposal,
   proposalChange,
 } from "@workspace/schemas"
-import { createProjectSchema } from "@workspace/schemas/validations/project"
-import { updateCardSectionsSchema } from "@workspace/schemas/validations/project"
+import {
+  createProjectSchema,
+  updateCardSectionsSchema,
+} from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
