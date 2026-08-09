@@ -3,7 +3,9 @@ import type {
   BoardSnapshot,
   SemanticMatch,
   CardSectionDef,
+  ChatHistoryItem,
 } from "../types"
+import { JSON_OUTPUT_RULES, formatChatHistory } from "./json-examples"
 
 function compactSnapshot(snapshot: BoardSnapshot): string {
   const cards = snapshot.cards
@@ -36,16 +38,21 @@ function compactMatches(matches: SemanticMatch[]): string {
     .join("\n")
 }
 
+const PROCESS_JSON_EXAMPLE =
+  '{"changes":[{"change_type":"create","card":{"title":"Loyalty points accrual","description":"Earn points on qualifying purchases.","acceptanceCriteria":["Points accrue on qualifying purchases"],"status":"backlog","priority":"high","epic_name":"Loyalty Program"},"relation_summary":[{"type":"dependency","target_card_id":"loyalty-enroll","note":"Depends on enrollment flow"}],"conflict_flags":[]},{"change_type":"update","target_card_id":"loyalty-rewards-catalog","fields":{"title":"Loyalty rewards catalog (v2)","priority":"high"},"relation_summary":[],"conflict_flags":[]},{"change_type":"close","target_card_id":"loyalty-rewards-catalog-v1","reason":"superseded by v2","relation_summary":[],"conflict_flags":[]}]}'
+
 export function buildProcessInstructionPrompt({
   instruction,
   snapshot,
   semanticMatches,
   cardSections = [],
+  chatHistory = [],
 }: {
   instruction: string
   snapshot: BoardSnapshot
   semanticMatches: SemanticMatch[]
   cardSections?: CardSectionDef[]
+  chatHistory?: ChatHistoryItem[]
 }): ChatMessage[] {
   const sectionsHint =
     cardSections.length > 0
@@ -54,22 +61,22 @@ export function buildProcessInstructionPrompt({
           .join("\n")}`
       : ""
 
+  const historyHint = formatChatHistory(chatHistory)
+
   return [
     {
       role: "system",
       content:
         "You are Storyteller, an AI that maintains a living requirements board from natural-language instructions. " +
-        "You MUST respond with JSON matching exactly this schema:\n" +
-        '{"changes":[{"change_type":"create","card":{"title":string,"description":string,' +
-        '"acceptanceCriteria":string[],"status":"backlog|todo|in_progress|review|done",' +
-        '"priority":"low|medium|high|critical","epic_name"?:string,"custom_fields"?:Record<string,string>,' +
-        '"sections"?:{string:string}},' +
-        '"relation_summary":[{"type":"dependency|hierarchy|evolution","source_card_id"?:string,' +
-        '"target_card_id"?:string,"note":string}],"conflict_flags":[{"type":"contradiction|duplicate|conflict","summary":string}]}' +
-        '|{"change_type":"update","target_card_id":string,"fields":{...},' +
-        '"relation_summary":[...],"conflict_flags":[...]}' +
-        '|{"change_type":"close","target_card_id":string,"reason":string,' +
-        '"relation_summary":[...],"conflict_flags":[...]}]}\n' +
+        "You MUST respond with JSON matching exactly this schema. " +
+        "Response example:\n" +
+        PROCESS_JSON_EXAMPLE +
+        "\n\n" +
+        JSON_OUTPUT_RULES.replace(
+          "Optional fields (sections, action, targetCardId, conflictFlags, relationSummary) may be omitted.",
+          "Optional fields (epic_name, custom_fields, sections, relation_summary, conflict_flags) may be omitted."
+        ) +
+        "\n" +
         "CRITICAL RULE: NEVER update a card whose status is CLOSED. " +
         "A closed card is immutable — if the instruction asks to change a closed card, " +
         "emit a NEW create change (same title/description/fields) with an evolution relation " +
@@ -77,15 +84,15 @@ export function buildProcessInstructionPrompt({
         "Card ids in the snapshot are raw ids (e.g. card_1). " +
         "When a card id is needed (target_card_id, source_card_id, target_card_id), " +
         "use the FIRST field (the id) of the card's snapshot line — never the slug.\n" +
-        "No markdown fences, no prose — only the JSON object." +
         sectionsHint,
     },
     {
       role: "user",
       content:
         `Current board snapshot:\n${compactSnapshot(snapshot)}\n\n` +
-        `Similar existing cards:\n${compactMatches(semanticMatches)}\n\n` +
-        `Instruction:\n${instruction}`,
+        `Similar existing cards:\n${compactMatches(semanticMatches)}\n` +
+        historyHint +
+        `\nInstruction:\n${instruction}`,
     },
   ]
 }

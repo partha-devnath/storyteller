@@ -129,6 +129,25 @@ describe("generate-board prompt semantic matches", () => {
 
   it("documents the action field in the system prompt", () => {
     const messages = buildGenerateBoardPrompt({ prompt: "x" })
-    expect(messages[0].content).toContain('"action"?:"create|update|skip"')
+    expect(messages[0].content).toContain("action=update")
+    expect(messages[0].content).toContain("action=skip")
+  })
+
+  it("includes relevant chat history in the user message", () => {
+    const messages = buildGenerateBoardPrompt({
+      prompt: "Add referral",
+      chatHistory: [
+        {
+          role: "user",
+          kind: "prompt",
+          content: "we discussed points expiry earlier",
+          createdAt: "2026-08-01T00:00:00Z",
+          similarity: 0.87,
+        },
+      ],
+    })
+    const userContent = messages[1].content as string
+    expect(userContent).toContain("points expiry")
+    expect(userContent).toContain("chat history")
   })
 })

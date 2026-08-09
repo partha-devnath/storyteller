@@ -4,11 +4,11 @@ import type {
   GenerateBoardResult,
   CardSectionDef,
   SemanticMatch,
+  ChatHistoryItem,
 } from "../types"
 import { generateBoardOutputSchema } from "../schemas"
 import { buildGenerateBoardPrompt } from "../prompts/generate-board"
-import { AiOutputError } from "../errors"
-import { isEmptyClarifying } from "./output-guard"
+import { parseJsonWithRetry } from "./parse-json"
 
 export async function generateBoard({
   provider,
@@ -16,59 +16,39 @@ export async function generateBoard({
   snapshot,
   cardSections = [],
   semanticMatches = [],
+  chatHistory = [],
 }: {
   provider: LLMProvider
   prompt: string
   snapshot?: BoardSnapshot
   cardSections?: CardSectionDef[]
   semanticMatches?: SemanticMatch[]
+  chatHistory?: ChatHistoryItem[]
 }): Promise<GenerateBoardResult> {
   const messages = buildGenerateBoardPrompt({
     prompt,
     existingContext: snapshot ? JSON.stringify(snapshot) : undefined,
     cardSections,
     semanticMatches,
+    chatHistory,
   })
-  const raw = await provider.chat(messages)
-  let parsedJson: unknown
-  try {
-    parsedJson = JSON.parse(raw)
-  } catch {
-    throw new AiOutputError(
-      "The AI returned malformed board output. Please try again."
-    )
-  }
+  const parsed = await parseJsonWithRetry({
+    provider,
+    messages,
+    schema: generateBoardOutputSchema,
+    errorMessage: "The AI returned malformed board output. Please try again.",
+  })
 
-  if (isEmptyClarifying(parsedJson)) {
-    const retryRaw = await provider.chat(messages)
-    try {
-      parsedJson = JSON.parse(retryRaw)
-    } catch {
-      throw new AiOutputError(
-        "The AI returned malformed board output. Please try again."
-      )
-    }
-  }
-
-  const parsed = generateBoardOutputSchema.safeParse(parsedJson)
-
-  if (!parsed.success) {
-    throw new AiOutputError(
-      "The AI returned malformed board output. Please try again.",
-      parsed.error.issues
-    )
-  }
-
-  if (parsed.data.kind === "clarifying") {
+  if (parsed.kind === "clarifying") {
     return {
       kind: "clarifying",
-      questions: parsed.data.questions,
+      questions: parsed.questions,
     }
   }
 
   return {
     kind: "board",
-    epics: parsed.data.epics.map((epic) => ({
+    epics: parsed.epics.map((epic) => ({
       name: epic.name,
       description: epic.description,
       order: epic.order,

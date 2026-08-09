@@ -5,10 +5,11 @@ import type {
   ProposalBatch,
   CreateChange,
   UpdateChange,
+  ChatHistoryItem,
 } from "../types"
 import { processInstructionOutputSchema } from "../schemas"
 import { buildProcessInstructionPrompt } from "../prompts/process-instruction"
-import { AiOutputError } from "../errors"
+import { parseJsonWithRetry } from "./parse-json"
 import { createLogger } from "@workspace/logger"
 
 const logger = createLogger("ai/process-instruction")
@@ -18,34 +19,27 @@ export async function processInstruction({
   instruction,
   snapshot,
   semanticMatches,
+  chatHistory = [],
 }: {
   provider: LLMProvider
   instruction: string
   snapshot: BoardSnapshot
   semanticMatches: SemanticMatch[]
+  chatHistory?: ChatHistoryItem[]
 }): Promise<ProposalBatch> {
   const messages = buildProcessInstructionPrompt({
     instruction,
     snapshot,
     semanticMatches,
+    chatHistory,
   })
-  const raw = await provider.chat(messages)
-  let parsedJson: unknown
-  try {
-    parsedJson = JSON.parse(raw)
-  } catch {
-    throw new AiOutputError(
-      "The AI returned a malformed instruction result. Please try again."
-    )
-  }
-  const parsed = processInstructionOutputSchema.safeParse(parsedJson)
-
-  if (!parsed.success) {
-    throw new AiOutputError(
+  const parsed = await parseJsonWithRetry({
+    provider,
+    messages,
+    schema: processInstructionOutputSchema,
+    errorMessage:
       "The AI returned a malformed instruction result. Please try again.",
-      parsed.error.issues
-    )
-  }
+  })
 
   const closedCardIds = new Set(
     snapshot.cards.filter((c) => c.isClosed).map((c) => c.id)
@@ -61,7 +55,7 @@ export async function processInstruction({
 
   const changes: ProposalBatch["changes"] = []
 
-  for (const change of parsed.data.changes) {
+  for (const change of parsed.changes) {
     if (change.change_type === "create") {
       changes.push({
         changeType: "create",

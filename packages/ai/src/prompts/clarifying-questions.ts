@@ -1,4 +1,15 @@
-import type { ChatMessage, BoardSnapshot, SemanticMatch } from "../types"
+import type {
+  ChatMessage,
+  BoardSnapshot,
+  SemanticMatch,
+  ChatHistoryItem,
+} from "../types"
+import {
+  BOARD_JSON_EXAMPLE,
+  CLARIFYING_JSON_EXAMPLE,
+  JSON_OUTPUT_RULES,
+  formatChatHistory,
+} from "./json-examples"
 
 export function buildClarifyingQuestionsPrompt({
   question,
@@ -7,6 +18,7 @@ export function buildClarifyingQuestionsPrompt({
   prompt,
   snapshot,
   semanticMatches = [],
+  chatHistory = [],
 }: {
   question: string
   answer: string
@@ -14,6 +26,7 @@ export function buildClarifyingQuestionsPrompt({
   prompt: string
   snapshot?: BoardSnapshot
   semanticMatches?: SemanticMatch[]
+  chatHistory?: ChatHistoryItem[]
 }): ChatMessage[] {
   const matchesHint =
     semanticMatches.length > 0
@@ -25,22 +38,22 @@ export function buildClarifyingQuestionsPrompt({
           .join("\n")}\n\n`
       : ""
 
+  const historyHint = formatChatHistory(chatHistory)
+
   return [
     {
       role: "system",
       content:
         "You are Storyteller, an AI that turns natural-language requirements into a living requirements board. " +
         "You are continuing a Q&A conversation with the user to clarify their request. " +
-        "You MUST respond with JSON matching exactly this schema:\n" +
-        '{"kind":"board","epics":[{"name":string,"description":string,"order":int,' +
-        '"stories":[{"title":string,"description":string,"acceptanceCriteria":string[],' +
-        '"priority":"low|medium|high|critical","suggestedStatus":"backlog|todo|in_progress|review|done",' +
-        '"action"?:"create|update|skip","targetCardId"?:string,' +
-        '"conflictFlags"?:[{type:"contradiction|duplicate|conflict",summary:string}],' +
-        '"relationSummary"?:[{type:"dependency|hierarchy|evolution",sourceCardId?:string,targetCardId?:string,note:string}]}]}]}\n' +
-        "OR if you still need clarification, respond with:\n" +
-        '{"kind":"clarifying","questions":[{"question":string,"options":[string]}]}\n' +
-        "No markdown fences, no prose — only the JSON object." +
+        "You MUST respond with JSON matching exactly this schema. " +
+        "Board response example:\n" +
+        BOARD_JSON_EXAMPLE +
+        "\n\nClarifying response example (use only if you still need clarification):\n" +
+        CLARIFYING_JSON_EXAMPLE +
+        "\n\n" +
+        JSON_OUTPUT_RULES +
+        "\n" +
         "Decide per story: create a new card (no existing match), update an existing card " +
         "(matching card needs changes — set action=update, targetCardId, and only the changed fields), " +
         "or skip (matching card already covers the request — set action=skip with a conflictFlags duplicate entry). " +
@@ -55,6 +68,8 @@ export function buildClarifyingQuestionsPrompt({
           ? `Existing board snapshot:\n${JSON.stringify(snapshot)}\n\n`
           : "") +
         matchesHint +
+        historyHint +
+        (historyHint ? "\n" : "") +
         `Previous answers:\n${priorAnswers}\n\n` +
         `Question asked: ${question}\n` +
         `User's answer: ${answer}\n\n` +

@@ -14,6 +14,7 @@ export type {
   ChatMessage,
   EpicDraft,
   GenerateBoardResult,
+  ChatHistoryItem,
 } from "./types"
 export {
   generateBoardOutputSchema,

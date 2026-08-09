@@ -28,6 +28,17 @@ export const errorHandler: ErrorHandler = (error) => {
   }
 
   if (error instanceof AiOutputError) {
+    logger.warn(
+      {
+        error: {
+          name: error.name,
+          message: error.message,
+          issues: error.issues,
+          rawOutput: error.rawOutput,
+        },
+      },
+      "AI output rejected by schema validation"
+    )
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
       {
