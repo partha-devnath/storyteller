@@ -11,6 +11,7 @@ import {
   proposalChange,
 } from "@workspace/schemas"
 import { createProjectSchema } from "@workspace/schemas/validations/project"
+import { updateCardSectionsSchema } from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
@@ -196,6 +197,28 @@ projectsRoutes.get("/:slug/proposed", resolveOrgFromProject, async (c) => {
 
   return c.json({ success: true, data: proposed })
 })
+
+projectsRoutes.patch(
+  "/:slug",
+  resolveOrgFromProject,
+  requireRole("owner", "admin", "member"),
+  validateBody(updateCardSectionsSchema),
+  async (c) => {
+    const projectId = c.var.projectId!
+    const body = c.var.body as {
+      cardSections: typeof project.$inferSelect.cardSections
+    }
+    const [updated] = await db
+      .update(project)
+      .set({ cardSections: body.cardSections, updatedAt: new Date() })
+      .where(eq(project.id, projectId))
+      .returning()
+    if (!updated) {
+      throw httpError("Not Found", 404)
+    }
+    return c.json({ success: true, data: { project: updated } })
+  }
+)
 
 // Delete a board. Deletes proposals first (their changes reference cards via
 // an FK without cascade), then epics, then the project (cascades cards,
