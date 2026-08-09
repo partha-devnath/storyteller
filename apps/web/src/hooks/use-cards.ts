@@ -30,6 +30,7 @@ export type CardDetail = {
     isClosed: boolean
     assigneeId: string | null
     customFields: Record<string, string> | null
+    sections: Record<string, string> | null
     closedAt: string | null
   }
   latestVersion: {

@@ -162,6 +162,7 @@ export function ProjectBoardPage() {
           projectSlug={slug ?? ""}
           orgId={projectDetail?.project.orgId}
           liveComment={liveComment}
+          cardSections={projectDetail?.project.cardSections}
         />
       )}
 

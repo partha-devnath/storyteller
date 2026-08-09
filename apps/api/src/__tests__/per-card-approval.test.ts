@@ -81,7 +81,10 @@ beforeAll(async () => {
       proposalId: PROP,
       changeType: "create",
       targetCardId: null,
-      newData: { title: "Third card" },
+      newData: {
+        title: "Third card",
+        sections: { valueAddition: "15% lift" },
+      },
       relationSummary: [],
       conflictFlags: [],
     },
@@ -169,6 +172,13 @@ describe("applyProposalChange", () => {
       .from(proposal)
       .where(eq(proposal.id, PROP))
     expect(prop?.status).toBe("approved")
+
+    const [created] = await db
+      .select({ sections: card.sections })
+      .from(card)
+      .where(eq(card.title, "Third card"))
+      .limit(1)
+    expect(created?.sections).toEqual({ valueAddition: "15% lift" })
   })
 })
 

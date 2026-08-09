@@ -14,6 +14,7 @@ const mockDetail = {
     isClosed: false,
     assigneeId: null,
     customFields: { team: "growth" },
+    sections: { valueAddition: "Boosts retention by 15%." },
     closedAt: null,
   },
   latestVersion: null,
@@ -77,7 +78,17 @@ describe("CardDrawer", () => {
     const { CardDrawer } = await import("../card-drawer")
     return render(
       <MemoryRouter>
-        <CardDrawer cardId="c1" open onClose={vi.fn()} projectSlug="loyalty" />
+        <CardDrawer
+          cardId="c1"
+          open
+          onClose={vi.fn()}
+          projectSlug="loyalty"
+          cardSections={[
+            { key: "description", label: "Description" },
+            { key: "acceptanceCriteria", label: "Acceptance criteria" },
+            { key: "valueAddition", label: "Value addition" },
+          ]}
+        />
       </MemoryRouter>
     )
   }
@@ -102,5 +113,11 @@ describe("CardDrawer", () => {
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("/project/loyalty/card/loyalty-enroll")
     )
+  })
+
+  it("renders custom card sections with their labels", async () => {
+    await renderDrawer()
+    expect(screen.getByText("Value addition")).toBeInTheDocument()
+    expect(screen.getByText("Boosts retention by 15%.")).toBeInTheDocument()
   })
 })
