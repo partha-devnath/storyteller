@@ -37,7 +37,13 @@ export const errorHandler: ErrorHandler = (error) => {
     )
   }
 
-  logger.error(error, "Unhandled error")
+  logger.error(error instanceof Error ? error.message : "Unknown error", {
+    err: {
+      name: error instanceof Error ? error.name : undefined,
+      message: error instanceof Error ? error.message : undefined,
+      stack: error instanceof Error ? error.stack : undefined,
+    },
+  })
   const status =
     error instanceof Error && "status" in error
       ? (error as { status: number }).status

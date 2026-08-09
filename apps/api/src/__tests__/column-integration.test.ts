@@ -108,7 +108,7 @@ describe("publishCardToColumn", () => {
 
     expect(createIssue).toHaveBeenCalledTimes(1)
     expect(createIssue).toHaveBeenCalledWith({
-      token: "ghp_test",
+      auth: { kind: "pat", token: "ghp_test" },
       repo: "acme/repo",
       title: "Test card",
       body: expect.stringContaining("Acceptance criteria"),

@@ -177,10 +177,23 @@ export const updateProjectColumnsSchema = z.object({
     }),
 })
 
-export const connectColumnSchema = z.discriminatedUnion("provider", [
+export const connectColumnSchema = z.union([
   z.object({
     provider: z.literal("github"),
+    auth: z.literal("pat"),
     config: z.object({ token: z.string().min(1) }),
+    target: z.string().min(1),
+    boardName: z.string().optional(),
+    listName: z.string().optional(),
+  }),
+  z.object({
+    provider: z.literal("github"),
+    auth: z.literal("app"),
+    config: z.object({
+      appId: z.string().min(1),
+      installationId: z.string().min(1),
+      privateKey: z.string().min(1, "Private key is required"),
+    }),
     target: z.string().min(1),
     boardName: z.string().optional(),
     listName: z.string().optional(),

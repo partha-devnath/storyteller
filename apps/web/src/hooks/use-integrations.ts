@@ -23,6 +23,7 @@ export function useConnectColumn(slug: string | undefined) {
     mutationFn: async (input: {
       columnKey: string
       provider: "github" | "trello"
+      auth?: "pat" | "app"
       config: Record<string, string>
       target: string
       boardName?: string

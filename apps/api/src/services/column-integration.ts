@@ -2,7 +2,11 @@ import { eq } from "drizzle-orm"
 import { db } from "@workspace/db"
 import { card, project, integrationCredential } from "@workspace/schemas"
 import { subscribeAll } from "./event-bus"
-import { realProviders, type ProviderClients } from "./providers"
+import {
+  realProviders,
+  githubAuthFromConfig,
+  type ProviderClients,
+} from "./providers"
 import { encryptConfig, decryptConfig } from "./credential-crypto"
 import { createLogger } from "@workspace/logger"
 import { httpError } from "../middleware/org-scope"
@@ -107,7 +111,7 @@ export async function publishCardToColumn({
   let url: string
   if (cred.provider === "github") {
     const created = await providers.github.createIssue({
-      token: config.token,
+      auth: githubAuthFromConfig(config),
       repo: column.integration.target,
       title: cardRow.title,
       body,

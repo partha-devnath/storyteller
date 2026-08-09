@@ -38,9 +38,18 @@ import {
   assertConnectableColumn,
   storeCredential,
 } from "../services/column-integration"
-import { realProviders } from "../services/providers"
+import { realProviders, githubAuthFromConfig } from "../services/providers"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
+
+function githubErrorMessage(e: unknown): string {
+  const message = e instanceof Error ? e.message : ""
+  if (message.includes("401"))
+    return "invalid credentials — check your token or GitHub App installation"
+  if (message.includes("404"))
+    return "repository not found, or the credentials lack access to it"
+  return message
+}
 
 export const projectsRoutes = new Hono<AppEnv>()
 projectsRoutes.onError(errorHandler)
@@ -366,23 +375,38 @@ projectsRoutes.post(
     const oldCredentialId = proj.columns.find((col) => col.key === key)
       ?.integration?.credentialId
 
+    let storedConfig: Record<string, string> = { ...body.config }
     if (body.provider === "github") {
-      await realProviders.github.fetchRepo({
-        token: body.config.token,
-        repo: body.target,
-      })
-    } else {
-      await realProviders.trello.fetchList({
-        apiKey: body.config.apiKey,
-        token: body.config.token,
-        listId: body.target,
-      })
+      storedConfig = { ...body.config, auth: body.auth }
+    }
+
+    try {
+      if (body.provider === "github") {
+        await realProviders.github.fetchRepo({
+          auth: githubAuthFromConfig(storedConfig),
+          repo: body.target,
+        })
+      } else {
+        await realProviders.trello.fetchList({
+          apiKey: body.config.apiKey,
+          token: body.config.token,
+          listId: body.target,
+        })
+      }
+    } catch (e) {
+      const message = githubErrorMessage(e)
+      throw httpError(
+        body.provider === "github" && message
+          ? `GitHub connection failed: ${message}`
+          : `Trello connection failed: ${(e as Error).message ?? "unknown error"}`,
+        400
+      )
     }
 
     const credentialId = await storeCredential({
       projectId,
       provider: body.provider,
-      config: body.config,
+      config: storedConfig,
     })
     const nextColumns = proj.columns.map((col) =>
       col.key === key

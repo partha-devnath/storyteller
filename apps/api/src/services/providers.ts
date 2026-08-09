@@ -1,13 +1,86 @@
+import { createSign } from "node:crypto"
+
+export type GithubAuth =
+  | { kind: "pat"; token: string }
+  | {
+      kind: "app"
+      appId: string
+      installationId: string
+      privateKey: string
+    }
+
+export function githubAuthFromConfig(
+  config: Record<string, string>
+): GithubAuth {
+  if (config.auth === "app") {
+    return {
+      kind: "app",
+      appId: config.appId,
+      installationId: config.installationId,
+      privateKey: config.privateKey,
+    }
+  }
+  return { kind: "pat", token: config.token }
+}
+
+const installationTokenCache = new Map<
+  string,
+  { token: string; expiresAt: number }
+>()
+
+async function githubInstallationToken(
+  auth: Extract<GithubAuth, { kind: "app" }>
+): Promise<string> {
+  const cacheKey = `${auth.appId}:${auth.installationId}`
+  const cached = installationTokenCache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token
+
+  const now = Math.floor(Date.now() / 1000)
+  const header = Buffer.from(
+    JSON.stringify({ alg: "RS256", typ: "JWT" })
+  ).toString("base64url")
+  const payload = Buffer.from(
+    JSON.stringify({ iss: auth.appId, iat: now, exp: now + 9 * 60 })
+  ).toString("base64url")
+  const signer = createSign("RSA-SHA256")
+  signer.update(`${header}.${payload}`)
+  const jwt = `${header}.${payload}.${signer.sign(auth.privateKey, "base64url")}`
+
+  const res = await fetch(
+    `https://api.github.com/app/installations/${auth.installationId}/access_tokens`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${jwt}`,
+        accept: "application/vnd.github+json",
+        "user-agent": "storyteller",
+      },
+    }
+  )
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`)
+  const data = (await res.json()) as { token: string; expires_at: string }
+  installationTokenCache.set(cacheKey, {
+    token: data.token,
+    expiresAt: new Date(data.expires_at).getTime(),
+  })
+  return data.token
+}
+
+export async function githubToken(auth: GithubAuth): Promise<string> {
+  if (auth.kind === "pat") return auth.token
+  return githubInstallationToken(auth)
+}
+
 export type ProviderClients = {
   github: {
     createIssue: (p: {
-      token: string
+      auth: GithubAuth
       repo: string
       title: string
       body: string
     }) => Promise<{ externalId: string; url: string }>
     fetchIssue: (p: {
-      token: string
+      auth: GithubAuth
       repo: string
       issueNumber: string
     }) => Promise<{
@@ -15,7 +88,7 @@ export type ProviderClients = {
       url: string
       comments: { author: string; text: string; createdAt: string }[]
     }>
-    fetchRepo: (p: { token: string; repo: string }) => Promise<void>
+    fetchRepo: (p: { auth: GithubAuth; repo: string }) => Promise<void>
   }
   trello: {
     createCard: (p: {
@@ -53,7 +126,8 @@ export type ProviderClients = {
 
 export const realProviders: ProviderClients = {
   github: {
-    async createIssue({ token, repo, title, body }) {
+    async createIssue({ auth, repo, title, body }) {
+      const token = await githubToken(auth)
       const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
         method: "POST",
         headers: {
@@ -68,7 +142,8 @@ export const realProviders: ProviderClients = {
       const data = (await res.json()) as { number: number; html_url: string }
       return { externalId: String(data.number), url: data.html_url }
     },
-    async fetchIssue({ token, repo, issueNumber }) {
+    async fetchIssue({ auth, repo, issueNumber }) {
+      const token = await githubToken(auth)
       const res = await fetch(
         `https://api.github.com/repos/${repo}/issues/${issueNumber}`,
         {
@@ -106,7 +181,8 @@ export const realProviders: ProviderClients = {
         : []
       return { state: data.state, url: data.html_url, comments }
     },
-    async fetchRepo({ token, repo }) {
+    async fetchRepo({ auth, repo }) {
+      const token = await githubToken(auth)
       const res = await fetch(`https://api.github.com/repos/${repo}`, {
         headers: {
           authorization: `Bearer ${token}`,

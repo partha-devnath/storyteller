@@ -9,6 +9,7 @@ import {
   createProjectSchema,
   updateCardSectionsSchema,
   updateProjectColumnsSchema,
+  connectColumnSchema,
 } from "../validations/project"
 import { createCardSchema, updateCardSchema } from "../validations/card"
 import { DEFAULT_CARD_SECTIONS } from "../db/project"
@@ -275,6 +276,52 @@ describe("project columns validations", () => {
     }))
     const result = updateProjectColumnsSchema.safeParse({
       columns: [...locked, ...many],
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("connect column validations", () => {
+  it("accepts a github PAT connection", () => {
+    const result = connectColumnSchema.safeParse({
+      provider: "github",
+      auth: "pat",
+      config: { token: "ghp_test" },
+      target: "acme/repo",
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("accepts a github app connection", () => {
+    const result = connectColumnSchema.safeParse({
+      provider: "github",
+      auth: "app",
+      config: {
+        appId: "12345",
+        installationId: "67890",
+        privateKey:
+          "-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----",
+      },
+      target: "acme/repo",
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects a github connection without an auth method", () => {
+    const result = connectColumnSchema.safeParse({
+      provider: "github",
+      config: { token: "ghp_test" },
+      target: "acme/repo",
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a github app connection without a private key", () => {
+    const result = connectColumnSchema.safeParse({
+      provider: "github",
+      auth: "app",
+      config: { appId: "12345", installationId: "67890", privateKey: "" },
+      target: "acme/repo",
     })
     expect(result.success).toBe(false)
   })

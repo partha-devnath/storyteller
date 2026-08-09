@@ -373,6 +373,12 @@ function BoardColumnsSection({
   const [connectToken, setConnectToken] = useState("")
   const [connectApiKey, setConnectApiKey] = useState("")
   const [connectTarget, setConnectTarget] = useState("")
+  const [connectGithubAuth, setConnectGithubAuth] = useState<"pat" | "app">(
+    "pat"
+  )
+  const [connectAppId, setConnectAppId] = useState("")
+  const [connectInstallationId, setConnectInstallationId] = useState("")
+  const [connectPrivateKey, setConnectPrivateKey] = useState("")
   const [connectBoard, setConnectBoard] = useState<string | null>(null)
   const [connectList, setConnectList] = useState<string | null>(null)
   const [trelloCreds, setTrelloCreds] = useState<{
@@ -434,6 +440,10 @@ function BoardColumnsSection({
     setConnectToken("")
     setConnectApiKey("")
     setConnectTarget("")
+    setConnectGithubAuth("pat")
+    setConnectAppId("")
+    setConnectInstallationId("")
+    setConnectPrivateKey("")
     setConnectBoard(null)
     setConnectList(null)
     setTrelloCreds(null)
@@ -442,16 +452,47 @@ function BoardColumnsSection({
   function handleConnectSave() {
     if (!connectKey) return
     if (connectProvider === "github") {
-      if (!connectToken.trim() || !connectTarget.trim()) return
-      connectColumn.mutate(
-        {
-          columnKey: connectKey,
-          provider: "github",
-          config: { token: connectToken.trim() },
-          target: connectTarget.trim(),
-        },
-        { onError: () => toast.error("Could not connect column") }
-      )
+      if (connectGithubAuth === "pat") {
+        if (!connectToken.trim() || !connectTarget.trim()) return
+        connectColumn.mutate(
+          {
+            columnKey: connectKey,
+            provider: "github",
+            auth: "pat",
+            config: { token: connectToken.trim() },
+            target: connectTarget.trim(),
+          },
+          {
+            onError: (e) =>
+              toast.error((e as Error).message ?? "Could not connect column"),
+          }
+        )
+      } else {
+        if (
+          !connectAppId.trim() ||
+          !connectInstallationId.trim() ||
+          !connectPrivateKey.trim() ||
+          !connectTarget.trim()
+        )
+          return
+        connectColumn.mutate(
+          {
+            columnKey: connectKey,
+            provider: "github",
+            auth: "app",
+            config: {
+              appId: connectAppId.trim(),
+              installationId: connectInstallationId.trim(),
+              privateKey: connectPrivateKey.trim(),
+            },
+            target: connectTarget.trim(),
+          },
+          {
+            onError: (e) =>
+              toast.error((e as Error).message ?? "Could not connect column"),
+          }
+        )
+      }
     } else {
       if (!connectApiKey.trim() || !connectToken.trim() || !connectList) return
       const board = boards.find((b) => b.id === connectBoard)
@@ -479,7 +520,12 @@ function BoardColumnsSection({
 
   const connectDisabled =
     connectProvider === "github"
-      ? !connectToken.trim() || !connectTarget.trim()
+      ? connectGithubAuth === "pat"
+        ? !connectToken.trim() || !connectTarget.trim()
+        : !connectAppId.trim() ||
+          !connectInstallationId.trim() ||
+          !connectPrivateKey.trim() ||
+          !connectTarget.trim()
       : !connectApiKey.trim() || !connectToken.trim() || !connectList
 
   return (
@@ -636,25 +682,92 @@ function BoardColumnsSection({
           {connectProvider === "github" ? (
             <>
               <div className="space-y-1">
-                <Label htmlFor="connect-token">Token</Label>
-                <Input
-                  id="connect-token"
-                  data-testid="connect-token"
-                  value={connectToken}
-                  onChange={(e) => setConnectToken(e.target.value)}
-                  placeholder="ghp_..."
-                />
+                <Label htmlFor="connect-github-auth">Auth method</Label>
+                <select
+                  id="connect-github-auth"
+                  data-testid="connect-github-auth"
+                  value={connectGithubAuth}
+                  onChange={(e) =>
+                    setConnectGithubAuth(e.target.value as "pat" | "app")
+                  }
+                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <option value="pat">Personal access token</option>
+                  <option value="app">GitHub App</option>
+                </select>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="connect-target">Repository</Label>
-                <Input
-                  id="connect-target"
-                  data-testid="connect-target"
-                  value={connectTarget}
-                  onChange={(e) => setConnectTarget(e.target.value)}
-                  placeholder="org/repo"
-                />
-              </div>
+              {connectGithubAuth === "pat" ? (
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="connect-token">Token</Label>
+                    <Input
+                      id="connect-token"
+                      data-testid="connect-token"
+                      value={connectToken}
+                      onChange={(e) => setConnectToken(e.target.value)}
+                      placeholder="ghp_..."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="connect-target">Repository</Label>
+                    <Input
+                      id="connect-target"
+                      data-testid="connect-target"
+                      value={connectTarget}
+                      onChange={(e) => setConnectTarget(e.target.value)}
+                      placeholder="org/repo"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="connect-app-id">App ID</Label>
+                    <Input
+                      id="connect-app-id"
+                      data-testid="connect-app-id"
+                      value={connectAppId}
+                      onChange={(e) => setConnectAppId(e.target.value)}
+                      placeholder="123456"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="connect-installation-id">
+                      Installation ID
+                    </Label>
+                    <Input
+                      id="connect-installation-id"
+                      data-testid="connect-installation-id"
+                      value={connectInstallationId}
+                      onChange={(e) => setConnectInstallationId(e.target.value)}
+                      placeholder="Installation ID from app settings"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="connect-private-key">
+                      Private key (PEM)
+                    </Label>
+                    <textarea
+                      id="connect-private-key"
+                      data-testid="connect-private-key"
+                      value={connectPrivateKey}
+                      onChange={(e) => setConnectPrivateKey(e.target.value)}
+                      placeholder="-----BEGIN RSA PRIVATE KEY-----"
+                      className="min-h-[90px] w-full resize-y rounded-lg border border-input bg-background px-3 py-2 font-mono text-xs outline-none placeholder:text-muted-foreground focus:border-primary"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="connect-target">Repository</Label>
+                    <Input
+                      id="connect-target"
+                      data-testid="connect-target"
+                      value={connectTarget}
+                      onChange={(e) => setConnectTarget(e.target.value)}
+                      placeholder="org/repo"
+                    />
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <>

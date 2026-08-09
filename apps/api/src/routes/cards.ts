@@ -30,7 +30,7 @@ import { publish } from "../services/event-bus"
 import { assertLimitTx } from "../services/plan-limits"
 import { nextCardKeyNo } from "../services/card-key"
 import { decryptConfig } from "../services/credential-crypto"
-import { realProviders } from "../services/providers"
+import { realProviders, githubAuthFromConfig } from "../services/providers"
 import { generateId, slugify } from "../utils"
 import type { AppEnv } from "../middleware/env"
 
@@ -469,7 +469,7 @@ cardsRoutes.get("/:id/external/:linkId", async (c) => {
     const repo = column?.integration?.target
     if (!repo) throw httpError("Column integration missing", 404)
     const issue = await realProviders.github.fetchIssue({
-      token: config.token,
+      auth: githubAuthFromConfig(config),
       repo,
       issueNumber: link.externalId,
     })

@@ -109,6 +109,7 @@ describe("ProjectSettingsPage board columns", () => {
       {
         columnKey: "todo",
         provider: "github",
+        auth: "pat",
         config: { token: "ghp_test" },
         target: "acme/repo",
       },
