@@ -240,3 +240,26 @@ export function useAddComment(
       qc.invalidateQueries({ queryKey: ["card", cardId, "comments"] }),
   })
 }
+
+export type ExternalTicket = {
+  state: string
+  url: string
+  comments: { author: string; text: string; createdAt: string }[]
+}
+
+export function useCardExternalLink(
+  cardId: string | undefined,
+  linkId: string | undefined,
+  projectSlug: string | undefined
+) {
+  return useQuery({
+    queryKey: ["card", cardId, "external", linkId],
+    queryFn: async () => {
+      const res = await apiClient<Envelope<ExternalTicket>>(
+        `/api/cards/${cardId}/external/${linkId}?project=${encodeURIComponent(projectSlug ?? "")}`
+      )
+      return res.data
+    },
+    enabled: Boolean(cardId && linkId && projectSlug),
+  })
+}
