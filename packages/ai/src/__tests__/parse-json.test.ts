@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from "vitest"
 import { z } from "zod"
-import { extractJson, parseJsonWithRetry } from "../operations/parse-json"
+import {
+  extractJson,
+  normalizeJsonOutput,
+  parseJsonWithRetry,
+} from "../operations/parse-json"
+import { generateBoardOutputSchema } from "../schemas"
 import { AiOutputError } from "../errors"
 import type { LLMProvider } from "../types"
 
@@ -33,6 +38,72 @@ describe("extractJson", () => {
 
   it("throws when no JSON object is present", () => {
     expect(() => extractJson("not json at all")).toThrow(SyntaxError)
+  })
+})
+
+describe("normalizeJsonOutput", () => {
+  it("converts none-like strings on array fields to empty arrays", () => {
+    const out = normalizeJsonOutput({
+      kind: "board",
+      epics: [
+        {
+          stories: [
+            { relationSummary: "none", conflictFlags: "N/A" },
+            { relationSummary: "", conflictFlags: "no" },
+          ],
+        },
+      ],
+    })
+    const stories = (out as { epics: { stories: unknown[] }[] }).epics[0]
+      .stories as Record<string, unknown>[]
+    expect(stories[0].relationSummary).toEqual([])
+    expect(stories[0].conflictFlags).toEqual([])
+    expect(stories[1].relationSummary).toEqual([])
+    expect(stories[1].conflictFlags).toEqual([])
+  })
+
+  it("handles snake_case keys for the instruction schema", () => {
+    const out = normalizeJsonOutput({
+      changes: [
+        {
+          change_type: "update",
+          relation_summary: "none",
+          conflict_flags: "none",
+        },
+      ],
+    })
+    const change = (out as { changes: Record<string, unknown>[] }).changes[0]
+    expect(change.relation_summary).toEqual([])
+    expect(change.conflict_flags).toEqual([])
+  })
+
+  it("leaves real array values and prose untouched", () => {
+    const out = normalizeJsonOutput({
+      epics: [
+        {
+          stories: [
+            {
+              title: "none at all",
+              relationSummary: [{ type: "dependency", note: "none" }],
+              acceptanceCriteria: ["none"],
+            },
+          ],
+        },
+      ],
+    })
+    expect(out).toEqual({
+      epics: [
+        {
+          stories: [
+            {
+              title: "none at all",
+              relationSummary: [{ type: "dependency", note: "none" }],
+              acceptanceCriteria: ["none"],
+            },
+          ],
+        },
+      ],
+    })
   })
 })
 
@@ -80,6 +151,46 @@ describe("parseJsonWithRetry", () => {
       errorMessage: "malformed",
     })
     expect(result.kind).toBe("board")
+    expect(chat).toHaveBeenCalledTimes(1)
+  })
+
+  it("accepts none-like strings on array fields without a retry", async () => {
+    const noneOutput = JSON.stringify({
+      kind: "board",
+      epics: [
+        {
+          name: "Loyalty",
+          description: "Loyalty program.",
+          order: 0,
+          stories: [
+            {
+              title: "Enroll",
+              description: "d",
+              acceptanceCriteria: [],
+              priority: "medium",
+              suggestedStatus: "backlog",
+              action: "update",
+              targetCardId: "card_1",
+              conflictFlags: "none",
+              relationSummary: "none",
+            },
+          ],
+        },
+      ],
+    })
+    const chat = vi.fn(async () => noneOutput)
+    const provider = { chat, embed: async () => [] } as unknown as LLMProvider
+    const result = await parseJsonWithRetry({
+      provider,
+      messages: [{ role: "user", content: "build" }],
+      schema: generateBoardOutputSchema,
+      errorMessage: "malformed",
+    })
+    expect(result.kind).toBe("board")
+    if (result.kind === "board") {
+      expect(result.epics[0].stories[0].relationSummary).toEqual([])
+      expect(result.epics[0].stories[0].conflictFlags).toEqual([])
+    }
     expect(chat).toHaveBeenCalledTimes(1)
   })
 

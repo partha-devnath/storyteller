@@ -12,6 +12,38 @@ export function extractJson(raw: string): string {
   return raw.slice(start, end + 1)
 }
 
+const NONE_LIKE_VALUES = new Set(["none", "no", "n/a", "null", ""])
+const ARRAY_FIELD_KEYS = new Set([
+  "relationSummary",
+  "conflictFlags",
+  "acceptanceCriteria",
+  "relation_summary",
+  "conflict_flags",
+  "acceptance_criteria",
+])
+
+export function normalizeJsonOutput(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeJsonOutput)
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {}
+    for (const [key, child] of Object.entries(value)) {
+      if (
+        ARRAY_FIELD_KEYS.has(key) &&
+        typeof child === "string" &&
+        NONE_LIKE_VALUES.has(child.trim().toLowerCase())
+      ) {
+        out[key] = []
+      } else {
+        out[key] = normalizeJsonOutput(child)
+      }
+    }
+    return out
+  }
+  return value
+}
+
 function formatZodFeedback(issues: unknown): string {
   if (Array.isArray(issues) && issues.length > 0) {
     const details = issues
@@ -59,7 +91,7 @@ export async function parseJsonWithRetry<T>({
 
     let parsedJson: unknown
     try {
-      parsedJson = JSON.parse(extractJson(raw))
+      parsedJson = normalizeJsonOutput(JSON.parse(extractJson(raw)))
     } catch {
       lastIssues = "AI output is not valid JSON"
       continue

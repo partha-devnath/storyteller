@@ -10,6 +10,7 @@ export const JSON_OUTPUT_RULES =
   "Respond with ONLY the JSON object matching the schema exactly. " +
   "No markdown fences, no prose, no comments, no trailing text. " +
   "Do not add any keys that are not in the example. " +
+  'For empty lists (relationSummary, conflictFlags, acceptanceCriteria, questions) use [] — never the string "none" or "N/A". ' +
   "Optional fields (sections, action, targetCardId, conflictFlags, relationSummary) may be omitted."
 
 export function formatChatHistory(chatHistory: ChatHistoryItem[]): string {
