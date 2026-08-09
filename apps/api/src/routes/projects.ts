@@ -24,7 +24,9 @@ import {
   createProjectSchema,
   updateCardSectionsSchema,
   updateProjectColumnsSchema,
+  connectColumnSchema,
 } from "@workspace/schemas/validations/project"
+import type { ConnectColumnInput } from "@workspace/schemas/validations/project"
 import { requireOrg } from "../middleware/org-scope"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
@@ -156,6 +158,7 @@ projectsRoutes.get("/:slug", resolveOrgFromProject, async (c) => {
       assigneeId: card.assigneeId,
       epicId: card.epicId,
       acceptanceCriteriaCount: sql<number>`json_array_length(${card.acceptanceCriteria})::int`,
+      externalLinks: card.externalLinks,
       updatedAt: card.updatedAt,
     })
     .from(card)
@@ -279,21 +282,45 @@ projectsRoutes.patch(
       }
       const nextColumns = parsed.data.columns
       const kept = new Set(nextColumns.map((col) => col.key))
-      await db
-        .update(card)
-        .set({ status: "backlog", updatedAt: new Date() })
-        .where(
-          and(eq(card.projectId, projectId), notInArray(card.status, [...kept]))
+      let updatedRow: typeof project.$inferSelect | undefined
+      await db.transaction(async (tx) => {
+        await tx
+          .update(card)
+          .set({ status: "backlog", updatedAt: new Date() })
+          .where(
+            and(
+              eq(card.projectId, projectId),
+              notInArray(card.status, [...kept])
+            )
+          )
+        const [current] = await tx
+          .select()
+          .from(project)
+          .where(eq(project.id, projectId))
+          .limit(1)
+        const existingByKey = new Map(
+          (current?.columns ?? []).map((col) => [
+            col.key,
+            col.integration ?? null,
+          ])
         )
-      const [updated] = await db
-        .update(project)
-        .set({ columns: nextColumns, updatedAt: new Date() })
-        .where(eq(project.id, projectId))
-        .returning()
-      if (!updated) {
+        const columns = nextColumns.map((col) => ({
+          key: col.key,
+          title: col.title,
+          locked: col.locked ?? false,
+          integration: existingByKey.get(col.key) ?? null,
+        }))
+        const [updated] = await tx
+          .update(project)
+          .set({ columns, updatedAt: new Date() })
+          .where(eq(project.id, projectId))
+          .returning()
+        updatedRow = updated
+      })
+      if (!updatedRow) {
         throw httpError("Not Found", 404)
       }
-      return c.json({ success: true, data: { project: updated } })
+      return c.json({ success: true, data: { project: updatedRow } })
     }
 
     const sections = updateCardSectionsSchema.safeParse(body)
@@ -322,18 +349,13 @@ projectsRoutes.post(
   "/:slug/columns/:key/connect",
   resolveOrgFromProject,
   requireRole("owner", "admin"),
+  validateBody(connectColumnSchema),
   async (c) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
     if (!session) throw httpError("Unauthorized", 401)
     const projectId = c.var.projectId!
     const key = c.req.param("key")
-    const body = (await c.req.json()) as {
-      provider: "github" | "trello"
-      config: Record<string, string>
-      target: string
-      boardName?: string
-      listName?: string
-    }
+    const body = c.var.body as ConnectColumnInput
     const [proj] = await db
       .select()
       .from(project)
@@ -341,6 +363,8 @@ projectsRoutes.post(
       .limit(1)
     if (!proj) throw httpError("Not Found", 404)
     assertConnectableColumn(proj.columns, key)
+    const oldCredentialId = proj.columns.find((col) => col.key === key)
+      ?.integration?.credentialId
 
     if (body.provider === "github") {
       await realProviders.github.fetchRepo({
@@ -378,6 +402,16 @@ projectsRoutes.post(
       .update(project)
       .set({ columns: nextColumns, updatedAt: new Date() })
       .where(eq(project.id, projectId))
+    if (
+      oldCredentialId &&
+      !nextColumns.some(
+        (col) => col.integration?.credentialId === oldCredentialId
+      )
+    ) {
+      await db
+        .delete(integrationCredential)
+        .where(eq(integrationCredential.id, oldCredentialId))
+    }
     return c.json({ success: true, data: { key } })
   }
 )

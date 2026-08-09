@@ -147,6 +147,13 @@ export const updateProjectColumnsSchema = z.object({
             message: "Only backlog and review can be locked",
           })
         }
+        if (col.locked && col.integration != null) {
+          ctx.addIssue({
+            code: "custom",
+            path: [i, "integration"],
+            message: "System columns cannot carry an integration",
+          })
+        }
       }
       for (const [i, expected] of [
         { key: "backlog", title: "Backlog" },
@@ -157,7 +164,8 @@ export const updateProjectColumnsSchema = z.object({
           !actual ||
           actual.key !== expected.key ||
           actual.title !== expected.title ||
-          actual.locked !== true
+          actual.locked !== true ||
+          actual.integration != null
         ) {
           ctx.addIssue({
             code: "custom",
@@ -168,3 +176,25 @@ export const updateProjectColumnsSchema = z.object({
       }
     }),
 })
+
+export const connectColumnSchema = z.discriminatedUnion("provider", [
+  z.object({
+    provider: z.literal("github"),
+    config: z.object({ token: z.string().min(1) }),
+    target: z.string().min(1),
+    boardName: z.string().optional(),
+    listName: z.string().optional(),
+  }),
+  z.object({
+    provider: z.literal("trello"),
+    config: z.object({
+      apiKey: z.string().min(1),
+      token: z.string().min(1),
+    }),
+    target: z.string().min(1),
+    boardName: z.string().optional(),
+    listName: z.string().optional(),
+  }),
+])
+
+export type ConnectColumnInput = z.infer<typeof connectColumnSchema>

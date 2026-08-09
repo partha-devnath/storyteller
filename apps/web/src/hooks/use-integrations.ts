@@ -57,7 +57,7 @@ export function useTrelloBoards(
   creds: { apiKey: string; token: string } | null
 ) {
   return useQuery({
-    queryKey: ["integrations", slug, "trello", "boards"],
+    queryKey: ["integrations", slug, "trello", "boards", creds?.apiKey],
     queryFn: async () => {
       const res = await apiClient<Envelope<{ id: string; name: string }[]>>(
         `/api/projects/${slug}/integrations/trello/boards?apiKey=${encodeURIComponent(creds!.apiKey)}&token=${encodeURIComponent(creds!.token)}`
@@ -74,7 +74,7 @@ export function useTrelloLists(
   boardId: string | null
 ) {
   return useQuery({
-    queryKey: ["integrations", slug, "trello", "lists", boardId],
+    queryKey: ["integrations", slug, "trello", "lists", boardId, creds?.apiKey],
     queryFn: async () => {
       const res = await apiClient<Envelope<{ id: string; name: string }[]>>(
         `/api/projects/${slug}/integrations/trello/lists?apiKey=${encodeURIComponent(creds!.apiKey)}&token=${encodeURIComponent(creds!.token)}&board=${encodeURIComponent(boardId!)}`
