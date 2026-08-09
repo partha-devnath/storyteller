@@ -129,6 +129,6 @@ describe("generate-board prompt semantic matches", () => {
 
   it("documents the action field in the system prompt", () => {
     const messages = buildGenerateBoardPrompt({ prompt: "x" })
-    expect(messages[0].content).toContain('"action":"create|update|skip"')
+    expect(messages[0].content).toContain('"action"?:"create|update|skip"')
   })
 })

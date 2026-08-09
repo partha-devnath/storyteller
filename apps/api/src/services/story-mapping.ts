@@ -12,7 +12,6 @@ export type StoryChange = {
     epicName?: string
     sections?: Record<string, string>
   }
-  epicName?: string
   relationSummary?: {
     type: "dependency" | "hierarchy" | "evolution"
     sourceCardId?: string
@@ -58,8 +57,9 @@ export function mapStoriesToChanges({
         skipped.push({
           title: story.title,
           reason:
-            story.conflictFlags?.map((f) => f.summary).join("; ") ??
-            "already exists",
+            story.conflictFlags && story.conflictFlags.length > 0
+              ? story.conflictFlags.map((f) => f.summary).join("; ")
+              : "already exists",
         })
         continue
       }
@@ -91,7 +91,6 @@ export function mapStoriesToChanges({
       }
       changes.push({
         changeType: "create",
-        epicName: epic.name,
         newData: {
           ...newData,
           epicName: epic.name,

@@ -36,14 +36,16 @@ export function buildClarifyingQuestionsPrompt({
         '"stories":[{"title":string,"description":string,"acceptanceCriteria":string[],' +
         '"priority":"low|medium|high|critical","suggestedStatus":"backlog|todo|in_progress|review|done",' +
         '"action"?:"create|update|skip","targetCardId"?:string,' +
-        '"conflictFlags"?:[{type:"contradiction|duplicate|conflict",summary:string}]}]}]}\n' +
+        '"conflictFlags"?:[{type:"contradiction|duplicate|conflict",summary:string}],' +
+        '"relationSummary"?:[{type:"dependency|hierarchy|evolution",sourceCardId?:string,targetCardId?:string,note:string}]}]}]}\n' +
         "OR if you still need clarification, respond with:\n" +
         '{"kind":"clarifying","questions":[{"question":string,"options":[string]}]}\n' +
         "No markdown fences, no prose — only the JSON object." +
         "Decide per story: create a new card (no existing match), update an existing card " +
         "(matching card needs changes — set action=update, targetCardId, and only the changed fields), " +
         "or skip (matching card already covers the request — set action=skip with a conflictFlags duplicate entry). " +
-        "Never create a duplicate of an existing card.",
+        "Never create a duplicate of an existing card. " +
+        "For updates that replace or depend on other cards, include relationSummary entries.",
     },
     {
       role: "user",
