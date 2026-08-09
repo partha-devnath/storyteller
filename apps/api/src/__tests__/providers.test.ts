@@ -16,12 +16,18 @@ afterEach(() => {
 describe("github app installation tokens", () => {
   it("exchanges an RS256 JWT for an installation token", async () => {
     const { githubToken } = await import("../services/providers")
-    const calls: { url: string; headers: HeadersInit | undefined }[] = []
+    const calls: {
+      url: string
+      headers: Record<string, string> | undefined
+    }[] = []
     globalThis.fetch = (async (
       url: string | URL | Request,
       init?: RequestInit
     ) => {
-      calls.push({ url: String(url), headers: init?.headers })
+      calls.push({
+        url: String(url),
+        headers: init?.headers as Record<string, string> | undefined,
+      })
       return new Response(
         JSON.stringify({
           token: "ghs_installation",
@@ -29,7 +35,7 @@ describe("github app installation tokens", () => {
         }),
         { status: 200 }
       )
-    }) as typeof fetch
+    }) as unknown as typeof fetch
 
     const token = await githubToken({
       kind: "app",
@@ -64,7 +70,7 @@ describe("github app installation tokens", () => {
         }),
         { status: 200 }
       )
-    }) as typeof fetch
+    }) as unknown as typeof fetch
 
     const auth = {
       kind: "app" as const,
@@ -87,7 +93,7 @@ describe("github app installation tokens", () => {
   it("throws on a failed token exchange", async () => {
     const { githubToken } = await import("../services/providers")
     globalThis.fetch = (async () =>
-      new Response("bad", { status: 403 })) as typeof fetch
+      new Response("bad", { status: 403 })) as unknown as typeof fetch
     await expect(
       githubToken({
         kind: "app",
