@@ -48,7 +48,10 @@ export function ProjectBoardPage() {
     ? projectDetail.project.columns
     : defaultColumns
   const [activeCardId, setActiveCardId] = useState<string | null>(null)
-  const [activeProposalId, setActiveProposalId] = useState<string | null>(null)
+  const [activeProposal, setActiveProposal] = useState<{
+    proposalId: string
+    changeId?: string
+  } | null>(null)
   const [liveComment, setLiveComment] = useState<{
     cardId: string
     comment: CommentItem
@@ -137,7 +140,9 @@ export function ProjectBoardPage() {
               filters={filters}
               onMove={(cardId, status) => moveCard.mutate({ cardId, status })}
               onSelectCard={(card) => setActiveCardId(card.id)}
-              onOpenProposal={(proposalId) => setActiveProposalId(proposalId)}
+              onOpenProposal={(proposalId, changeId) =>
+                setActiveProposal({ proposalId, changeId })
+              }
             />
           )}
           {cards && (
@@ -160,11 +165,12 @@ export function ProjectBoardPage() {
         />
       )}
 
-      {activeProposalId && (
+      {activeProposal && (
         <ProposalDrawer
-          proposalId={activeProposalId}
-          open={Boolean(activeProposalId)}
-          onClose={() => setActiveProposalId(null)}
+          proposalId={activeProposal.proposalId}
+          changeId={activeProposal.changeId}
+          open={Boolean(activeProposal)}
+          onClose={() => setActiveProposal(null)}
           projectSlug={slug ?? ""}
         />
       )}

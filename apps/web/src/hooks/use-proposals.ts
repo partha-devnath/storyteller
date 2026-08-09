@@ -34,6 +34,8 @@ export type ProposalChangeRow = {
     type: "contradiction" | "duplicate" | "conflict"
     summary: string
   }[]
+  approvedAt: string | null
+  rejectedAt: string | null
 }
 
 export type ProposalDetail = {

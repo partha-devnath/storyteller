@@ -5,16 +5,20 @@ import {
   useProposal,
   useApproveProposal,
   useRejectProposal,
+  type ProposalChangeRow,
 } from "@/hooks/use-proposals"
+import { DiffPanel } from "./diff-panel"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
 
 export function ProposalDrawer({
   proposalId,
+  changeId,
   open,
   onClose,
   projectSlug,
 }: {
   proposalId: string
+  changeId?: string
   open: boolean
   onClose: () => void
   projectSlug: string
@@ -27,7 +31,11 @@ export function ProposalDrawer({
 
   if (!open || !data) return null
 
-  const change = data.changes.find((c) => c.changeType === "create")
+  const change =
+    data.changes.find((c) => c.id === changeId) ??
+    data.changes.find(
+      (c) => !c.approvedAt && !c.rejectedAt && c.changeType === "create"
+    )
   if (!change) return null
 
   const newData = change.newData as Record<string, unknown>
@@ -38,6 +46,22 @@ export function ProposalDrawer({
     : []
   const priority = String(newData.priority ?? "medium")
   const status = String(newData.status ?? "backlog")
+
+  const isUpdate = change.changeType === "update"
+  const before =
+    change.changeType === "update"
+      ? (
+          change as ProposalChangeRow & {
+            before?: {
+              title?: string
+              description?: string | null
+              acceptanceCriteria?: string[]
+              status?: string
+              priority?: string
+            } | null
+          }
+        ).before
+      : null
 
   function close() {
     setRejecting(false)
@@ -83,48 +107,151 @@ export function ProposalDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {description && (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{description}</ReactMarkdown>
+          {isUpdate ? (
+            <div className="space-y-4">
+              <div>
+                <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                  Title
+                </p>
+                <p className="text-sm">
+                  <span className="text-muted line-through decoration-destructive/50">
+                    {before?.title ?? ""}
+                  </span>
+                  <span className="mx-2 text-muted-foreground">→</span>
+                  <span className="font-medium">{title}</span>
+                </p>
+              </div>
+              <div>
+                <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                  Description
+                </p>
+                <DiffPanel
+                  before={before?.description ?? ""}
+                  after={description}
+                />
+              </div>
+              <div>
+                <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                  Acceptance criteria
+                </p>
+                <ul className="space-y-1 text-sm">
+                  {(before?.acceptanceCriteria ?? []).map((c, i) => {
+                    const kept = criteria.includes(c)
+                    return (
+                      <li key={`before-${i}`} className="flex gap-2">
+                        <span
+                          className={kept ? "text-primary" : "text-destructive"}
+                        >
+                          {kept ? "☐" : "✕"}
+                        </span>
+                        <span
+                          className={
+                            kept
+                              ? ""
+                              : "text-muted line-through decoration-destructive/50"
+                          }
+                        >
+                          {c}
+                        </span>
+                      </li>
+                    )
+                  })}
+                  {criteria.map((c, i) => {
+                    const kept = before?.acceptanceCriteria.includes(c)
+                    return kept ? null : (
+                      <li key={`after-${i}`} className="flex gap-2">
+                        <span className="text-success">+</span>
+                        <span>{c}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+              <div>
+                <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                  Status &amp; priority
+                </p>
+                <p className="text-sm">
+                  <span className="text-muted line-through decoration-destructive/50">
+                    {before?.status ?? ""} · {before?.priority ?? ""}
+                  </span>
+                  <span className="mx-2 text-muted-foreground">→</span>
+                  <span className="font-medium">
+                    {status} · {priority}
+                  </span>
+                </p>
+              </div>
+              {change.conflictFlags.length > 0 && (
+                <div className="space-y-1 text-sm text-destructive">
+                  {change.conflictFlags.map((f, i) => (
+                    <p key={i}>⚠ {f.summary}</p>
+                  ))}
+                </div>
+              )}
+              {change.relationSummary.length > 0 && (
+                <div>
+                  <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    Relations
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {change.relationSummary.map((r, i) => (
+                      <li key={i}>
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase">
+                          {r.type}
+                        </span>{" "}
+                        {r.note}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          )}
-          {criteria.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                Acceptance criteria
-              </p>
-              <ul className="space-y-1 text-sm">
-                {criteria.map((c, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-primary">☐</span>
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {change.conflictFlags.length > 0 && (
-            <div className="mt-4 space-y-1 text-sm text-destructive">
-              {change.conflictFlags.map((f, i) => (
-                <p key={i}>⚠ {f.summary}</p>
-              ))}
-            </div>
-          )}
-          {change.relationSummary.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                Relations
-              </p>
-              <ul className="space-y-1 text-sm">
-                {change.relationSummary.map((r, i) => (
-                  <li key={i}>
-                    <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase">
-                      {r.type}
-                    </span>{" "}
-                    {r.note}
-                  </li>
-                ))}
-              </ul>
+          ) : (
+            <div className="space-y-4">
+              {description && (
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{description}</ReactMarkdown>
+                </div>
+              )}
+              {criteria.length > 0 && (
+                <div>
+                  <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    Acceptance criteria
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {criteria.map((c, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="text-primary">☐</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {change.conflictFlags.length > 0 && (
+                <div className="space-y-1 text-sm text-destructive">
+                  {change.conflictFlags.map((f, i) => (
+                    <p key={i}>⚠ {f.summary}</p>
+                  ))}
+                </div>
+              )}
+              {change.relationSummary.length > 0 && (
+                <div>
+                  <p className="mb-2 font-mono text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    Relations
+                  </p>
+                  <ul className="space-y-1 text-sm">
+                    {change.relationSummary.map((r, i) => (
+                      <li key={i}>
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase">
+                          {r.type}
+                        </span>{" "}
+                        {r.note}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -134,7 +261,12 @@ export function ProposalDrawer({
             size="sm"
             data-testid="approve-proposal"
             disabled={approve.isPending}
-            onClick={() => approve.mutate({ proposalId }, { onSuccess: close })}
+            onClick={() =>
+              approve.mutate(
+                { proposalId, changeId: change.id },
+                { onSuccess: close }
+              )
+            }
           >
             {approve.isPending ? "Approving..." : "Approve"}
           </Button>
@@ -159,7 +291,11 @@ export function ProposalDrawer({
                 disabled={reject.isPending}
                 onClick={() =>
                   reject.mutate(
-                    { proposalId, reason: reason || undefined },
+                    {
+                      proposalId,
+                      changeId: change.id,
+                      reason: reason || undefined,
+                    },
                     { onSuccess: close }
                   )
                 }
