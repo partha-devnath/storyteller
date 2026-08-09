@@ -32,6 +32,7 @@ services:
       DATABASE_URL: postgres://template:template@postgres:5432/template
       BETTER_AUTH_SECRET: change-me-to-a-random-string-at-least-32-chars
       BETTER_AUTH_URL: http://localhost:3001/api/auth
+      INTEGRATION_SECRET: change-me-to-a-random-string-at-least-16-chars
       CLIENT_URL: http://localhost:5173
       PORT: "3001"
       LOG_LEVEL: info
