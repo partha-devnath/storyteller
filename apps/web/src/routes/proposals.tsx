@@ -60,11 +60,6 @@ export function ProposalsPage() {
 
   const { data: chatMessages = [] } = useChatMessages(slug, resolvedSessionId)
   const addMessage = useAddChatMessage(slug ?? "", resolvedSessionId)
-  const { containerRef, showJump, handleScroll, jumpToBottom } = useChatScroll([
-    chatMessages,
-    pendingPrompt,
-    resolvedSessionId,
-  ])
 
   const [prompt, setPrompt] = useState("")
   const [mentions, setMentions] = useState<MentionItem[]>([])
@@ -73,6 +68,11 @@ export function ProposalsPage() {
     text: string
     mentions: MentionItem[]
   } | null>(null)
+  const { containerRef, showJump, handleScroll, jumpToBottom } = useChatScroll([
+    chatMessages,
+    pendingPrompt,
+    resolvedSessionId,
+  ])
   const [priorAnswers, setPriorAnswers] = useState("")
   const promptRef = useRef<HTMLInputElement | null>(null)
   const { mentionQuery, mentionCaret, mentionEnd, handleInput, stopMention } =
