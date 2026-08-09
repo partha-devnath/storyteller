@@ -7,7 +7,18 @@ import {
 } from "drizzle-orm/pg-core"
 import { organization } from "./organization"
 
-export type ProjectColumn = { key: string; title: string }
+export type ProjectColumn = {
+  key: string
+  title: string
+  locked?: boolean
+  integration?: {
+    type: "github" | "trello"
+    credentialId: string
+    target: string
+    boardName?: string
+    listName?: string
+  } | null
+}
 export type ProjectCustomField = {
   name: string
   type: "text" | "dropdown" | "date"

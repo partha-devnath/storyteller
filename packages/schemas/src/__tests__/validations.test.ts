@@ -8,6 +8,7 @@ import {
 import {
   createProjectSchema,
   updateCardSectionsSchema,
+  updateProjectColumnsSchema,
 } from "../validations/project"
 import { createCardSchema, updateCardSchema } from "../validations/card"
 import { DEFAULT_CARD_SECTIONS } from "../db/project"
@@ -222,6 +223,59 @@ describe("card section validations", () => {
     const result = updateCardSectionsSchema.safeParse(
       base([...DEFAULT_CARD_SECTIONS, ...many])
     )
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("project columns validations", () => {
+  const locked = [
+    { key: "backlog", title: "Backlog", locked: true },
+    { key: "review", title: "Review", locked: true },
+  ]
+  const custom = [{ key: "qa", title: "QA", locked: false, integration: null }]
+
+  it("accepts locked columns plus custom columns", () => {
+    const result = updateProjectColumnsSchema.safeParse({
+      columns: [...locked, ...custom],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects missing locked columns", () => {
+    const result = updateProjectColumnsSchema.safeParse({ columns: custom })
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects a changed locked column", () => {
+    const result = updateProjectColumnsSchema.safeParse({
+      columns: [
+        { key: "backlog", title: "Backlog renamed", locked: true },
+        { key: "review", title: "Review", locked: true },
+      ],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects duplicate keys", () => {
+    const result = updateProjectColumnsSchema.safeParse({
+      columns: [
+        ...locked,
+        { key: "qa", title: "QA", locked: false },
+        { key: "qa", title: "QA2", locked: false },
+      ],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it("rejects more than 12 columns", () => {
+    const many = Array.from({ length: 11 }, (_, i) => ({
+      key: `col${i}`,
+      title: `Col ${i}`,
+      locked: false,
+    }))
+    const result = updateProjectColumnsSchema.safeParse({
+      columns: [...locked, ...many],
+    })
     expect(result.success).toBe(false)
   })
 })

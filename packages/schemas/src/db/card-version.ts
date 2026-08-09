@@ -21,9 +21,7 @@ export const cardVersion = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     acceptanceCriteria: json("acceptance_criteria").$type<string[]>().notNull(),
-    status: text("status")
-      .$type<"backlog" | "todo" | "in_progress" | "review" | "done">()
-      .notNull(),
+    status: text("status").$type<string>().notNull(),
     priority: text("priority")
       .$type<"low" | "medium" | "high" | "critical">()
       .notNull(),

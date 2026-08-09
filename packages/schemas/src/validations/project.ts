@@ -100,3 +100,71 @@ export const updateCardSectionsSchema = z.object({
       }
     }),
 })
+
+export const updateProjectColumnsSchema = z.object({
+  columns: z
+    .array(
+      z.object({
+        key: z
+          .string()
+          .regex(
+            /^[a-z][a-zA-Z0-9_]*$/,
+            "Column key must be lowercase snake or camelCase"
+          ),
+        title: z
+          .string()
+          .min(1, "Column title is required")
+          .max(60, "Column title must be at most 60 characters"),
+        locked: z.boolean().optional(),
+        integration: z
+          .object({
+            type: z.enum(["github", "trello"]),
+            credentialId: z.string().min(1),
+            target: z.string().min(1),
+            boardName: z.string().optional(),
+            listName: z.string().optional(),
+          })
+          .nullable()
+          .optional(),
+      })
+    )
+    .max(12, "At most 12 columns are allowed")
+    .superRefine((columns, ctx) => {
+      const seen = new Set<string>()
+      for (const [i, col] of columns.entries()) {
+        if (seen.has(col.key)) {
+          ctx.addIssue({
+            code: "custom",
+            path: [i, "key"],
+            message: `Duplicate column key: ${col.key}`,
+          })
+        }
+        seen.add(col.key)
+        if (col.key !== "backlog" && col.key !== "review" && col.locked) {
+          ctx.addIssue({
+            code: "custom",
+            path: [i, "locked"],
+            message: "Only backlog and review can be locked",
+          })
+        }
+      }
+      for (const [i, expected] of [
+        { key: "backlog", title: "Backlog" },
+        { key: "review", title: "Review" },
+      ].entries()) {
+        const actual = columns[i]
+        if (
+          !actual ||
+          actual.key !== expected.key ||
+          actual.title !== expected.title ||
+          actual.locked !== true
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: [i],
+            message: `System column "${expected.key}" must be present unchanged at position ${i}`,
+          })
+        }
+      }
+    }),
+})

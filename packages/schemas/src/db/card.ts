@@ -11,6 +11,16 @@ import { epic } from "./epic"
 import { project } from "./project"
 import { user } from "./users"
 
+export type ExternalLink = {
+  id: string
+  type: "github" | "trello"
+  externalId: string
+  url: string
+  columnKey: string
+  credentialId: string
+  createdAt: string
+}
+
 export const card = pgTable(
   "card",
   {
@@ -25,15 +35,17 @@ export const card = pgTable(
       .$type<string[]>()
       .notNull()
       .default([]),
-    status: text("status")
-      .$type<"backlog" | "todo" | "in_progress" | "review" | "done">()
-      .notNull(),
+    status: text("status").$type<string>().notNull(),
     priority: text("priority")
       .$type<"low" | "medium" | "high" | "critical">()
       .notNull(),
     assigneeId: text("assignee_id").references(() => user.id),
     customFields: json("custom_fields").$type<Record<string, string>>(),
     sections: json("sections").$type<Record<string, string>>(),
+    externalLinks: json("external_links")
+      .$type<ExternalLink[]>()
+      .notNull()
+      .default([]),
     isClosed: boolean("is_closed").notNull().default(false),
     closedBy: text("closed_by").references(() => user.id),
     closedAt: timestamp("closed_at"),
