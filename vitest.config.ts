@@ -10,7 +10,12 @@ export default defineConfig({
   test: {
     globals: true,
     include: ["**/__tests__/**/*.test.{ts,tsx}"],
-    exclude: ["**/node_modules/**", "**/dist/**", "apps/api/**"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "apps/api/**",
+      "**/.worktrees/**",
+    ],
     environment: "jsdom",
     setupFiles: [path.resolve(__dirname, "packages/ui/src/__tests__/setup.ts")],
     coverage: {
