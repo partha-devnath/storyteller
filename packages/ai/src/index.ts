@@ -9,7 +9,12 @@ export const EMBEDDING_DIMENSIONS = Number(
   process.env.EMBEDDING_DIMENSIONS ?? 4096
 )
 
-export type { LLMProvider, ChatMessage } from "./types"
+export type {
+  LLMProvider,
+  ChatMessage,
+  EpicDraft,
+  GenerateBoardResult,
+} from "./types"
 export {
   generateBoardOutputSchema,
   processInstructionOutputSchema,

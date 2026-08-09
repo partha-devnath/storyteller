@@ -18,6 +18,11 @@ import {
   buildBoardSnapshot,
   buildSemanticContext,
 } from "../services/board-snapshot"
+import {
+  mapStoriesToChanges,
+  buildReplySummaryText,
+} from "../services/story-mapping"
+import type { ProposalSummary } from "../services/story-mapping"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
@@ -68,6 +73,15 @@ async function resolveProjectId(projectSlug: string): Promise<string> {
   return row.id
 }
 
+async function loadCardSections(projectId: string): Promise<{ key: string }[]> {
+  const [row] = await db
+    .select({ cardSections: project.cardSections })
+    .from(project)
+    .where(eq(project.id, projectId))
+    .limit(1)
+  return row?.cardSections ?? []
+}
+
 function persistProposal(params: {
   orgId: string
   projectId: string
@@ -79,8 +93,8 @@ function persistProposal(params: {
     changeType: "create" | "update" | "close"
     targetCardId?: string
     newData: Record<string, unknown>
-    relationSummary: ProposalChangeRelation[]
-    conflictFlags: ProposalChangeConflictFlag[]
+    relationSummary?: ProposalChangeRelation[]
+    conflictFlags?: ProposalChangeConflictFlag[]
   }>
 }): Promise<{ proposalId: string; changeCount: number }> {
   const proposalId = generateId()
@@ -102,8 +116,8 @@ function persistProposal(params: {
         changeType: change.changeType,
         targetCardId: change.targetCardId ?? null,
         newData: change.newData,
-        relationSummary: change.relationSummary,
-        conflictFlags: change.conflictFlags,
+        relationSummary: change.relationSummary ?? [],
+        conflictFlags: change.conflictFlags ?? [],
       })
     }
     return { proposalId, changeCount: params.changes.length }
@@ -125,10 +139,16 @@ aiRoutes.post("/generate", async (c) => {
   if (resolved !== projectId) throw httpError("Forbidden", 403)
 
   const snapshot = await buildBoardSnapshot(projectId)
+  const semantic = await buildSemanticContext({
+    projectId,
+    instruction: body.prompt,
+    provider: aiProvider,
+  })
   const result = await generateBoard({
     provider: aiProvider,
     prompt: body.prompt,
     snapshot,
+    semanticMatches: semantic,
   })
 
   if (result.kind === "clarifying") {
@@ -138,22 +158,13 @@ aiRoutes.post("/generate", async (c) => {
     })
   }
 
-  const changes = result.epics.flatMap((epic) =>
-    epic.stories.map((story) => ({
-      changeType: "create" as const,
-      newData: {
-        title: story.title,
-        description: story.description,
-        acceptanceCriteria: story.acceptanceCriteria,
-        status: story.suggestedStatus,
-        priority: story.priority,
-        epicName: epic.name,
-        sections: story.sections ?? undefined,
-      },
-      relationSummary: [],
-      conflictFlags: [],
-    }))
-  )
+  const cardSections = await loadCardSections(projectId)
+  const knownCardIds = new Set(snapshot.cards.map((c) => c.id))
+  const { changes, skipped } = mapStoriesToChanges({
+    epics: result.epics,
+    cardSections,
+    knownCardIds,
+  })
 
   const created = await persistProposal({
     orgId: c.var.orgId!,
@@ -170,8 +181,22 @@ aiRoutes.post("/generate", async (c) => {
     proposalId: created.proposalId,
   })
 
+  const summary: ProposalSummary = {
+    created: changes.filter((c) => c.changeType === "create").length,
+    updated: changes.filter((c) => c.changeType === "update").length,
+    skipped,
+  }
+
   return c.json(
-    { success: true, data: { kind: "board", proposal: created } },
+    {
+      success: true,
+      data: {
+        kind: "board",
+        proposal: created,
+        summary,
+        summaryText: buildReplySummaryText(summary),
+      },
+    },
     201
   )
 })
@@ -270,6 +295,11 @@ aiRoutes.post("/clarify", async (c) => {
   if (resolved !== projectId) throw httpError("Forbidden", 403)
 
   const snapshot = await buildBoardSnapshot(projectId)
+  const semantic = await buildSemanticContext({
+    projectId,
+    instruction: body.prompt,
+    provider: aiProvider,
+  })
   const result = await answerClarifyingQuestions({
     provider: aiProvider,
     prompt: body.prompt,
@@ -277,6 +307,7 @@ aiRoutes.post("/clarify", async (c) => {
     answer: body.answer,
     priorAnswers: body.priorAnswers,
     snapshot,
+    semanticMatches: semantic,
   })
 
   if (result.kind === "clarifying") {
@@ -286,22 +317,13 @@ aiRoutes.post("/clarify", async (c) => {
     })
   }
 
-  const changes = result.epics.flatMap((epic) =>
-    epic.stories.map((story) => ({
-      changeType: "create" as const,
-      newData: {
-        title: story.title,
-        description: story.description,
-        acceptanceCriteria: story.acceptanceCriteria,
-        status: story.suggestedStatus,
-        priority: story.priority,
-        epicName: epic.name,
-        sections: story.sections ?? undefined,
-      },
-      relationSummary: [],
-      conflictFlags: [],
-    }))
-  )
+  const cardSections = await loadCardSections(projectId)
+  const knownCardIds = new Set(snapshot.cards.map((c) => c.id))
+  const { changes, skipped } = mapStoriesToChanges({
+    epics: result.epics,
+    cardSections,
+    knownCardIds,
+  })
 
   const created = await persistProposal({
     orgId: c.var.orgId!,
@@ -316,8 +338,23 @@ aiRoutes.post("/clarify", async (c) => {
     type: "proposal.ready",
     proposalId: created.proposalId,
   })
+
+  const summary: ProposalSummary = {
+    created: changes.filter((c) => c.changeType === "create").length,
+    updated: changes.filter((c) => c.changeType === "update").length,
+    skipped,
+  }
+
   return c.json(
-    { success: true, data: { kind: "board", proposal: created } },
+    {
+      success: true,
+      data: {
+        kind: "board",
+        proposal: created,
+        summary,
+        summaryText: buildReplySummaryText(summary),
+      },
+    },
     201
   )
 })
