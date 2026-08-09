@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { eq, sql, and, asc, desc } from "drizzle-orm"
+import { eq, sql, and, asc, desc, isNull, inArray } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import {
@@ -156,46 +156,86 @@ projectsRoutes.get("/:slug", resolveOrgFromProject, async (c) => {
 projectsRoutes.get("/:slug/proposed", resolveOrgFromProject, async (c) => {
   const projectId = c.var.projectId
   const rows = await db
-    .select({
-      proposalId: proposal.id,
-      proposalStatus: proposal.status,
-      changeId: proposalChange.id,
-      changeType: proposalChange.changeType,
-      targetCardId: proposalChange.targetCardId,
-      newData: proposalChange.newData,
-      createdAt: proposalChange.createdAt,
-    })
+    .select()
     .from(proposal)
     .innerJoin(proposalChange, eq(proposalChange.proposalId, proposal.id))
     .where(
-      and(eq(proposal.projectId, projectId!), eq(proposal.status, "pending"))
+      and(
+        eq(proposal.projectId, projectId!),
+        eq(proposal.status, "pending"),
+        isNull(proposalChange.approvedAt),
+        isNull(proposalChange.rejectedAt)
+      )
     )
     .orderBy(asc(proposalChange.createdAt))
 
-  const proposed = rows
-    .filter((r) => r.changeType === "create")
-    .map((r) => {
-      const data = (r.newData ?? {}) as Record<string, unknown>
-      const id = `${r.changeId}__proposed`
-      return {
-        id,
+  const targetIds = rows
+    .filter((r) => r.proposal_change.changeType === "update")
+    .map((r) => r.proposal_change.targetCardId)
+    .filter((t): t is string => Boolean(t))
+  const targets = new Map<string, typeof card.$inferSelect>()
+  if (targetIds.length > 0) {
+    const cards = await db
+      .select()
+      .from(card)
+      .where(and(eq(card.projectId, projectId!), inArray(card.id, targetIds)))
+    for (const c of cards) targets.set(c.id, c)
+  }
+
+  const proposed = rows.flatMap(({ proposal_change: change }) => {
+    const data = (change.newData ?? {}) as Record<string, unknown>
+    const base = {
+      proposalId: change.proposalId,
+      changeId: change.id,
+      changeType: change.changeType as "create" | "update",
+      targetCardId: change.targetCardId,
+    }
+    if (change.changeType === "close") return []
+    if (change.changeType === "create") {
+      return [
+        {
+          ...base,
+          id: `${change.id}__proposed`,
+          keyNo: 0,
+          title: String(data.title ?? "Untitled"),
+          slug: `${change.id}__proposed`,
+          status: "proposed",
+          priority:
+            (data.priority as "low" | "medium" | "high" | "critical") ??
+            "medium",
+          isClosed: false,
+          assigneeId: null,
+          epicId: null,
+          acceptanceCriteriaCount: Array.isArray(data.acceptanceCriteria)
+            ? (data.acceptanceCriteria as unknown[]).length
+            : 0,
+        },
+      ]
+    }
+    const target = change.targetCardId
+      ? targets.get(change.targetCardId)
+      : undefined
+    return [
+      {
+        ...base,
+        id: `${change.id}__proposed`,
         keyNo: 0,
-        title: String(data.title ?? "Untitled"),
-        slug: id,
-        status: "proposed",
+        title: String(data.title ?? target?.title ?? "Untitled"),
+        slug: `${change.id}__proposed`,
+        status: String(data.status ?? target?.status ?? "backlog"),
         priority:
-          (data.priority as "low" | "medium" | "high" | "critical") ?? "medium",
+          (data.priority as "low" | "medium" | "high" | "critical") ??
+          target?.priority ??
+          "medium",
         isClosed: false,
         assigneeId: null,
         epicId: null,
         acceptanceCriteriaCount: Array.isArray(data.acceptanceCriteria)
           ? (data.acceptanceCriteria as unknown[]).length
-          : 0,
-        proposalId: r.proposalId,
-        changeId: r.changeId,
-        updatedAt: r.createdAt,
-      }
-    })
+          : (target?.acceptanceCriteria.length ?? 0),
+      },
+    ]
+  })
 
   return c.json({ success: true, data: proposed })
 })

@@ -88,6 +88,8 @@ export type ProposedCard = {
   acceptanceCriteriaCount: number
   proposalId: string
   changeId: string
+  changeType: "create" | "update"
+  targetCardId: string | null
   updatedAt: string
 }
 

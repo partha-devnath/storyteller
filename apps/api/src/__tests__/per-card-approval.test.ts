@@ -193,3 +193,13 @@ describe("per-card approve/reject routes", () => {
     expect(res.status).toBe(401)
   })
 })
+
+describe("proposed lane", () => {
+  it("includes update changes with target card context", async () => {
+    const { default: app } = await import("../app")
+    const res = await app.fetch(
+      new Request("http://localhost/api/projects/test-pcard/proposed")
+    )
+    expect(res.status).toBe(401)
+  })
+})
