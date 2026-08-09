@@ -90,6 +90,7 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
       priority: body.priority,
       assigneeId: body.assigneeId ?? null,
       customFields: body.customFields ?? null,
+      sections: body.sections ?? null,
       keyNo,
       slug,
     })

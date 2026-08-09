@@ -178,6 +178,7 @@ export function useCreateCard(projectSlug: string) {
       status: string
       priority: string
       acceptanceCriteria?: string[]
+      sections?: Record<string, string>
     }) => {
       const res = await apiClient<Envelope<{ id: string; slug: string }>>(
         `/api/cards?project=${encodeURIComponent(projectSlug)}`,
