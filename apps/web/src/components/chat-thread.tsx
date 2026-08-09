@@ -156,14 +156,14 @@ export function ChatThread({
     return last
   }, [messages])
 
-  const [draftAnswers, setDraftAnswers] = useState<string[] | null>(null)
+  const [draftAnswers, setDraftAnswers] = useState<string[][] | null>(null)
   const activeClarifying =
     clarifyingIndex >= 0 ? messages[clarifyingIndex] : null
   const answering = draftAnswers !== null
 
   function startAnswering() {
     if (!activeClarifying?.questions) return
-    setDraftAnswers(activeClarifying.questions.map(() => ""))
+    setDraftAnswers(activeClarifying.questions.map(() => [""]))
   }
 
   return (
@@ -265,7 +265,7 @@ export function ChatThread({
                       {q.options && q.options.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
                           {q.options.map((opt) => {
-                            const selected = draftAnswers[qi] === opt
+                            const selected = draftAnswers[qi]?.includes(opt)
                             return (
                               <button
                                 key={opt}
@@ -274,9 +274,18 @@ export function ChatThread({
                                 onClick={() =>
                                   setDraftAnswers((prev) =>
                                     prev
-                                      ? prev.map((a, idx) =>
-                                          idx === qi ? opt : a
-                                        )
+                                      ? prev.map((parts, idx) => {
+                                          if (idx !== qi) return parts
+                                          const withoutBlank = parts.filter(
+                                            (p) => p !== ""
+                                          )
+                                          const next = selected
+                                            ? withoutBlank.filter(
+                                                (p) => p !== opt
+                                              )
+                                            : [...withoutBlank, opt]
+                                          return next.length === 0 ? [""] : next
+                                        })
                                       : prev
                                   )
                                 }
@@ -300,12 +309,12 @@ export function ChatThread({
                             : "Type your answer…"
                         }
                         className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                        value={draftAnswers[qi] ?? ""}
+                        value={draftAnswers[qi]?.[0] ?? ""}
                         onChange={(e) =>
                           setDraftAnswers((prev) =>
                             prev
-                              ? prev.map((a, idx) =>
-                                  idx === qi ? e.target.value : a
+                              ? prev.map((parts, idx) =>
+                                  idx === qi ? [e.target.value] : parts
                                 )
                               : prev
                           )
@@ -318,7 +327,10 @@ export function ChatThread({
                       size="sm"
                       data-testid="chat-clarify-submit"
                       onClick={() => {
-                        onClarifyAnswer(i, draftAnswers)
+                        onClarifyAnswer(
+                          i,
+                          draftAnswers.map((parts) => parts.join(" | "))
+                        )
                         setDraftAnswers(null)
                       }}
                     >

@@ -144,4 +144,75 @@ describe("ChatThread", () => {
     await screen.getByTestId("chat-clarify-submit").click()
     expect(onClarifyAnswer).toHaveBeenCalledWith(2, ["All users", ""])
   })
+
+  it("selects multiple options for select-all questions", async () => {
+    const { ChatThread } = await import("../chat-thread")
+    const onClarifyAnswer = vi.fn()
+    const clarifyMessages = [
+      ...messages,
+      {
+        id: "m3",
+        projectId: "p1",
+        role: "ai" as const,
+        kind: "clarifying" as const,
+        content: "",
+        questions: [
+          {
+            question: "Which channels? (select all that apply)",
+            options: ["Email", "SMS", "Push"],
+          },
+        ],
+        proposalId: null,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ]
+    render(
+      <ChatThread
+        messages={clarifyMessages}
+        projectSlug="acme"
+        onClarifyAnswer={onClarifyAnswer}
+      />,
+      { wrapper }
+    )
+
+    await screen.getByTestId("chat-clarify-answer").click()
+    await screen.getByTestId("clarify-option-0-Email").click()
+    await screen.getByTestId("clarify-option-0-SMS").click()
+    await screen.getByTestId("chat-clarify-submit").click()
+    expect(onClarifyAnswer).toHaveBeenCalledWith(2, ["Email | SMS"])
+  })
+
+  it("toggles an option off when clicked again", async () => {
+    const { ChatThread } = await import("../chat-thread")
+    const onClarifyAnswer = vi.fn()
+    const clarifyMessages = [
+      ...messages,
+      {
+        id: "m3",
+        projectId: "p1",
+        role: "ai" as const,
+        kind: "clarifying" as const,
+        content: "",
+        questions: [{ question: "Which base?", options: ["All", "New"] }],
+        proposalId: null,
+        createdAt: "",
+        updatedAt: "",
+      },
+    ]
+    render(
+      <ChatThread
+        messages={clarifyMessages}
+        projectSlug="acme"
+        onClarifyAnswer={onClarifyAnswer}
+      />,
+      { wrapper }
+    )
+
+    await screen.getByTestId("chat-clarify-answer").click()
+    await screen.getByTestId("clarify-option-0-All").click()
+    await screen.getByTestId("clarify-option-0-All").click()
+    await screen.getByTestId("chat-clarify-submit").click()
+    expect(onClarifyAnswer).toHaveBeenCalledWith(2, [""])
+  })
 })
