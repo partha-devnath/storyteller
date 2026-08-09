@@ -1,6 +1,11 @@
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router"
-import { useProject, useDeleteProject } from "@/hooks/use-projects"
+import {
+  useProject,
+  useDeleteProject,
+  useUpdateProject,
+  type CardSectionInput,
+} from "@/hooks/use-projects"
 import { ProjectTabs } from "@/components/project-tabs"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -22,12 +27,81 @@ export function ProjectSettingsPage() {
   const navigate = useNavigate()
   const { data: projectDetail } = useProject(slug)
   const deleteProject = useDeleteProject()
+  const updateProject = useUpdateProject(slug)
   const [section, setSection] = useState<Section>("columns")
   const [confirmText, setConfirmText] = useState("")
+  const [addingSection, setAddingSection] = useState(false)
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [confirmingKey, setConfirmingKey] = useState<string | null>(null)
+  const [sectionLabel, setSectionLabel] = useState("")
+  const [sectionDescription, setSectionDescription] = useState("")
 
   const columns = projectDetail?.project.columns ?? []
-  const cardSections = projectDetail?.project.cardSections ?? []
   const projectName = projectDetail?.project.name ?? ""
+
+  function camelCaseKey(label: string): string {
+    const words = label
+      .trim()
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean)
+    if (words.length === 0) return "section"
+    return (
+      words[0] +
+      words
+        .slice(1)
+        .map((w) => w[0].toUpperCase() + w.slice(1))
+        .join("")
+    )
+  }
+
+  function persistSections(next: CardSectionInput[]) {
+    updateProject.mutate(next)
+  }
+
+  function handleAddSection() {
+    const label = sectionLabel.trim()
+    if (!label) return
+    const all = projectDetail?.project.cardSections ?? []
+    let key = camelCaseKey(label)
+    let n = 2
+    while (all.some((s) => s.key === key)) {
+      key = `${camelCaseKey(label)}${n}`
+      n += 1
+    }
+    persistSections([
+      ...all,
+      {
+        key,
+        label,
+        description: sectionDescription.trim() || "TBD",
+        builtIn: false,
+      },
+    ])
+    setAddingSection(false)
+    setSectionLabel("")
+    setSectionDescription("")
+  }
+
+  function handleSaveEdit(key: string) {
+    const label = sectionLabel.trim()
+    if (!label) return
+    persistSections(
+      (projectDetail?.project.cardSections ?? []).map((s) =>
+        s.key === key ? { ...s, label, description: sectionDescription } : s
+      )
+    )
+    setEditingKey(null)
+    setSectionLabel("")
+    setSectionDescription("")
+  }
+
+  function handleDeleteSection(key: string) {
+    persistSections(
+      (projectDetail?.project.cardSections ?? []).filter((s) => s.key !== key)
+    )
+    setConfirmingKey(null)
+  }
 
   async function handleDelete() {
     if (confirmText !== projectName) {
@@ -118,33 +192,129 @@ export function ProjectSettingsPage() {
                 Sections the AI generates on each new card.
               </p>
               <div className="mt-4 space-y-2">
-                {cardSections.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No custom sections.
-                  </p>
-                ) : (
-                  cardSections.map((s) => (
-                    <div
-                      key={s.key}
-                      className="flex items-start justify-between gap-2 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium">
-                          {s.label}
-                          {s.builtIn && (
-                            <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase">
-                              built-in
-                            </span>
-                          )}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {s.description}
-                        </p>
-                      </div>
+                {(projectDetail?.project.cardSections ?? []).map((s) => (
+                  <div
+                    key={s.key}
+                    className="flex items-start justify-between gap-2 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium">
+                        {s.label}
+                        {s.builtIn && (
+                          <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase">
+                            built-in
+                          </span>
+                        )}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {s.description}
+                      </p>
                     </div>
-                  ))
-                )}
+                    {!s.builtIn && (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          data-testid={`edit-section-${s.key}`}
+                          onClick={() => {
+                            setEditingKey(editingKey === s.key ? null : s.key)
+                            setSectionLabel(s.label)
+                            setSectionDescription(s.description)
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        {confirmingKey === s.key ? (
+                          <Button
+                            size="xs"
+                            variant="destructive"
+                            data-testid="confirm-delete-section"
+                            onClick={() => handleDeleteSection(s.key)}
+                          >
+                            Confirm
+                          </Button>
+                        ) : (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            data-testid={`delete-section-${s.key}`}
+                            onClick={() =>
+                              setConfirmingKey(
+                                confirmingKey === s.key ? null : s.key
+                              )
+                            }
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+
+              {addingSection || editingKey ? (
+                <div className="mt-4 space-y-3 rounded-lg border border-border/60 bg-background p-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="section-label">Label</Label>
+                    <Input
+                      id="section-label"
+                      data-testid="section-label"
+                      value={sectionLabel}
+                      onChange={(e) => setSectionLabel(e.target.value)}
+                      placeholder="e.g. Success metrics"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="section-description">
+                      What the AI should fill in
+                    </Label>
+                    <Input
+                      id="section-description"
+                      data-testid="section-description"
+                      value={sectionDescription}
+                      onChange={(e) => setSectionDescription(e.target.value)}
+                      placeholder="e.g. What success looks like for this requirement."
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      data-testid="section-save"
+                      disabled={updateProject.isPending || !sectionLabel.trim()}
+                      onClick={() =>
+                        editingKey
+                          ? handleSaveEdit(editingKey)
+                          : handleAddSection()
+                      }
+                    >
+                      {updateProject.isPending ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setAddingSection(false)
+                        setEditingKey(null)
+                        setSectionLabel("")
+                        setSectionDescription("")
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  data-testid="add-section"
+                  className="mt-4"
+                  onClick={() => setAddingSection(true)}
+                >
+                  Add section
+                </Button>
+              )}
             </section>
           )}
 

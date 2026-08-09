@@ -17,6 +17,13 @@ export type ProjectSummary = {
   lastActivity: string | null
 }
 
+export type CardSectionInput = {
+  key: string
+  label: string
+  description: string
+  builtIn: boolean
+}
+
 export type ProjectDetail = {
   project: {
     id: string
@@ -25,12 +32,7 @@ export type ProjectDetail = {
     description: string | null
     orgId: string
     columns: { key: string; title: string }[]
-    cardSections?: {
-      key: string
-      label: string
-      description: string
-      builtIn: boolean
-    }[]
+    cardSections?: CardSectionInput[]
   }
   epics: { id: string; name: string; order: number }[]
   cards: {
@@ -135,5 +137,18 @@ export function useDeleteProject() {
       qc.invalidateQueries({ queryKey: ["projects"] })
       qc.invalidateQueries({ queryKey: ["project"] })
     },
+  })
+}
+
+export function useUpdateProject(slug: string | undefined) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (cardSections: CardSectionInput[]) => {
+      const res = await apiClient<
+        Envelope<{ project: { cardSections: CardSectionInput[] } }>
+      >(`/api/projects/${slug}`, { method: "PATCH", body: { cardSections } })
+      return res.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["project", slug] }),
   })
 }
