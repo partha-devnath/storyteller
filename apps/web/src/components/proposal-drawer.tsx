@@ -5,7 +5,6 @@ import {
   useProposal,
   useApproveProposal,
   useRejectProposal,
-  type ProposalChangeRow,
 } from "@/hooks/use-proposals"
 import { DiffPanel } from "./diff-panel"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
@@ -48,20 +47,7 @@ export function ProposalDrawer({
   const status = String(newData.status ?? "backlog")
 
   const isUpdate = change.changeType === "update"
-  const before =
-    change.changeType === "update"
-      ? (
-          change as ProposalChangeRow & {
-            before?: {
-              title?: string
-              description?: string | null
-              acceptanceCriteria?: string[]
-              status?: string
-              priority?: string
-            } | null
-          }
-        ).before
-      : null
+  const before = change.changeType === "update" ? change.before : null
 
   function close() {
     setRejecting(false)

@@ -90,7 +90,6 @@ export type ProposedCard = {
   changeId: string
   changeType: "create" | "update"
   targetCardId: string | null
-  updatedAt: string
 }
 
 export function useProposedCards(slug: string | undefined) {

@@ -99,6 +99,7 @@ proposalsRoutes.post(
           changeId: body.data.changeId,
           approverId: session.user.id,
           mode: "approve",
+          projectId: c.var.projectId!,
         })
       : await applyProposal({ proposalId: id, approverId: session.user.id })
     return c.json({ success: true, data: result })
@@ -127,6 +128,7 @@ proposalsRoutes.post(
         approverId: session.user.id,
         mode: "reject",
         reason: body.data.reason,
+        projectId: c.var.projectId!,
       })
       return c.json({ success: true, data: result })
     }

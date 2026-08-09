@@ -103,6 +103,7 @@ describe("applyProposalChange", () => {
       changeId: `${PROP}_ch1`,
       approverId: USER!,
       mode: "reject",
+      projectId: PROJ,
     })
     expect(result.applied).toBe(0)
     expect(result.proposalStatus).toBe("pending")
@@ -121,6 +122,7 @@ describe("applyProposalChange", () => {
       changeId: `${PROP}_ch2`,
       approverId: USER!,
       mode: "approve",
+      projectId: PROJ,
     })
     expect(result.applied).toBe(1)
     expect(result.proposalStatus).toBe("pending")
@@ -146,6 +148,7 @@ describe("applyProposalChange", () => {
         changeId: `${PROP}_ch2`,
         approverId: USER!,
         mode: "approve",
+        projectId: PROJ,
       })
     ).rejects.toMatchObject({ status: 409 })
   })
@@ -157,6 +160,7 @@ describe("applyProposalChange", () => {
       changeId: `${PROP}_ch3`,
       approverId: USER!,
       mode: "approve",
+      projectId: PROJ,
     })
     expect(result.proposalStatus).toBe("approved")
 

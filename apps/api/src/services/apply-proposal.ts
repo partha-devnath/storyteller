@@ -114,7 +114,7 @@ async function reindexSafe(cardId: string, versionId: string) {
   try {
     await reindexCard({ cardId, provider: aiProvider, versionId })
   } catch (error) {
-    logger.warn({ cardId, error }, "applyProposal: embedding reindex failed")
+    logger.warn({ cardId, error }, "proposal change: embedding reindex failed")
   }
 }
 
@@ -480,12 +480,14 @@ export async function applyProposalChange({
   approverId,
   mode,
   reason,
+  projectId,
 }: {
   proposalId: string
   changeId: string
   approverId: string
   mode: "approve" | "reject"
   reason?: string
+  projectId: string
 }): Promise<{
   applied: number
   proposalStatus: "pending" | "approved" | "rejected"
@@ -496,7 +498,9 @@ export async function applyProposalChange({
     const [proposalRow] = await tx
       .select()
       .from(proposal)
-      .where(eq(proposal.id, proposalId))
+      .where(
+        and(eq(proposal.id, proposalId), eq(proposal.projectId, projectId))
+      )
       .limit(1)
     if (!proposalRow) throw httpError("Not Found", 404)
     if (proposalRow.status !== "pending") {
@@ -512,6 +516,7 @@ export async function applyProposalChange({
           eq(proposalChange.proposalId, proposalId)
         )
       )
+      .for("update")
       .limit(1)
     if (!change) throw httpError("Change not found", 404)
     if (change.approvedAt || change.rejectedAt) {

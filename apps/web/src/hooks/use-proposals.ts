@@ -103,7 +103,13 @@ export function useRejectProposal(projectSlug: string) {
       changeId?: string
       reason?: string
     }) => {
-      const res = await apiClient<Envelope<{ rejected: string }>>(
+      const res = await apiClient<
+        Envelope<{
+          rejected?: string
+          applied?: number
+          proposalStatus?: string
+        }>
+      >(
         `/api/proposals/${input.proposalId}/reject?project=${encodeURIComponent(projectSlug)}`,
         {
           method: "POST",
