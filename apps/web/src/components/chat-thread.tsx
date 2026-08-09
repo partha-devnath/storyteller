@@ -84,7 +84,9 @@ function BoardReply({
             size="sm"
             data-testid="approve-proposal"
             disabled={approve.isPending}
-            onClick={() => approve.mutate(proposalId, { onSuccess: refresh })}
+            onClick={() =>
+              approve.mutate({ proposalId }, { onSuccess: refresh })
+            }
           >
             Approve
           </Button>
@@ -110,7 +112,7 @@ function BoardReply({
                 disabled={reject.isPending}
                 onClick={() =>
                   reject.mutate(
-                    { id: proposalId, reason: reason || undefined },
+                    { proposalId, reason: reason || undefined },
                     {
                       onSuccess: () => {
                         setRejecting(false)

@@ -102,12 +102,15 @@ export function ProposalReview({
                     data-testid="approve-proposal"
                     disabled={approve.isPending}
                     onClick={() =>
-                      approve.mutate(p.id, {
-                        onSuccess: () => {
-                          setExpandedId(null)
-                          window.location.reload()
-                        },
-                      })
+                      approve.mutate(
+                        { proposalId: p.id },
+                        {
+                          onSuccess: () => {
+                            setExpandedId(null)
+                            window.location.reload()
+                          },
+                        }
+                      )
                     }
                   >
                     Approve
@@ -149,7 +152,10 @@ export function ProposalReview({
                       disabled={reject.isPending}
                       onClick={() =>
                         reject.mutate(
-                          { id: p.id, reason: rejectReason || undefined },
+                          {
+                            proposalId: p.id,
+                            reason: rejectReason || undefined,
+                          },
                           {
                             onSuccess: () => {
                               setRejectingId(null)

@@ -75,10 +75,13 @@ export function useProposal(id: string | undefined, projectSlug?: string) {
 export function useApproveProposal(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (input: { proposalId: string; changeId?: string }) => {
       const res = await apiClient<Envelope<{ applied: number }>>(
-        `/api/proposals/${id}/approve?project=${encodeURIComponent(projectSlug)}`,
-        { method: "POST" }
+        `/api/proposals/${input.proposalId}/approve?project=${encodeURIComponent(projectSlug)}`,
+        {
+          method: "POST",
+          body: input.changeId ? { changeId: input.changeId } : undefined,
+        }
       )
       return res.data
     },
@@ -93,10 +96,20 @@ export function useApproveProposal(projectSlug: string) {
 export function useRejectProposal(projectSlug: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { id: string; reason?: string }) => {
+    mutationFn: async (input: {
+      proposalId: string
+      changeId?: string
+      reason?: string
+    }) => {
       const res = await apiClient<Envelope<{ rejected: string }>>(
-        `/api/proposals/${input.id}/reject?project=${encodeURIComponent(projectSlug)}`,
-        { method: "POST", body: { reason: input.reason } }
+        `/api/proposals/${input.proposalId}/reject?project=${encodeURIComponent(projectSlug)}`,
+        {
+          method: "POST",
+          body: {
+            ...(input.changeId ? { changeId: input.changeId } : {}),
+            ...(input.reason ? { reason: input.reason } : {}),
+          },
+        }
       )
       return res.data
     },

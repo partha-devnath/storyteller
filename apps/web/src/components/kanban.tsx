@@ -35,7 +35,7 @@ export function KanbanBoard({
   filters: BoardFilters
   onMove: (cardId: string, status: string) => void
   onSelectCard: (card: BoardCard) => void
-  onOpenProposal?: (proposalId: string) => void
+  onOpenProposal?: (proposalId: string, changeId?: string) => void
 }) {
   const openCards = cards.filter((c) => !c.isClosed)
   const [activeCard, setActiveCard] = useState<BoardCard | null>(null)
@@ -114,18 +114,20 @@ export function KanbanBoard({
                     data-testid="proposed-card"
                     role="button"
                     tabIndex={0}
-                    onClick={() => onOpenProposal?.(card.proposalId)}
+                    onClick={() =>
+                      onOpenProposal?.(card.proposalId, card.changeId)
+                    }
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault()
-                        onOpenProposal?.(card.proposalId)
+                        onOpenProposal?.(card.proposalId, card.changeId)
                       }
                     }}
                     className="flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left transition-colors hover:border-warn/70 hover:bg-card"
                   >
                     <div className="flex items-center gap-2">
                       <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
-                        proposed
+                        {card.changeType === "update" ? "update" : "proposed"}
                       </span>
                       <span className="ml-auto font-mono text-[11px] text-muted-foreground opacity-0 transition-opacity hover:opacity-100">
                         ›
