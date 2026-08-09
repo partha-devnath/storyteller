@@ -18,6 +18,7 @@ import {
   buildBoardSnapshot,
   buildSemanticContext,
 } from "../services/board-snapshot"
+import { chatHistorySearch } from "@workspace/vector"
 import {
   mapStoriesToChanges,
   buildReplySummaryText,
@@ -144,11 +145,17 @@ aiRoutes.post("/generate", async (c) => {
     instruction: body.prompt,
     provider: aiProvider,
   })
+  const chatHistory = await chatHistorySearch({
+    projectId,
+    query: body.prompt,
+    provider: aiProvider,
+  })
   const result = await generateBoard({
     provider: aiProvider,
     prompt: body.prompt,
     snapshot,
     semanticMatches: semantic,
+    chatHistory,
   })
 
   if (result.kind === "clarifying") {
@@ -225,11 +232,18 @@ aiRoutes.post("/process", async (c) => {
           .join("\n")}`
       : body.instruction
 
+  const chatHistory = await chatHistorySearch({
+    projectId,
+    query: body.instruction,
+    provider: aiProvider,
+  })
+
   const batch = await processInstruction({
     provider: aiProvider,
     instruction: instructionWithMentions,
     snapshot,
     semanticMatches: semantic,
+    chatHistory,
   })
 
   const changes = batch.changes.map((change) => {
@@ -300,6 +314,11 @@ aiRoutes.post("/clarify", async (c) => {
     instruction: body.prompt,
     provider: aiProvider,
   })
+  const chatHistory = await chatHistorySearch({
+    projectId,
+    query: body.prompt,
+    provider: aiProvider,
+  })
   const result = await answerClarifyingQuestions({
     provider: aiProvider,
     prompt: body.prompt,
@@ -308,6 +327,7 @@ aiRoutes.post("/clarify", async (c) => {
     priorAnswers: body.priorAnswers,
     snapshot,
     semanticMatches: semantic,
+    chatHistory,
   })
 
   if (result.kind === "clarifying") {

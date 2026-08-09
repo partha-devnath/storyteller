@@ -1,11 +1,24 @@
 import { and, cosineDistance, desc, eq, sql } from "drizzle-orm"
 import { db } from "@workspace/db"
-import { card, cardEmbedding } from "@workspace/schemas"
+import {
+  card,
+  cardEmbedding,
+  chatMessage,
+  chatMessageEmbedding,
+} from "@workspace/schemas"
 import { createLogger } from "@workspace/logger"
 import { EMBEDDING_DIMENSIONS } from "@workspace/ai"
-import type { LLMProvider, SemanticMatch } from "@workspace/ai/types"
+import type {
+  LLMProvider,
+  SemanticMatch,
+  ChatHistoryItem,
+} from "@workspace/ai/types"
 
 const logger = createLogger("vector")
+
+function buildEmbeddingId(): string {
+  return crypto.randomUUID().split("-").join("").slice(0, 16)
+}
 
 function buildEmbeddingText(cardRow: typeof card.$inferSelect): string {
   const customValues = cardRow.customFields
@@ -53,11 +66,98 @@ export async function embedCard({
 
   const model = process.env.EMBEDDING_MODEL ?? "nvidia/nv-embed-v1"
   await db.insert(cardEmbedding).values({
-    id: crypto.randomUUID().split("-").join("").slice(0, 16),
+    id: buildEmbeddingId(),
     cardId,
     embedding: vector,
     model,
   })
+}
+
+export async function embedChatMessage({
+  messageId,
+  provider,
+}: {
+  messageId: string
+  provider: LLMProvider
+}): Promise<void> {
+  const [row] = await db
+    .select()
+    .from(chatMessage)
+    .where(eq(chatMessage.id, messageId))
+    .limit(1)
+
+  if (!row || !row.content?.trim()) {
+    return
+  }
+
+  const text = row.content.trim().slice(0, 2000)
+  const [vector] = await provider.embed([text])
+
+  if (!vector || vector.length !== EMBEDDING_DIMENSIONS) {
+    logger.warn(
+      { messageId, dimensions: vector?.length },
+      "embedChatMessage: embedding has wrong dimension, skipping"
+    )
+    return
+  }
+
+  await db
+    .delete(chatMessageEmbedding)
+    .where(eq(chatMessageEmbedding.messageId, messageId))
+
+  const model = process.env.EMBEDDING_MODEL ?? "nvidia/nv-embed-v1"
+  await db.insert(chatMessageEmbedding).values({
+    id: buildEmbeddingId(),
+    messageId,
+    embedding: vector,
+    model,
+  })
+}
+
+export async function chatHistorySearch({
+  projectId,
+  query,
+  provider,
+  limit = 5,
+}: {
+  projectId: string
+  query: string
+  provider: LLMProvider
+  limit?: number
+}): Promise<ChatHistoryItem[]> {
+  const [queryVector] = await provider.embed([query])
+
+  if (!queryVector || queryVector.length !== EMBEDDING_DIMENSIONS) {
+    logger.warn(
+      { dimensions: queryVector?.length },
+      "chatHistorySearch: query embedding has wrong dimension, returning empty"
+    )
+    return []
+  }
+
+  const similarity = sql<number>`1 - (${cosineDistance(chatMessageEmbedding.embedding, queryVector)})`
+
+  const rows = await db
+    .select({
+      role: chatMessage.role,
+      kind: chatMessage.kind,
+      content: chatMessage.content,
+      createdAt: chatMessage.createdAt,
+      similarity,
+    })
+    .from(chatMessageEmbedding)
+    .innerJoin(chatMessage, eq(chatMessageEmbedding.messageId, chatMessage.id))
+    .where(eq(chatMessage.projectId, projectId))
+    .orderBy(desc(similarity))
+    .limit(limit)
+
+  return rows.map((row) => ({
+    role: row.role,
+    kind: row.kind,
+    content: row.content,
+    createdAt: row.createdAt.toISOString(),
+    similarity: Number(row.similarity),
+  }))
 }
 
 export async function reindexCard({

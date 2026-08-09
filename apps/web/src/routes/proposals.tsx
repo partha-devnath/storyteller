@@ -226,10 +226,14 @@ export function ProposalsPage() {
         answer: answers.join(" | "),
         priorAnswers: newPrior,
         prompt:
+          chatMessages.find(
+            (m) => m.kind === "prompt" && !m.content.startsWith("Answers:")
+          )?.content ||
           chatMessages
             .filter((m) => m.kind === "prompt")
             .map((m) => m.content)
-            .join(" ") || "",
+            .join(" ") ||
+          "",
       })
       if (result.kind === "clarifying") {
         await addMessage.mutateAsync({

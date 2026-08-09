@@ -4,6 +4,9 @@ import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import { chatMessage, chatSession } from "@workspace/schemas"
 import { chatMessageInputSchema } from "@workspace/schemas/validations/chat"
+import { aiProvider } from "@workspace/ai"
+import { embedChatMessage } from "@workspace/vector"
+import { createLogger } from "@workspace/logger"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
@@ -11,6 +14,8 @@ import { validateBody } from "../middleware/validate"
 import { httpError } from "../middleware/org-scope"
 import { generateId } from "../utils"
 import type { AppEnv } from "../middleware/env"
+
+const logger = createLogger("api/chat")
 
 export const chatRoutes = new Hono<AppEnv>()
 chatRoutes.onError(errorHandler)
@@ -177,6 +182,20 @@ chatRoutes.post(
         .update(chatSession)
         .set({ updatedAt: new Date() })
         .where(eq(chatSession.id, sessionId))
+    }
+
+    if (body.role === "user" && body.kind === "prompt" && row.content?.trim()) {
+      try {
+        await embedChatMessage({ messageId: row.id, provider: aiProvider })
+      } catch (error) {
+        logger.warn(
+          {
+            messageId: row.id,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "chat: failed to embed user message"
+        )
+      }
     }
 
     return c.json({ success: true, data: row }, 201)

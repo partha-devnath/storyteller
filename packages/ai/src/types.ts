@@ -57,6 +57,14 @@ export type SemanticMatch = {
   similarity: number
 }
 
+export type ChatHistoryItem = {
+  role: "user" | "ai"
+  kind: "prompt" | "board" | "clarifying" | "error"
+  content: string
+  createdAt: string
+  similarity: number
+}
+
 export type RelationSummaryEntry = {
   type: "dependency" | "hierarchy" | "evolution"
   sourceCardId?: string

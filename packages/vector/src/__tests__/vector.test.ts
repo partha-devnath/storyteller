@@ -69,6 +69,10 @@ beforeEach(() => {
   selectChain.row.isClosed = false
   selectChain.row.similarity = 0.87
   selectChain.row.cardId = "card_1"
+  selectChain.row.content = "we discussed points expiry"
+  selectChain.row.role = "user"
+  selectChain.row.kind = "prompt"
+  selectChain.row.createdAt = new Date("2026-08-01T00:00:00Z")
 })
 
 describe("embedCard", () => {
@@ -145,6 +149,69 @@ describe("semanticSearch", () => {
     selectChain.builder.limit.mockResolvedValueOnce([])
     const { semanticSearch } = await import("../index")
     const results = await semanticSearch({
+      projectId: "proj_1",
+      query: "nothing",
+      provider: fakeProvider(),
+    })
+    expect(results).toEqual([])
+  })
+})
+
+describe("embedChatMessage", () => {
+  it("embeds the message content and inserts an embedding row", async () => {
+    const { embedChatMessage } = await import("../index")
+    const embedSpy = vi.fn(async () => [
+      Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.3),
+    ])
+    const provider = { chat: async () => "", embed: embedSpy }
+
+    await embedChatMessage({ messageId: "msg_1", provider })
+
+    expect(embedSpy).toHaveBeenCalledWith(["we discussed points expiry"])
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: "msg_1" })
+    )
+    expect(deleteWhere).toHaveBeenCalled()
+  })
+
+  it("skips messages with empty content", async () => {
+    selectChain.row.content = "  "
+    const { embedChatMessage } = await import("../index")
+    await embedChatMessage({ messageId: "msg_2", provider: fakeProvider() })
+    expect(insertValues).not.toHaveBeenCalled()
+  })
+})
+
+describe("chatHistorySearch", () => {
+  it("embeds the query and returns mapped history items", async () => {
+    const { chatHistorySearch } = await import("../index")
+    const embedSpy = vi.fn(async () => [
+      Array.from({ length: EMBEDDING_DIMENSIONS }, () => 0.4),
+    ])
+    const provider = { chat: async () => "", embed: embedSpy }
+
+    const results = await chatHistorySearch({
+      projectId: "proj_1",
+      query: "points expiry",
+      provider,
+      limit: 5,
+    })
+
+    expect(embedSpy).toHaveBeenCalledOnce()
+    expect(selectChain.builder.where).toHaveBeenCalled()
+    expect(results[0]).toMatchObject({
+      role: "user",
+      kind: "prompt",
+      content: "we discussed points expiry",
+      similarity: 0.87,
+    })
+    expect(typeof results[0].createdAt).toBe("string")
+  })
+
+  it("returns an empty array when nothing matches", async () => {
+    selectChain.builder.limit.mockResolvedValueOnce([])
+    const { chatHistorySearch } = await import("../index")
+    const results = await chatHistorySearch({
       projectId: "proj_1",
       query: "nothing",
       provider: fakeProvider(),
