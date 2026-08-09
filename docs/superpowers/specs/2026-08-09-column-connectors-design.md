@@ -123,9 +123,17 @@ Accepts `{ columns }` — full replace with validation:
 - Locked columns (keys `backlog`, `review`) must be present unchanged
   (title/order/integration as-is — integration changes go through the
   connect endpoints)
+- Connect endpoints reject locked columns (`409` — Backlog/Review cannot
+  be connected)
 - Keys unique, `/^[a-z][a-zA-Z0-9_]*$/`, titles 1-60 chars, max 12 columns
 - Zod schema `updateProjectColumnsSchema` in
   `packages/schemas/src/validations/project.ts`
+
+### Card moves must publish `card.updated`
+
+Verify `apps/api/src/routes/cards.ts` manual-move endpoint publishes
+`card.updated` (the proposal path already does). If not, add the publish —
+the column-integration subscriber depends on it.
 
 ### Connect/disconnect
 
