@@ -3,12 +3,12 @@ import { eq, and, asc, desc, count, inArray } from "drizzle-orm"
 import { auth } from "@workspace/auth"
 import { db } from "@workspace/db"
 import { proposal, proposalChange, card } from "@workspace/schemas"
-import { rejectProposalSchema } from "@workspace/schemas/validations/proposal"
+import { resolveProposalChangeSchema } from "@workspace/schemas/validations/proposal"
 import { resolveOrgFromProject } from "../middleware/org-scope"
 import { requireRole } from "../middleware/role-guard"
 import { errorHandler } from "../middleware/error-handler"
 import { httpError } from "../middleware/org-scope"
-import { applyProposal } from "../services/apply-proposal"
+import { applyProposal, applyProposalChange } from "../services/apply-proposal"
 import type { AppEnv } from "../middleware/env"
 
 export const proposalsRoutes = new Hono<AppEnv>()
@@ -85,10 +85,22 @@ proposalsRoutes.post(
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
     if (!session) throw httpError("Unauthorized", 401)
     const id = c.req.param("id")
-    const result = await applyProposal({
-      proposalId: id,
-      approverId: session.user.id,
-    })
+    const raw = await c.req.text()
+    const body = resolveProposalChangeSchema.safeParse(
+      raw ? (JSON.parse(raw) as unknown) : {}
+    )
+    if (!body.success) {
+      throw httpError(body.error.issues.map((i) => i.message).join("; "), 400)
+    }
+
+    const result = body.data.changeId
+      ? await applyProposalChange({
+          proposalId: id,
+          changeId: body.data.changeId,
+          approverId: session.user.id,
+          mode: "approve",
+        })
+      : await applyProposal({ proposalId: id, approverId: session.user.id })
     return c.json({ success: true, data: result })
   }
 )
@@ -100,9 +112,23 @@ proposalsRoutes.post(
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
     if (!session) throw httpError("Unauthorized", 401)
     const id = c.req.param("id")
-    const body = rejectProposalSchema.safeParse(await c.req.json())
+    const raw = await c.req.text()
+    const body = resolveProposalChangeSchema.safeParse(
+      raw ? (JSON.parse(raw) as unknown) : {}
+    )
     if (!body.success) {
       throw httpError(body.error.issues.map((i) => i.message).join("; "), 400)
+    }
+
+    if (body.data.changeId) {
+      const result = await applyProposalChange({
+        proposalId: id,
+        changeId: body.data.changeId,
+        approverId: session.user.id,
+        mode: "reject",
+        reason: body.data.reason,
+      })
+      return c.json({ success: true, data: result })
     }
 
     const [proposalRow] = await db

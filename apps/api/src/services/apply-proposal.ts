@@ -1,4 +1,4 @@
-import { and, eq, max } from "drizzle-orm"
+import { and, eq, max, count, isNull } from "drizzle-orm"
 import { db } from "@workspace/db"
 import {
   proposal,
@@ -92,6 +92,24 @@ function readCreateFields(newData: Record<string, unknown>) {
   }
 }
 
+async function applyChange(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  projectId: string,
+  change: ChangeRow,
+  approverId: string,
+  reindexJobs: { cardId: string; versionId: string }[]
+): Promise<number> {
+  if (change.changeType === "create") {
+    return applyCreate(tx, projectId, change, approverId, reindexJobs)
+  }
+  if (change.changeType === "update") {
+    await applyUpdate(tx, projectId, change, approverId, reindexJobs)
+    return 1
+  }
+  await applyClose(tx, projectId, change, approverId, reindexJobs)
+  return 1
+}
+
 async function reindexSafe(cardId: string, versionId: string) {
   try {
     await reindexCard({ cardId, provider: aiProvider, versionId })
@@ -130,33 +148,13 @@ export async function applyProposal({
 
     let applied = 0
     for (const change of changes) {
-      if (change.changeType === "create") {
-        applied += await applyCreate(
-          tx,
-          proposalRow.projectId,
-          change,
-          approverId,
-          reindexJobs
-        )
-      } else if (change.changeType === "update") {
-        await applyUpdate(
-          tx,
-          proposalRow.projectId,
-          change,
-          approverId,
-          reindexJobs
-        )
-        applied += 1
-      } else if (change.changeType === "close") {
-        await applyClose(
-          tx,
-          proposalRow.projectId,
-          change,
-          approverId,
-          reindexJobs
-        )
-        applied += 1
-      }
+      applied += await applyChange(
+        tx,
+        proposalRow.projectId,
+        change,
+        approverId,
+        reindexJobs
+      )
     }
 
     await tx
@@ -474,4 +472,122 @@ async function insertAttachments(
       uploadedBy,
     })
   }
+}
+
+export async function applyProposalChange({
+  proposalId,
+  changeId,
+  approverId,
+  mode,
+  reason,
+}: {
+  proposalId: string
+  changeId: string
+  approverId: string
+  mode: "approve" | "reject"
+  reason?: string
+}): Promise<{
+  applied: number
+  proposalStatus: "pending" | "approved" | "rejected"
+}> {
+  const reindexJobs: { cardId: string; versionId: string }[] = []
+
+  const result = await db.transaction(async (tx) => {
+    const [proposalRow] = await tx
+      .select()
+      .from(proposal)
+      .where(eq(proposal.id, proposalId))
+      .limit(1)
+    if (!proposalRow) throw httpError("Not Found", 404)
+    if (proposalRow.status !== "pending") {
+      throw httpError("Proposal already resolved", 409)
+    }
+
+    const [change] = await tx
+      .select()
+      .from(proposalChange)
+      .where(
+        and(
+          eq(proposalChange.id, changeId),
+          eq(proposalChange.proposalId, proposalId)
+        )
+      )
+      .limit(1)
+    if (!change) throw httpError("Change not found", 404)
+    if (change.approvedAt || change.rejectedAt) {
+      throw httpError("Change already resolved", 409)
+    }
+
+    let applied = 0
+    if (mode === "approve") {
+      applied = await applyChange(
+        tx,
+        proposalRow.projectId,
+        change,
+        approverId,
+        reindexJobs
+      )
+      await tx
+        .update(proposalChange)
+        .set({ approvedAt: new Date(), approverId })
+        .where(eq(proposalChange.id, changeId))
+    } else {
+      await tx
+        .update(proposalChange)
+        .set({
+          rejectedAt: new Date(),
+          rejectionReason: reason ?? null,
+          approverId,
+        })
+        .where(eq(proposalChange.id, changeId))
+    }
+
+    const [remaining] = await tx
+      .select({ count: count() })
+      .from(proposalChange)
+      .where(
+        and(
+          eq(proposalChange.proposalId, proposalId),
+          isNull(proposalChange.approvedAt),
+          isNull(proposalChange.rejectedAt)
+        )
+      )
+    const remainingCount = remaining?.count ?? 0
+
+    let proposalStatus: "pending" | "approved" | "rejected" = "pending"
+    if (remainingCount === 0) {
+      const [rejectedCount] = await tx
+        .select({ count: count() })
+        .from(proposalChange)
+        .where(
+          and(
+            eq(proposalChange.proposalId, proposalId),
+            isNull(proposalChange.approvedAt)
+          )
+        )
+      const [totalCount] = await tx
+        .select({ count: count() })
+        .from(proposalChange)
+        .where(eq(proposalChange.proposalId, proposalId))
+      const rejected = rejectedCount?.count ?? 0
+      const allRejected = rejected > 0 && rejected === (totalCount?.count ?? 0)
+      proposalStatus = allRejected ? "rejected" : "approved"
+      await tx
+        .update(proposal)
+        .set({
+          status: proposalStatus,
+          approvedBy: approverId,
+          rejectedAt: proposalStatus === "rejected" ? new Date() : null,
+          updatedAt: new Date(),
+        })
+        .where(eq(proposal.id, proposalId))
+    }
+
+    return { applied, proposalStatus }
+  })
+
+  for (const job of reindexJobs) {
+    await reindexSafe(job.cardId, job.versionId)
+  }
+  return result
 }
