@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { NavLink, Outlet, useLocation, useParams } from "react-router"
 import { useAppStore } from "@/stores/app-store"
 import { useBoardStore } from "@/stores/board-store"
@@ -9,8 +9,9 @@ import { UserMenu } from "./user-menu"
 import { EnvIndicator } from "./env-indicator"
 import { LimitBanner } from "./limit-banner"
 import { getWorkspaceNavItems, getOrgNavItems } from "@/lib/nav-items"
+import { Input } from "@workspace/ui/components/input"
 import { cn } from "@workspace/ui/lib/utils"
-import { Bell, Search } from "lucide-react"
+import { Search } from "lucide-react"
 
 const groupClass =
   "px-3 pb-1.5 pt-3 font-mono text-[10.5px] font-medium tracking-[0.12em] text-muted-foreground uppercase"
@@ -101,6 +102,7 @@ export function AppShell() {
   const { logout, user } = useAuth()
   const location = useLocation()
   const { slug } = useParams<{ slug: string }>()
+  const searchRef = useRef<HTMLInputElement | null>(null)
   const { data: orgs } = useOrgs()
   const activeOrg = orgs?.find((o) => o.id === selectedOrgId) ?? orgs?.[0]
   const role = activeOrg?.role
@@ -125,6 +127,17 @@ export function AppShell() {
     setSidebarOpen(false)
   }, [location.pathname, setSidebarOpen])
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        searchRef.current?.focus()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
   return (
     <div className="flex h-svh flex-col overflow-hidden">
       <header className="sticky top-0 z-40 flex h-13 shrink-0 items-center gap-4 border-b px-6">
@@ -144,10 +157,11 @@ export function AppShell() {
 
         <div className="ml-2 flex max-w-md min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-input bg-card px-3 py-2 text-sm focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/25">
           <Search className="size-4 shrink-0 text-muted-foreground" />
-          <input
+          <Input
+            ref={searchRef}
             aria-label="Global search"
             placeholder="Search cards, keys, versions…"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="h-auto border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
           />
           <kbd className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline">
             Ctrl K
@@ -155,13 +169,6 @@ export function AppShell() {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <button
-            aria-label="Notifications"
-            className="relative grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <Bell className="size-4.5" />
-            <span className="absolute top-2 right-2.5 size-1.5 rounded-full bg-warn" />
-          </button>
           <EnvIndicator />
         </div>
       </header>

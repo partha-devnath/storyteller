@@ -91,11 +91,11 @@ describe("AppShell", () => {
     expect(screen.getByText("Boards")).toBeInTheDocument()
   })
 
-  it("renders the notifications action", () => {
+  it("renders no notification bell while it is decorative", () => {
     renderWithRouter(<AppShell />)
     expect(
-      screen.getByRole("button", { name: "Notifications" })
-    ).toBeInTheDocument()
+      screen.queryByRole("button", { name: "Notifications" })
+    ).not.toBeInTheDocument()
   })
 })
 
