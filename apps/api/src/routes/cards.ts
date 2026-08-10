@@ -47,6 +47,16 @@ const commentSchema = z.object({
   mentions: z.array(z.string()).optional(),
 })
 
+export type CardSectionConfig = { key: string; label: string }[]
+
+export function defaultSections(
+  config: CardSectionConfig | null | undefined
+): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const section of config ?? []) out[section.key] = ""
+  return out
+}
+
 cardsRoutes.use("*", resolveOrgFromProject)
 
 async function nextVersionNo(
@@ -81,6 +91,13 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
   const raw = (await c.req.json()) as Record<string, unknown>
   const body = createCardSchema.parse({ ...raw, projectId })
 
+  const [projRow] = await db
+    .select({ cardSections: project.cardSections })
+    .from(project)
+    .where(eq(project.id, projectId))
+    .limit(1)
+  const defaults = defaultSections(projRow?.cardSections)
+
   const cardId = generateId()
   const slug = slugify(body.title) || "card"
   await db.transaction(async (tx) => {
@@ -98,7 +115,7 @@ cardsRoutes.post("/", requireRole("owner", "admin", "member"), async (c) => {
       priority: body.priority,
       assigneeId: body.assigneeId ?? null,
       customFields: body.customFields ?? null,
-      sections: body.sections ?? null,
+      sections: { ...defaults, ...(body.sections ?? {}) },
       keyNo,
       slug,
     })

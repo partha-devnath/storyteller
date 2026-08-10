@@ -54,3 +54,22 @@ describe("cards routes (validation gate)", () => {
     expect([401, 404]).toContain(res.status)
   })
 })
+
+describe("defaultSections", () => {
+  it("maps configured sections to empty-string defaults", async () => {
+    const { defaultSections } = await import("../routes/cards")
+    expect(
+      defaultSections([
+        { key: "valueAddtion", label: "Value Addtion" },
+        { key: "impact", label: "Impact" },
+      ])
+    ).toEqual({ valueAddtion: "", impact: "" })
+  })
+
+  it("returns empty map for null or empty config", async () => {
+    const { defaultSections } = await import("../routes/cards")
+    expect(defaultSections(null)).toEqual({})
+    expect(defaultSections(undefined)).toEqual({})
+    expect(defaultSections([])).toEqual({})
+  })
+})
