@@ -80,7 +80,34 @@ export function CardDrawer({
     return () => window.clearTimeout(id)
   }, [liveComment, cardId])
 
-  if (!open || !detail) return null
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open, onClose])
+
+  if (!open) return null
+
+  if (!detail) {
+    return (
+      <div className="fixed inset-0 z-50 flex justify-end">
+        <div
+          className="absolute inset-0 animate-in bg-black/60 backdrop-blur-sm duration-150 fade-in"
+          onClick={onClose}
+        />
+        <div className="relative flex h-full w-full max-w-xl flex-col gap-4 border-l border-input bg-background p-5 shadow-2xl">
+          <div className="h-6 w-24 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-full animate-pulse rounded bg-muted" />
+          <div className="h-3 w-5/6 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-4/6 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    )
+  }
 
   const card = detail.card
   const slug = card.slug
@@ -111,10 +138,15 @@ export function CardDrawer({
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 animate-in bg-black/60 backdrop-blur-sm duration-150 fade-in"
         onClick={onClose}
       />
-      <div className="relative flex h-full w-full max-w-xl flex-col border-l border-input bg-background shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+        className="relative flex h-full w-full max-w-xl animate-in flex-col border-l border-input bg-background shadow-2xl duration-200 fade-in slide-in-from-right-6"
+      >
         <div className="flex items-start justify-between gap-3 border-b border-border p-5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">

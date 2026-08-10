@@ -98,14 +98,14 @@ beforeEach(() => {
 })
 
 describe("CardDrawer", () => {
-  async function renderDrawer() {
+  async function renderDrawer(onClose = vi.fn()) {
     const { CardDrawer } = await import("../card-drawer")
-    return render(
+    render(
       <MemoryRouter>
         <CardDrawer
           cardId="c1"
           open
-          onClose={vi.fn()}
+          onClose={onClose}
           projectSlug="loyalty"
           cardSections={[
             { key: "description", label: "Description" },
@@ -115,6 +115,7 @@ describe("CardDrawer", () => {
         />
       </MemoryRouter>
     )
+    return onClose
   }
 
   it("renders details tab content and comments section", async () => {
@@ -154,5 +155,16 @@ describe("CardDrawer", () => {
     await renderDrawer()
     expect(screen.getByText("Value addition")).toBeInTheDocument()
     expect(screen.getByText("Boosts retention by 15%.")).toBeInTheDocument()
+  })
+
+  it("closes on Escape key", async () => {
+    const onClose = await renderDrawer()
+    fireEvent.keyDown(window, { key: "Escape" })
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it("marks the panel as a modal dialog", async () => {
+    await renderDrawer()
+    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true")
   })
 })

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
 import ReactMarkdown from "react-markdown"
 import {
@@ -27,6 +27,15 @@ export function ProposalDrawer({
   const reject = useRejectProposal(projectSlug)
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState("")
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open, onClose])
 
   if (!open || !data) return null
 
@@ -58,10 +67,15 @@ export function ProposalDrawer({
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 animate-in bg-black/60 backdrop-blur-sm duration-150 fade-in"
         onClick={close}
       />
-      <div className="relative flex h-full w-full max-w-xl flex-col border-l border-input bg-background shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        tabIndex={-1}
+        className="relative flex h-full w-full max-w-xl animate-in flex-col border-l border-input bg-background shadow-2xl duration-200 fade-in slide-in-from-right-6"
+      >
         <div className="flex items-start justify-between gap-3 border-b border-border p-5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
