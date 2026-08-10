@@ -10,14 +10,17 @@ const mockWinstonLogger = vi.hoisted(() => ({
 vi.mock("winston", () => ({
   default: {
     createLogger: vi.fn(() => mockWinstonLogger),
-    format: {
-      json: vi.fn(() => "json-format"),
-      combine: vi.fn(() => "combined-format"),
-      colorize: vi.fn(() => "colorize-format"),
-      timestamp: vi.fn(() => "timestamp-format"),
-      errors: vi.fn(() => "errors-format"),
-      printf: vi.fn(() => "printf-format"),
-    },
+    format: Object.assign(
+      vi.fn(() => vi.fn(() => "format")),
+      {
+        json: vi.fn(() => "json-format"),
+        combine: vi.fn(() => "combined-format"),
+        colorize: vi.fn(() => "colorize-format"),
+        timestamp: vi.fn(() => "timestamp-format"),
+        errors: vi.fn(() => "errors-format"),
+        printf: vi.fn(() => "printf-format"),
+      }
+    ),
     transports: {
       Console: vi.fn(() => "console-transport"),
     },
