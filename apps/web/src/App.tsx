@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react"
 import { Routes, Route, Navigate } from "react-router"
 import { LoginPage } from "@/routes/login"
 import { SignupPage } from "@/routes/signup"
@@ -6,16 +7,37 @@ import { ForgotPasswordPage } from "@/routes/forgot-password"
 import { ResetPasswordPage } from "@/routes/reset-password"
 import { LandingPage } from "@/routes/landing"
 import { ProjectsPage } from "@/routes/projects"
-import { OrgMembersPage } from "@/routes/org-members"
 import { ProjectBoardPage } from "@/routes/project-board"
-import { ProposalsPage } from "@/routes/proposals"
-import { ProjectSettingsPage } from "@/routes/project-settings"
-import { CardDetailPage } from "@/routes/card-detail"
-import { OnboardingPage } from "@/routes/onboarding"
-import { BillingPage } from "@/routes/billing"
-import { AnalyticsPage } from "@/routes/analytics"
 import { ProtectedRoute, PublicRoute } from "@/components/protected-route"
 import { AppShell } from "@/components/app-shell"
+
+const CardDetailPage = lazy(() =>
+  import("@/routes/card-detail").then((m) => ({ default: m.CardDetailPage }))
+)
+const ProposalsPage = lazy(() =>
+  import("@/routes/proposals").then((m) => ({ default: m.ProposalsPage }))
+)
+const OrgMembersPage = lazy(() =>
+  import("@/routes/org-members").then((m) => ({ default: m.OrgMembersPage }))
+)
+const ProjectSettingsPage = lazy(() =>
+  import("@/routes/project-settings").then((m) => ({
+    default: m.ProjectSettingsPage,
+  }))
+)
+const OnboardingPage = lazy(() =>
+  import("@/routes/onboarding").then((m) => ({ default: m.OnboardingPage }))
+)
+const BillingPage = lazy(() =>
+  import("@/routes/billing").then((m) => ({ default: m.BillingPage }))
+)
+const AnalyticsPage = lazy(() =>
+  import("@/routes/analytics").then((m) => ({ default: m.AnalyticsPage }))
+)
+
+function Suspended({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={null}>{children}</Suspense>
+}
 
 export function App() {
   return (
@@ -38,19 +60,62 @@ export function App() {
           />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:slug" element={<ProjectBoardPage />} />
-          <Route path="/projects/:slug/proposals" element={<ProposalsPage />} />
+          <Route
+            path="/projects/:slug/proposals"
+            element={
+              <Suspended>
+                <ProposalsPage />
+              </Suspended>
+            }
+          />
           <Route
             path="/projects/:slug/settings"
-            element={<ProjectSettingsPage />}
+            element={
+              <Suspended>
+                <ProjectSettingsPage />
+              </Suspended>
+            }
           />
           <Route
             path="/project/:slug/card/:cardSlug"
-            element={<CardDetailPage />}
+            element={
+              <Suspended>
+                <CardDetailPage />
+              </Suspended>
+            }
           />
-          <Route path="/orgs/:orgId/members" element={<OrgMembersPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/orgs/:orgId/billing" element={<BillingPage />} />
-          <Route path="/orgs/:orgId/analytics" element={<AnalyticsPage />} />
+          <Route
+            path="/orgs/:orgId/members"
+            element={
+              <Suspended>
+                <OrgMembersPage />
+              </Suspended>
+            }
+          />
+          <Route
+            path="/onboarding"
+            element={
+              <Suspended>
+                <OnboardingPage />
+              </Suspended>
+            }
+          />
+          <Route
+            path="/orgs/:orgId/billing"
+            element={
+              <Suspended>
+                <BillingPage />
+              </Suspended>
+            }
+          />
+          <Route
+            path="/orgs/:orgId/analytics"
+            element={
+              <Suspended>
+                <AnalyticsPage />
+              </Suspended>
+            }
+          />
         </Route>
       </Route>
 
