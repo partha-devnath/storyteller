@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
 import {
   useProposal,
   useApproveProposal,
@@ -99,9 +100,9 @@ function BoardReply({
           </Button>
           {rejecting && (
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 data-testid="reject-reason"
-                className="w-40 rounded-md border bg-background px-2 py-1 text-xs"
+                className="w-40"
                 placeholder="Reason (optional)"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}

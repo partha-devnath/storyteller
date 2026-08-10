@@ -1,5 +1,6 @@
 import { Search } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
+import { Input } from "@workspace/ui/components/input"
 import type { BoardFilters } from "./kanban"
 
 const PRIORITY_OPTIONS = [
@@ -21,12 +22,12 @@ export function BoardToolbar({
     <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border/60 bg-card px-3 py-2">
       <div className="flex min-w-[180px] flex-1 items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5">
         <Search className="size-3.5 shrink-0 text-muted-foreground" />
-        <input
+        <Input
           aria-label="Filter cards"
           placeholder="Filter cards by title…"
           value={filters.query}
           onChange={(e) => onChange({ ...filters, query: e.target.value })}
-          className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
+          className="h-auto border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
         />
       </div>
       <div className="flex items-center gap-1 rounded-lg border border-input bg-background p-0.5">
