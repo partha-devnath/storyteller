@@ -145,7 +145,23 @@ export function ProjectBoardPage() {
             />
           </div>
           {isLoading || !cards ? (
-            <p className="text-sm text-muted-foreground">Loading board...</p>
+            <div
+              className="flex gap-4"
+              data-testid="board-loading"
+              aria-label="Loading board"
+            >
+              {[0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="flex w-80 min-w-80 animate-pulse flex-col gap-3 rounded-xl border border-border/60 bg-background/60 p-2.5"
+                >
+                  <div className="h-5 w-24 rounded bg-muted" />
+                  <div className="h-24 rounded-lg bg-muted" />
+                  <div className="h-24 rounded-lg bg-muted" />
+                  <div className="h-24 rounded-lg bg-muted" />
+                </div>
+              ))}
+            </div>
           ) : (
             <KanbanBoard
               cards={cards}

@@ -25,10 +25,12 @@ describe("ViewSwitcher", () => {
     const { ViewSwitcher } = await import("../view-switcher")
     render(<ViewSwitcher />)
     expect(screen.getByTestId("view-switcher-board")).toHaveAttribute(
-      "data-active"
+      "aria-selected",
+      "true"
     )
-    expect(screen.getByTestId("view-switcher-graph")).not.toHaveAttribute(
-      "data-active"
+    expect(screen.getByTestId("view-switcher-graph")).toHaveAttribute(
+      "aria-selected",
+      "false"
     )
   })
 

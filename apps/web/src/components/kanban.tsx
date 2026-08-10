@@ -12,6 +12,8 @@ import {
 } from "@dnd-kit/core"
 import type { BoardCard } from "@/hooks/use-cards"
 import type { ProposedCard } from "@/hooks/use-projects"
+import { priorityClasses, priorityLabel } from "@/lib/priority"
+import { cn } from "@workspace/ui/lib/utils"
 import { BoardColumn } from "./board-column"
 import { BoardCard as Card } from "./board-card"
 
@@ -105,7 +107,7 @@ export function KanbanBoard({
                 Proposed
               </p>
               <span className="rounded-full bg-warn/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-warn">
-                {proposedCards?.length ?? 0}
+                {proposedCards?.filter(proposedMatches).length ?? 0}
               </span>
             </div>
             <div className="flex min-h-[80px] flex-col gap-3 overflow-y-auto pr-1">
@@ -129,7 +131,7 @@ export function KanbanBoard({
                         onOpenProposal?.(card.proposalId, card.changeId)
                       }
                     }}
-                    className="flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left transition-colors hover:border-warn/70 hover:bg-card"
+                    className="flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left shadow-sm transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-0.5 hover:border-warn/70 hover:bg-card hover:shadow-lg"
                   >
                     <div className="flex items-center gap-2">
                       <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-wide text-warn uppercase">
@@ -143,6 +145,17 @@ export function KanbanBoard({
                       {card.title}
                     </p>
                     <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2.5">
+                      {card.priority && (
+                        <span
+                          className={cn(
+                            "rounded px-1.5 py-0.5 text-[10px] font-bold",
+                            priorityClasses[card.priority] ??
+                              priorityClasses.low
+                          )}
+                        >
+                          {priorityLabel(card.priority)}
+                        </span>
+                      )}
                       <span className="font-mono text-[10px] text-muted-foreground">
                         {card.acceptanceCriteriaCount} criteria
                       </span>

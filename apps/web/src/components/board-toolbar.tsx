@@ -8,7 +8,7 @@ const PRIORITY_OPTIONS = [
   { key: "critical", label: "P0" },
   { key: "high", label: "P1" },
   { key: "medium", label: "P2" },
-  { key: "low", label: "Low" },
+  { key: "low", label: "P3" },
 ]
 
 export function BoardToolbar({

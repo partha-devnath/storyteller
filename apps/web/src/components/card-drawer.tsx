@@ -25,6 +25,16 @@ import {
   DialogTitle,
 } from "@workspace/ui/components/dialog"
 import { cardKey } from "@/lib/card-key"
+import { Link2, X } from "lucide-react"
+import { cn } from "@workspace/ui/lib/utils"
+
+const statusChip: Record<string, string> = {
+  backlog: "border border-border bg-muted text-muted-foreground",
+  todo: "border border-primary/40 bg-primary/10 text-primary",
+  in_progress: "border border-warn/40 bg-warn/10 text-warn",
+  review: "border border-purple-500/40 bg-purple-500/10 text-purple-400",
+  done: "border border-success/40 bg-success/10 text-success",
+}
 
 type Tab = "details" | "history" | "relations" | "similar"
 
@@ -163,13 +173,14 @@ export function CardDrawer({
                 {cardKey(card.keyNo)}
               </span>
               <span
-                className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                className={cn(
+                  "rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold capitalize",
                   card.isClosed
                     ? "border border-destructive/40 bg-destructive/10 text-destructive"
-                    : "border border-warn/40 bg-warn/10 text-warn"
-                }`}
+                    : (statusChip[card.status] ?? statusChip.backlog)
+                )}
               >
-                {card.isClosed ? "closed" : card.status}
+                {card.isClosed ? "closed" : card.status.replace("_", " ")}
               </span>
             </div>
             <p
@@ -199,14 +210,25 @@ export function CardDrawer({
             )}
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               onClick={copyLink}
               data-testid="copy-link"
+              title="Copy link"
+              aria-label="Copy link"
             >
-              {copied ? "Copied!" : "Copy link"}
+              {copied ? (
+                <span className="text-xs">Copied!</span>
+              ) : (
+                <Link2 className="size-4" />
+              )}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onClose}>
-              ✕
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onClose}
+              aria-label="Close drawer"
+            >
+              <X className="size-4" />
             </Button>
           </div>
         </div>
@@ -398,8 +420,14 @@ export function CardDrawer({
                     <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase">
                       {r.type}
                     </span>
-                    <span className="ml-2">
-                      {r.sourceCardId} → {r.targetCardId}
+                    <span className="ml-2 font-mono text-xs text-muted-foreground">
+                      <span title={r.sourceCardId}>
+                        {r.sourceCardId.slice(0, 8)}
+                      </span>
+                      {" → "}
+                      <span title={r.targetCardId}>
+                        {r.targetCardId.slice(0, 8)}
+                      </span>
                     </span>
                   </div>
                 ))

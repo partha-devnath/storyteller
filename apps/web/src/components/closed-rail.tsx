@@ -1,5 +1,6 @@
 import type { BoardCard } from "@/hooks/use-cards"
 import { useBoardStore } from "@/stores/board-store"
+import { cardKey } from "@/lib/card-key"
 import { ChevronDown, Lock } from "lucide-react"
 
 export function ClosedRail({
@@ -22,7 +23,7 @@ export function ClosedRail({
       >
         <Lock className="size-3.5 text-destructive" />
         <span className="font-mono text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
-          Frozen
+          Closed
         </span>
         <span className="font-mono text-[11px] font-semibold text-muted-foreground">
           {closedCards.length}
@@ -43,13 +44,23 @@ export function ClosedRail({
                 key={card.id}
                 data-testid="closed-card"
                 onClick={() => onSelectCard(card)}
-                className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-destructive/40 bg-background px-3 py-2 text-left text-sm opacity-70 hover:opacity-100"
+                className="group flex items-center justify-between gap-2 rounded-lg border border-dashed border-destructive/40 bg-background px-3 py-2 text-left text-sm opacity-70 transition-[transform,box-shadow,opacity] duration-150 hover:-translate-y-0.5 hover:opacity-100 hover:shadow-sm"
               >
-                <span className="line-through decoration-destructive/60">
-                  {card.title}
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="shrink-0 font-mono text-[11px] font-semibold text-muted-foreground">
+                    {cardKey(card.keyNo)}
+                  </span>
+                  <span className="truncate line-through decoration-destructive/60">
+                    {card.title}
+                  </span>
                 </span>
-                <span className="font-mono text-[10px] text-destructive">
-                  closed
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="font-mono text-[10px] text-destructive">
+                    closed
+                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                    ›
+                  </span>
                 </span>
               </button>
             ))

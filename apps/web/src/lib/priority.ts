@@ -13,6 +13,8 @@ export function priorityLabel(priority: string): string {
       return "P1"
     case "medium":
       return "P2"
+    case "low":
+      return "P3"
     default:
       return ""
   }
