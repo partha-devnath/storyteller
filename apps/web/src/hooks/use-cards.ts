@@ -195,6 +195,7 @@ export function useCreateCard(projectSlug: string) {
 
 export function useMoveCard(projectSlug: string) {
   const qc = useQueryClient()
+  const queryKey = ["project", projectSlug, "cards"] as const
   return useMutation({
     mutationFn: async (input: { cardId: string; status: string }) => {
       const res = await apiClient<Envelope<{ id: string }>>(
@@ -202,6 +203,19 @@ export function useMoveCard(projectSlug: string) {
         { method: "PATCH", body: { status: input.status } }
       )
       return res.data
+    },
+    onMutate: async (input) => {
+      await qc.cancelQueries({ queryKey })
+      const previous = qc.getQueryData<BoardCard[]>(queryKey)
+      qc.setQueryData<BoardCard[]>(queryKey, (old) =>
+        old?.map((c) =>
+          c.id === input.cardId ? { ...c, status: input.status } : c
+        )
+      )
+      return { previous }
+    },
+    onError: (_err, _input, context) => {
+      if (context?.previous) qc.setQueryData(queryKey, context.previous)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["project"] }),
   })

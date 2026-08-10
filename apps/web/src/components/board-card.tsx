@@ -1,4 +1,5 @@
-import type { BoardCard } from "@/hooks/use-cards"
+import { memo } from "react"
+import type { BoardCard as BoardCardType } from "@/hooks/use-cards"
 import { priorityClasses, priorityLabel } from "@/lib/priority"
 import { cardKey } from "@/lib/card-key"
 import { timeAgo } from "@/lib/time-ago"
@@ -12,13 +13,13 @@ const statusChip: Record<string, string> = {
   done: "border border-success/40 bg-success/10 text-success",
 }
 
-export function BoardCard({
+export const BoardCard = memo(function BoardCard({
   card,
   isClosed,
   dragProps,
   onClick,
 }: {
-  card: BoardCard
+  card: BoardCardType
   isClosed: boolean
   dragProps?: {
     ref: (element: Element | null) => void
@@ -97,4 +98,4 @@ export function BoardCard({
       </div>
     </div>
   )
-}
+})

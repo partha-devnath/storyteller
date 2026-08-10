@@ -1,8 +1,13 @@
-import { lazy, Suspense, useState } from "react"
+import { lazy, Suspense, useCallback, useState } from "react"
 import { useParams, useSearchParams } from "react-router"
 import { Plus } from "lucide-react"
 import { useProject, useProposedCards } from "@/hooks/use-projects"
-import { useCards, useMoveCard, type CommentItem } from "@/hooks/use-cards"
+import {
+  useCards,
+  useMoveCard,
+  type CommentItem,
+  type BoardCard,
+} from "@/hooks/use-cards"
 import { useProjectEvents } from "@/hooks/use-project-events"
 import { useExport, type ExportFormat } from "@/hooks/use-export"
 import { useBoardStore } from "@/stores/board-store"
@@ -71,6 +76,15 @@ export function ProjectBoardPage() {
     }
   }
 
+  const handleMoveCard = useCallback(
+    (cardId: string, status: string) => moveCard.mutate({ cardId, status }),
+    [moveCard]
+  )
+  const handleSelectCard = useCallback(
+    (card: BoardCard) => setActiveCardId(card.id),
+    []
+  )
+
   return (
     <div className="space-y-4">
       <ProjectTabs slug={slug ?? ""} />
@@ -138,8 +152,8 @@ export function ProjectBoardPage() {
               columns={columns}
               proposedCards={proposedCards}
               filters={filters}
-              onMove={(cardId, status) => moveCard.mutate({ cardId, status })}
-              onSelectCard={(card) => setActiveCardId(card.id)}
+              onMove={handleMoveCard}
+              onSelectCard={handleSelectCard}
               onOpenProposal={(proposalId, changeId) =>
                 setActiveProposal({ proposalId, changeId })
               }

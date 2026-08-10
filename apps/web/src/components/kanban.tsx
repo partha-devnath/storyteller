@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -45,23 +45,29 @@ export function KanbanBoard({
     useSensor(KeyboardSensor)
   )
 
-  const matchesFilters = (card: BoardCard) => {
-    if (filters.priority && card.priority !== filters.priority) return false
-    if (filters.query) {
-      const q = filters.query.toLowerCase()
-      return card.title.toLowerCase().includes(q)
-    }
-    return true
-  }
+  const matchesFilters = useCallback(
+    (card: BoardCard) => {
+      if (filters.priority && card.priority !== filters.priority) return false
+      if (filters.query) {
+        const q = filters.query.toLowerCase()
+        return card.title.toLowerCase().includes(q)
+      }
+      return true
+    },
+    [filters]
+  )
 
-  const proposedMatches = (card: ProposedCard) => {
-    if (filters.priority && card.priority !== filters.priority) return false
-    if (filters.query) {
-      const q = filters.query.toLowerCase()
-      return card.title.toLowerCase().includes(q)
-    }
-    return true
-  }
+  const proposedMatches = useCallback(
+    (card: ProposedCard) => {
+      if (filters.priority && card.priority !== filters.priority) return false
+      if (filters.query) {
+        const q = filters.query.toLowerCase()
+        return card.title.toLowerCase().includes(q)
+      }
+      return true
+    },
+    [filters]
+  )
 
   function handleDragStart(event: DragStartEvent) {
     const card = openCards.find((c) => c.id === String(event.active.id))
@@ -155,6 +161,7 @@ export function KanbanBoard({
               cards={openCards.filter(
                 (c) => c.status === col.key && matchesFilters(c)
               )}
+              isFiltered={filters.priority !== "" || filters.query !== ""}
               onSelectCard={onSelectCard}
             />
           ))}

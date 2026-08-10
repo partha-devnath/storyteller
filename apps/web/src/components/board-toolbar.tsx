@@ -49,6 +49,15 @@ export function BoardToolbar({
           </button>
         ))}
       </div>
+      {(filters.priority !== "" || filters.query !== "") && (
+        <button
+          onClick={() => onChange({ priority: "", query: "" })}
+          data-testid="clear-filters"
+          className="rounded-md px-2 py-1 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+        >
+          Clear
+        </button>
+      )}
     </div>
   )
 }

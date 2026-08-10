@@ -1,8 +1,9 @@
+import { memo } from "react"
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import type { BoardCard } from "@/hooks/use-cards"
 import { BoardCard as Card } from "./board-card"
 
-function DraggableBoardCard({
+const DraggableBoardCard = memo(function DraggableBoardCard({
   card,
   onSelectCard,
 }: {
@@ -31,17 +32,19 @@ function DraggableBoardCard({
       onClick={() => onSelectCard(card)}
     />
   )
-}
+})
 
-export function BoardColumn({
+export const BoardColumn = memo(function BoardColumn({
   columnKey,
   title,
   cards,
+  isFiltered,
   onSelectCard,
 }: {
   columnKey: string
   title: string
   cards: BoardCard[]
+  isFiltered?: boolean
   onSelectCard: (card: BoardCard) => void
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -68,7 +71,7 @@ export function BoardColumn({
       <div className="flex min-h-[80px] flex-col gap-3 overflow-y-auto pr-1">
         {cards.length === 0 ? (
           <p className="p-3 text-center text-xs text-muted-foreground">
-            No cards
+            {isFiltered ? "No cards match filter" : "No cards"}
           </p>
         ) : (
           cards.map((card) => (
@@ -82,4 +85,4 @@ export function BoardColumn({
       </div>
     </div>
   )
-}
+})
