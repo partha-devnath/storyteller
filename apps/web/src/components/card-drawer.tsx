@@ -16,6 +16,14 @@ import { CardSections } from "./card-sections"
 import { CommentList } from "./comment-list"
 import { CommentComposer } from "./comment-composer"
 import { Button, buttonVariants } from "@workspace/ui/components/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
 import { cardKey } from "@/lib/card-key"
 
 type Tab = "details" | "history" | "relations" | "similar"
@@ -56,6 +64,7 @@ export function CardDrawer({
   const closeCard = useCloseCard(projectSlug)
   const [tab, setTab] = useState<Tab>("details")
   const [copied, setCopied] = useState(false)
+  const [confirmClose, setConfirmClose] = useState(false)
   const [replyTarget, setReplyTarget] = useState<CommentItem | null>(null)
   const [newCommentCount, setNewCommentCount] = useState(0)
   const listRef = useRef<HTMLDivElement | null>(null)
@@ -183,10 +192,9 @@ export function CardDrawer({
                 size="sm"
                 variant="outline"
                 data-testid="close-card"
-                disabled={closeCard.isPending}
-                onClick={() => closeCard.mutate({ cardId: card.id })}
+                onClick={() => setConfirmClose(true)}
               >
-                {closeCard.isPending ? "Closing..." : "Close card"}
+                Close card
               </Button>
             )}
             <Button
@@ -416,7 +424,7 @@ export function CardDrawer({
                     </div>
                     {s.isClosed && (
                       <span className="text-[10px] text-muted-foreground">
-                        🔒 closed
+                        closed
                       </span>
                     )}
                   </div>
@@ -426,6 +434,32 @@ export function CardDrawer({
           )}
         </div>
       </div>
+
+      <Dialog open={confirmClose} onOpenChange={setConfirmClose}>
+        <DialogContent data-testid="close-card-confirm">
+          <DialogHeader>
+            <DialogTitle>Close this card?</DialogTitle>
+            <DialogDescription>
+              The card becomes permanently read-only. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmClose(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={closeCard.isPending}
+              onClick={() => {
+                setConfirmClose(false)
+                closeCard.mutate({ cardId: card.id })
+              }}
+            >
+              {closeCard.isPending ? "Closing..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

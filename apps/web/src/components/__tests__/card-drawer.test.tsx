@@ -167,4 +167,11 @@ describe("CardDrawer", () => {
     await renderDrawer()
     expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true")
   })
+
+  it("confirms before closing a card", async () => {
+    await renderDrawer()
+    fireEvent.click(screen.getByTestId("close-card"))
+    expect(screen.getByText("Close this card?")).toBeInTheDocument()
+    expect(screen.getByText(/permanently read-only/)).toBeInTheDocument()
+  })
 })
