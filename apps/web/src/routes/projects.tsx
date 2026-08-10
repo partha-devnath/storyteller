@@ -49,7 +49,12 @@ export function ProjectsPage() {
   const projectsLimited = usage.isAtLimit("projects")
   const [showForm, setShowForm] = useState(false)
   const [quickPrompt, setQuickPrompt] = useState("")
-  const { register, handleSubmit, reset } = useForm<CreateForm>()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateForm>()
 
   const pendingTotal =
     projects?.reduce((sum, p) => sum + p.pendingProposals, 0) ?? 0
@@ -160,7 +165,16 @@ export function ProjectsPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
               <div className="space-y-1">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" {...register("name", { required: true })} />
+                <Input
+                  id="name"
+                  aria-invalid={Boolean(errors.name)}
+                  {...register("name", { required: "Name is required" })}
+                />
+                {errors.name && (
+                  <p className="text-xs text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="description">Description</Label>

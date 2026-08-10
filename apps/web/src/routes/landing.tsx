@@ -530,27 +530,6 @@ export function LandingPage() {
                   Board view
                 </Link>
               </div>
-              <div>
-                <h4 className="mb-3 text-[13px] font-semibold">Legal</h4>
-                <a
-                  href="#features"
-                  className="mb-2.5 block text-[13px] text-muted-foreground hover:text-foreground"
-                >
-                  Privacy
-                </a>
-                <a
-                  href="#features"
-                  className="mb-2.5 block text-[13px] text-muted-foreground hover:text-foreground"
-                >
-                  Terms
-                </a>
-                <a
-                  href="#features"
-                  className="block text-[13px] text-muted-foreground hover:text-foreground"
-                >
-                  Security
-                </a>
-              </div>
             </div>
           </div>
           <div className="mt-8 flex flex-wrap justify-between gap-2 border-t border-border/60 pt-5 text-xs text-muted-foreground">
