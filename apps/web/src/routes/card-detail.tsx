@@ -29,7 +29,7 @@ type Tab = "details" | "history" | "relations" | "similar"
 
 export function CardDetailPage() {
   const { slug, cardSlug } = useParams<{ slug: string; cardSlug: string }>()
-  const { data: detail } = useCardDetail(cardSlug, slug)
+  const { data: detail, isLoading } = useCardDetail(cardSlug, slug)
   const { data: versions } = useCardVersions(cardSlug, slug)
   const { data: similar } = useCardSimilar(cardSlug, slug)
   const { data: comments } = useCardComments(cardSlug, slug)
@@ -50,6 +50,17 @@ export function CardDetailPage() {
     for (const m of orgMembers ?? []) map[m.userId] = m.name
     return map
   }, [orgMembers])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-6" data-testid="card-detail-loading">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-full animate-pulse rounded bg-muted" />
+        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
+      </div>
+    )
+  }
 
   if (!detail) {
     return (

@@ -36,7 +36,7 @@ export const BoardCard = memo(function BoardCard({
       {...(dragProps?.listeners ?? {})}
       onClick={onClick}
       className={cn(
-        "group flex cursor-pointer flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-3.5 text-left shadow-sm transition-all duration-150",
+        "group flex cursor-pointer flex-col gap-2.5 rounded-xl border border-border/80 bg-card p-3.5 text-left shadow-sm transition-[transform,box-shadow,border-color,opacity] duration-150",
         "hover:-translate-y-0.5 hover:border-border hover:shadow-lg",
         isClosed && "border-dashed border-destructive/40 bg-card/60 opacity-70",
         dragProps?.isDragging && "scale-[1.03] rotate-1 opacity-50 shadow-2xl"

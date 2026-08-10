@@ -13,12 +13,12 @@ const SKIP_KEY = "storyteller:onboarding-skipped"
 
 export function isOnboardingSkipped(): boolean {
   if (typeof window === "undefined") return false
-  return window.sessionStorage.getItem(SKIP_KEY) === "1"
+  return window.localStorage.getItem(SKIP_KEY) === "1"
 }
 
 export function dismissOnboarding(): void {
   if (typeof window === "undefined") return
-  window.sessionStorage.setItem(SKIP_KEY, "1")
+  window.localStorage.setItem(SKIP_KEY, "1")
 }
 
 /**
