@@ -96,7 +96,7 @@ export function ProjectBoardPage() {
           </h1>
           <p className="mt-1 text-[13px] text-muted-foreground">
             {cards?.length ?? 0} cards ·{" "}
-            {cards?.filter((c) => c.isClosed).length ?? 0} frozen
+            {cards?.filter((c) => c.isClosed).length ?? 0} closed
           </p>
         </div>
         <div className="flex items-center gap-3">

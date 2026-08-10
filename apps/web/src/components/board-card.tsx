@@ -54,7 +54,7 @@ export const BoardCard = memo(function BoardCard({
               : (statusChip[card.status] ?? statusChip.backlog)
           )}
         >
-          {isClosed ? "frozen" : card.status.replace("_", " ")}
+          {isClosed ? "closed" : card.status.replace("_", " ")}
         </span>
         <span className="ml-auto font-mono text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
           ›

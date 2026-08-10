@@ -169,7 +169,7 @@ export function CardDrawer({
                     : "border border-warn/40 bg-warn/10 text-warn"
                 }`}
               >
-                {card.isClosed ? "frozen" : card.status}
+                {card.isClosed ? "closed" : card.status}
               </span>
             </div>
             <p

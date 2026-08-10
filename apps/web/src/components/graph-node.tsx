@@ -97,7 +97,7 @@ export function GraphNodeComponent({
                 }`}
               />
               {data.isClosed
-                ? "frozen"
+                ? "closed"
                 : data.isProposed
                   ? "pending"
                   : "active"}

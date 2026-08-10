@@ -26,7 +26,7 @@ describe("BoardCard", () => {
 
   it("renders a closed lock state when isClosed", () => {
     render(<BoardCard card={card} isClosed />)
-    expect(screen.getByText("frozen")).toBeInTheDocument()
+    expect(screen.getByText("closed")).toBeInTheDocument()
   })
 
   it("renders the req key and footer meta", () => {

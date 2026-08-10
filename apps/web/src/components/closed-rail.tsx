@@ -49,7 +49,7 @@ export function ClosedRail({
                   {card.title}
                 </span>
                 <span className="font-mono text-[10px] text-destructive">
-                  frozen
+                  closed
                 </span>
               </button>
             ))

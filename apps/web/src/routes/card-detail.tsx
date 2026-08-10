@@ -108,7 +108,7 @@ export function CardDetailPage() {
                   : "border border-primary/40 bg-primary/10 text-primary"
               }`}
             >
-              {card.isClosed ? "frozen" : card.status.replace("_", " ")}
+              {card.isClosed ? "closed" : card.status.replace("_", " ")}
             </span>
             {latest && (
               <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[11px] font-semibold">

@@ -5,7 +5,11 @@ import { VerifyEmailPage } from "../verify-email"
 
 const mockVerifyEmail = vi.hoisted(() => vi.fn())
 const mockSendVerificationEmail = vi.hoisted(() => vi.fn())
-const mockUseSession = vi.hoisted(() => vi.fn(() => ({ data: null })))
+const mockUseSession = vi.hoisted(() =>
+  vi.fn<() => { data: { user: { email: string } } | null }>(() => ({
+    data: null,
+  }))
+)
 const mockNavigate = vi.hoisted(() => vi.fn())
 
 vi.mock("@/lib/auth-client", () => ({

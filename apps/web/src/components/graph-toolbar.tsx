@@ -33,7 +33,7 @@ const FILTERS: {
   {
     key: "evolution",
     label: "Replaces",
-    hint: "frozen → new",
+    hint: "closed → new",
     icon: GitFork,
     color: "bg-edge-evolution",
   },
@@ -109,7 +109,7 @@ export function GraphToolbar({
         ))}
         <span className="flex items-center gap-1.5">
           <span className="size-2 rounded-full border border-destructive bg-destructive/20" />
-          frozen
+          closed
         </span>
       </div>
 
