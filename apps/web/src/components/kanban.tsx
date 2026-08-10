@@ -126,7 +126,7 @@ export function KanbanBoard({
                     className="flex cursor-pointer flex-col gap-2 rounded-xl border border-dashed border-warn/40 bg-card/60 p-3.5 text-left transition-colors hover:border-warn/70 hover:bg-card"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
+                      <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-wide text-warn uppercase">
                         {card.changeType === "update" ? "update" : "proposed"}
                       </span>
                       <span className="ml-auto font-mono text-[11px] text-muted-foreground opacity-0 transition-opacity hover:opacity-100">

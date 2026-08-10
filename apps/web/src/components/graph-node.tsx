@@ -70,7 +70,7 @@ export function GraphNodeComponent({
           </p>
           <div className="flex flex-wrap items-center gap-1.5">
             {data.isProposed ? (
-              <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-warn uppercase">
+              <span className="rounded border border-warn/40 bg-warn/10 px-1.5 py-0.5 font-mono text-[11px] font-bold tracking-wide text-warn uppercase">
                 proposed
               </span>
             ) : (
@@ -79,7 +79,7 @@ export function GraphNodeComponent({
               </span>
             )}
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase ${
+              className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[11px] font-semibold uppercase ${
                 data.isClosed
                   ? "border border-destructive/40 bg-destructive/10 text-destructive"
                   : data.isProposed

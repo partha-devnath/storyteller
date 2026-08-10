@@ -182,7 +182,7 @@ export function ChatThread({
                   {message.mentions.map((m) => (
                     <span
                       key={`${m.type}-${m.id}`}
-                      className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary"
+                      className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] text-primary"
                     >
                       @{m.label}
                     </span>
@@ -374,7 +374,7 @@ export function ChatThread({
                 {pendingPrompt.mentions.map((m) => (
                   <span
                     key={`${m.type}-${m.id}`}
-                    className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[9px] text-primary"
+                    className="rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] text-primary"
                   >
                     @{m.label}
                   </span>
