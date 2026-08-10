@@ -2,6 +2,16 @@ import type { LLMProvider, ChatMessage } from "../types"
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 
+/** nv-embed-v1 caps input at 4096 tokens (~3 chars/token). */
+export const EMBED_MAX_CHARS = 12_000
+
+export function truncateEmbedText(
+  text: string,
+  maxChars = EMBED_MAX_CHARS
+): string {
+  return text.length <= maxChars ? text : text.slice(0, maxChars)
+}
+
 export type NVIDIAProviderEnv = {
   apiKey?: string
   chatModel?: string
@@ -61,7 +71,7 @@ export function createNVIDIAProvider(env: NVIDIAProviderEnv): LLMProvider {
       const result = await withRetry(() =>
         client.embeddings.create({
           model: embeddingModel,
-          input: texts,
+          input: texts.map((t) => truncateEmbedText(t)),
           input_type: "passage",
           truncate: "NONE",
         } as Parameters<typeof client.embeddings.create>[0])

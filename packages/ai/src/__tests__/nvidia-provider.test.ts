@@ -33,3 +33,19 @@ describe("nvidia provider", () => {
     expect(aiProvider.embed).toBeDefined()
   })
 })
+
+describe("truncateEmbedText", () => {
+  it("passes short text through unchanged", async () => {
+    const { truncateEmbedText } = await import("../providers/nvidia")
+    expect(truncateEmbedText("short")).toBe("short")
+  })
+
+  it("truncates text over the token budget", async () => {
+    const { truncateEmbedText, EMBED_MAX_CHARS } =
+      await import("../providers/nvidia")
+    const long = "a".repeat(EMBED_MAX_CHARS + 500)
+    const out = truncateEmbedText(long)
+    expect(out.length).toBe(EMBED_MAX_CHARS)
+    expect(out.endsWith("a")).toBe(true)
+  })
+})
