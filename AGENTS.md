@@ -49,6 +49,72 @@ bun run test         # Vitest (run)
 bun run test:watch   # Vitest (watch)
 ```
 
+## Managing the project
+
+### First-time setup
+
+```bash
+# 1. Install dependencies
+bun install
+
+# 2. Start PostgreSQL + Mailpit
+docker compose up -d
+
+# 3. Copy env files (root .env is used by docker compose + e2e)
+cp .env.example .env
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+
+# 4. Set BETTER_AUTH_SECRET (32+ random chars) in .env and apps/api/.env
+
+# 5. Apply existing migrations (only run `generate` after a schema change)
+bun --filter @workspace/db migrate
+
+# 6. Start dev servers
+bun dev
+```
+
+- API → http://localhost:3001, Web → http://localhost:5173, Mailpit UI → http://localhost:8025, floci S3 → http://localhost:4566
+- `VITE_*` env vars are baked at Vite startup — restart `bun dev` after changing `apps/web/.env`
+
+### Dev workflow (change → verify)
+
+1. Locate the code (`cavecrew-investigator`), keep the change scoped to 1–2 files (`cavecrew-builder`)
+2. Add or update tests in `src/__tests__/` next to the code — no tests, no feature
+3. Run focused checks first, then the full gate:
+
+```bash
+bun --filter api test         # API unit/integration (bun test)
+bun --filter web test         # Web unit (vitest)
+bun run test:e2e              # Playwright E2E (dev servers must be running)
+bun run typecheck && bun run lint
+bun run format                # Prettier — run before committing
+```
+
+4. Run E2E whenever a user-facing flow (auth, board, chat, billing) is touched
+5. Delegate diff review to `cavecrew-reviewer` before committing
+
+### Git flow
+
+- `main` is stable — work on feature branches (`feat/<topic>`), merge when green
+- One logical change per commit (atomic). Schema change + its migration go in the same commit
+- Conventional Commits enforced by commitlint via husky — `<type>: <subject>` (see table above)
+- Never commit secrets; `.env` files are gitignored — run `git status` and `git diff` before `git add`
+
+### Troubleshooting
+
+| Symptom                                   | Fix                                                                                      |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| DB connection refused                     | `docker compose up -d`, then `docker compose ps`                                         |
+| Port already in use (3001/5173/5432/8025) | Find and stop the process holding it, then restart `bun dev`                             |
+| `Cannot find module @workspace/x`         | `bun install` — workspace packages resolve via node_modules symlinks                     |
+| Migration not applied                     | `bun --filter @workspace/db migrate`                                                     |
+| Schema changed but no migration           | `bun --filter @workspace/db generate`, review the SQL, then `migrate`                    |
+| Need a clean database                     | `docker compose down -v && docker compose up -d`, then `migrate`                         |
+| Emails not arriving                       | Check Mailpit at http://localhost:8025, or set `EMAIL_PROVIDER=console` to log to stdout |
+| S3 uploads fail locally                   | Ensure floci is up at http://localhost:4566 and `S3_ENDPOINT` is set                     |
+| Web picks up stale env                    | Restart `bun dev` — `VITE_*` vars are read at startup                                    |
+
 ## Project conventions
 
 - **Runtime**: Bun (not Node). Use Bun-native APIs (`Bun.file()`, `Bun.env`, `Bun.serve()`)
@@ -68,6 +134,7 @@ bun run test:watch   # Vitest (watch)
 - **Rate limiting**: In-memory `Map` with `setInterval` cleanup (`.unref()` to not block shutdown)
 - **Dependencies**: Pinned to exact versions (`.npmrc` sets `save-exact=true`)
 - **TypeScript**: `erasableSyntaxOnly` enabled across all `tsconfig.json` — no enums, namespaces, or non-type-erasable syntax
+- **Subagents**: Use subagents wherever possible — delegate code location (`cavecrew-investigator`), surgical 1–2 file edits (`cavecrew-builder`), and diff/branch review (`cavecrew-reviewer`). Keep main-thread context small by pushing investigative and mechanical work to subagents. Do NOT spawn subagents for trivial one-line answers or features needing 3+ file coordination.
 
 ## Package structure
 
