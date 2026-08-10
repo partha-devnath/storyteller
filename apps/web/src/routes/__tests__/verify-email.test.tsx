@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, fireEvent } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import { VerifyEmailPage } from "../verify-email"
 
 const mockVerifyEmail = vi.hoisted(() => vi.fn())
+const mockSendVerificationEmail = vi.hoisted(() => vi.fn())
+const mockUseSession = vi.hoisted(() => vi.fn(() => ({ data: null })))
 const mockNavigate = vi.hoisted(() => vi.fn())
 
 vi.mock("@/lib/auth-client", () => ({
   verifyEmail: mockVerifyEmail,
+  sendVerificationEmail: mockSendVerificationEmail,
+  useSession: mockUseSession,
 }))
 
 vi.mock("react-router", async (importOriginal) => ({
@@ -80,5 +84,31 @@ describe("VerifyEmailPage", () => {
     expect(
       screen.getByRole("button", { name: "Back to login" })
     ).toBeInTheDocument()
+  })
+
+  it("resends verification email to the session user", async () => {
+    mockUseSession.mockReturnValue({ data: { user: { email: "a@b.com" } } })
+    mockSendVerificationEmail.mockResolvedValue({})
+    renderPage()
+
+    const resendButton = screen.getByRole("button", { name: "Resend email" })
+    fireEvent.click(resendButton)
+
+    expect(
+      await screen.findByText("Verification email sent")
+    ).toBeInTheDocument()
+    expect(mockSendVerificationEmail).toHaveBeenCalledWith({ email: "a@b.com" })
+  })
+
+  it("shows error when resend fails", async () => {
+    mockUseSession.mockReturnValue({ data: { user: { email: "a@b.com" } } })
+    mockSendVerificationEmail.mockResolvedValue({
+      error: { message: "No account found" },
+    })
+    renderPage()
+
+    fireEvent.click(screen.getByRole("button", { name: "Resend email" }))
+
+    expect(await screen.findByText("No account found")).toBeInTheDocument()
   })
 })

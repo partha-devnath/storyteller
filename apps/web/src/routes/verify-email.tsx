@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from "react"
 import { useSearchParams, Link, useNavigate } from "react-router"
 import { Button } from "@workspace/ui/components/button"
 import { AuthShell } from "@/components/auth-shell"
-import { verifyEmail } from "@/lib/auth-client"
+import {
+  sendVerificationEmail,
+  useSession,
+  verifyEmail,
+} from "@/lib/auth-client"
 
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
@@ -13,6 +17,29 @@ export function VerifyEmailPage() {
     "idle" | "verifying" | "success" | "error"
   >(token ? "verifying" : "idle")
   const [error, setError] = useState<string | null>(null)
+  const { data: session } = useSession()
+  const email = session?.user?.email
+  const [resent, setResent] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendError, setResendError] = useState<string | null>(null)
+
+  async function handleResend() {
+    if (!email) return
+    setResending(true)
+    setResendError(null)
+    try {
+      const result = await sendVerificationEmail({ email })
+      if (result.error) {
+        setResendError(result.error.message ?? "Failed to resend")
+        return
+      }
+      setResent(true)
+    } catch {
+      setResendError("An unexpected error occurred")
+    } finally {
+      setResending(false)
+    }
+  }
 
   useEffect(() => {
     if (!token || startedRef.current) {
@@ -73,12 +100,29 @@ export function VerifyEmailPage() {
         )}
 
         {!token && (
-          <Link
-            to="/login"
-            className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            Back to login
-          </Link>
+          <div className="flex flex-col items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResend}
+              disabled={resending || resent}
+            >
+              {resending
+                ? "Sending..."
+                : resent
+                  ? "Verification email sent"
+                  : "Resend email"}
+            </Button>
+            {resendError && (
+              <p className="text-sm text-destructive">{resendError}</p>
+            )}
+            <Link
+              to="/login"
+              className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              Back to login
+            </Link>
+          </div>
         )}
       </div>
     </AuthShell>
