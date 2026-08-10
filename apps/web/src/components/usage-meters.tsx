@@ -33,7 +33,7 @@ function rawPct(usage: number, limit: number | null): number | null {
 
 /**
  * Per-metric usage meters (UI-SPEC V2c). Fill-color contract:
- * primary below 80% · chart-1 at >=80% <100% · destructive at >=100%.
+ * primary below 80% · warn at >=80% <100% · destructive at >=100%.
  * Null limit (unlimited) renders "Unlimited" with a 0-width fill and no warnings.
  */
 export function UsageMeters({ usage, limits }: UsageMetersProps) {
@@ -54,7 +54,7 @@ export function UsageMeters({ usage, limits }: UsageMetersProps) {
           const fillClass = atLimit
             ? "bg-destructive"
             : nearLimit
-              ? "bg-chart-1"
+              ? "bg-warn"
               : "bg-primary"
           const valueText =
             limit === null || limit === undefined
@@ -94,7 +94,7 @@ export function UsageMeters({ usage, limits }: UsageMetersProps) {
                 <p className="text-xs text-muted-foreground">Resets monthly</p>
               )}
               {nearLimit && (
-                <p className="text-xs text-chart-1">
+                <p className="text-xs text-warn">
                   {LABELS[metric]} nearly exhausted — upgrade for more headroom.
                 </p>
               )}

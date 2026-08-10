@@ -71,11 +71,11 @@ describe("UsageMeters", () => {
     expect(
       screen.getByText("Cards nearly exhausted — upgrade for more headroom.")
     ).toBeInTheDocument()
-    // 99.8 is >= 80 → chart-1 fill, not primary
-    expect(screen.getByTestId("usage-bar-cards")).toHaveClass("bg-chart-1")
+    // 99.8 is >= 80 → warn fill, not primary
+    expect(screen.getByTestId("usage-bar-cards")).toHaveClass("bg-warn")
   })
 
-  it("switches to chart-1 fill + warning at exactly 80%", () => {
+  it("switches to warn fill + warning at exactly 80%", () => {
     render(
       <UsageMeters
         usage={{ projects: 1, members: 2, aiActions: 40, cards: 100 }}
@@ -87,7 +87,7 @@ describe("UsageMeters", () => {
       "data-pct",
       "80"
     )
-    expect(screen.getByTestId("usage-bar-aiActions")).toHaveClass("bg-chart-1")
+    expect(screen.getByTestId("usage-bar-aiActions")).toHaveClass("bg-warn")
     expect(
       screen.getByText(
         "AI actions nearly exhausted — upgrade for more headroom."
